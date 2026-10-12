@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת איסוף נתוני צריכת חשמל</title>
+    
+    <style>
+        /* ================= עיצוב כללי (תואם בראשית סולאר) ================= */
+        :root { 
+            --primary: #1a3a5f; 
+            --secondary: #f39c12; 
+            --success: #27ae60; 
+            --danger: #e74c3c;
+            --bg: #f0f4f8; 
+            --white: #ffffff; 
+            --border: #dcdde1; 
+        }
+        
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; color: #2f3640; }
+        .container { max-width: 1200px; margin: auto; }
+        
+        .top-bar { display: flex; align-items: center; justify-content: center; background: var(--primary); padding: 20px; border-radius: 12px; color: white; margin-bottom: 25px; font-size: 1.5em; font-weight: bold; }
+        
+        .card { background: var(--white); border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; }
+
+        /* ================= אקורדיון מיקומים ================= */
+        .location-header {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #fff; padding: 15px 25px; cursor: pointer;
+            border-bottom: 3px solid var(--secondary); transition: background 0.2s;
+        }
+        .location-header:hover { background: #f9fbfd; }
+        .location-content { padding: 25px; display: none; }
+        .location-content.active { display: block; }
+        
+        .location-title-input {
+            font-size: 1.4em; font-weight: bold; border: 1px solid transparent; border-bottom: 2px dashed var(--secondary);
+            padding: 5px 10px; color: var(--primary); background: transparent; width: 300px; transition: all 0.2s;
+        }
+        .location-title-input:focus { background: #fff; border-style: solid; outline: none; border-radius: 6px; }
+
+        /* ================= אקורדיון סקשנים (קטגוריות) ================= */
+        .category-wrapper { margin-bottom: 15px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .category-header {
+            background: #f8f9fa; padding: 12px 20px; cursor: pointer;
+            font-size: 1.1em; font-weight: bold; color: var(--primary);
+            display: flex; justify-content: space-between; align-items: center;
+            border-right: 5px solid var(--primary); transition: background 0.2s;
+        }
+        .category-header:hover { background: #eef2f5; }
+        .category-content { padding: 15px; display: none; background: white; }
+        .category-content.active { display: block; border-top: 1px solid var(--border); }
+        .toggle-icon { font-size: 0.8em; transition: transform 0.3s; }
+        .active-icon { transform: rotate(180deg); }
+
+        /* ================= כפתורים ================= */
+        .btn-add { background: none; border: 2px solid var(--success); color: var(--success); padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: all 0.2s; }
+        .btn-add:hover { background: var(--success); color: white; }
+        .btn-delete { background: none; border: 2px solid var(--danger); color: var(--danger); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; }
+        .btn-delete:hover { background: var(--danger); color: white; }
+        .btn-primary-large { background: var(--primary); color: white; padding: 15px 30px; border-radius: 8px; cursor: pointer; border: none; font-weight: bold; font-size: 1.2em; width: 100%; transition: background 0.3s; }
+        .btn-primary-large:hover { background: #132b47; }
+        .btn-popup-select { background: #f0f4f8; border: 1px solid var(--border); padding: 10px; border-radius: 6px; width: 100%; text-align: right; cursor: pointer; display: flex; justify-content: space-between; font-family: inherit; font-size: 0.9em; }
+        .btn-popup-select:hover { border-color: var(--primary); }
+
+        /* ================= פריסת שורת הצרכן ================= */
+        .consumers-list { overflow-x: auto; padding-bottom: 10px; }
+        .item-row { 
+            display: grid; 
+            grid-template-columns: minmax(180px, 1.5fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(180px, 1.5fr) minmax(180px, 1.5fr) 50px; 
+            gap: 15px; align-items: start; padding: 15px 0; border-bottom: 1px solid #eee; min-width: 1000px; 
+        }
+        .field-wrapper { display: flex; flex-direction: column; gap: 5px; }
+        .field-wrapper label { font-size: 0.8em; font-weight: bold; color: #666; white-space: nowrap; }
+        input[type="text"], input[type="number"], select { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; width: 100%; box-sizing: border-box; font-size: 0.9em; }
+
+        /* ================= חלונות קופצים (Modals) ================= */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;
+        }
+        .modal-box {
+            background: white; border-radius: 12px; width: 90%; max-width: 450px;
+            padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;
+        }
+        .modal-title { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 10px; }
+        .modal-options { display: flex; flex-direction: column; gap: 10px; margin: 15px 0; }
+        .modal-options label { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 5px; border-radius: 4px; }
+        .modal-options label:hover { background: #f0f4f8; }
+        
+        .checkbox-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; padding: 15px; background: #f9fbfd; border: 1px solid var(--border); border-radius: 6px; }
+        .checkbox-grid.hours-grid { grid-template-columns: repeat(4, 1fr); direction: ltr; text-align: right; }
+        .checkbox-grid label { font-size: 0.9em; }
+        
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
+        .btn-modal-confirm { background: var(--success); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-modal-cancel { background: #95a5a6; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="top-bar">מערכת לאיסוף נתוני צריכת חשמל</div>
+
+    <div class="card" style="padding:25px;">
+        <h3 style="margin-top:0; color:var(--primary); border-bottom:2px solid var(--secondary); padding-bottom:10px;">פרטי לקוח</h3>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px;">
+            <div class="field-wrapper"><label>שם הלקוח / המוסד</label><input type="text" id="client_name" placeholder="שם מלא"></div>
+            <div class="field-wrapper"><label>טלפון</label><input type="text" id="client_phone" placeholder="050-0000000"></div>
+            <div class="field-wrapper"><label>כתובת</label><input type="text" id="client_address" placeholder="רחוב, עיר"></div>
+            <div class="field-wrapper"><label>מספר חוזה/מונה (אם ידוע)</label><input type="text" id="client_contract" placeholder="אופציונלי"></div>
+            <div class="field-wrapper"><label>איש קשר למילוי הטופס</label><input type="text" id="client_filledBy" placeholder="שם איש המכירות/הממלא"></div>
+            <div class="field-wrapper"><label>הערות</label><input type="text" id="client_notes" placeholder="אופציונלי"></div>
+        </div>
+    </div>
+
+    <div id="locations-container"></div>
+    <button class="btn-primary-large" onclick="addLocation()">+ הוסף מיקום חדש</button>
+    <button class="btn-primary-large" style="background:var(--success); margin-top:12px;" onclick="exportToFile()">📤 ייצוא לקובץ (לקריאה במחשבון הסולארי)</button>
+</div>
+
+<!-- ================= Modals (חלונות קופצים) ================= -->
+<!-- Modal ימים -->
+<div class="modal-overlay" id="daysModal">
+    <div class="modal-box">
+        <h3 class="modal-title">בחירת ימי פעילות</h3>
+        <div class="modal-options" id="daysRadios">
+            <label><input type="radio" name="daySelection" value="כל הימים" checked> כל הימים</label>
+            <label><input type="radio" name="daySelection" value="יום א'"> יום א'</label>
+            <label><input type="radio" name="daySelection" value="יום ב'"> יום ב'</label>
+            <label><input type="radio" name="daySelection" value="יום ג'"> יום ג'</label>
+            <label><input type="radio" name="daySelection" value="יום ד'"> יום ד'</label>
+            <label><input type="radio" name="daySelection" value="יום ה'"> יום ה'</label>
+            <label><input type="radio" name="daySelection" value="יום ו'"> יום ו'</label>
+            <label><input type="radio" name="daySelection" value="יום ז'"> יום ז'</label>
+            <label><input type="radio" name="daySelection" value="שבת יהודי"> יום שבת יהודי</label>
+            <label><input type="radio" name="daySelection" value="custom"> בחירת ימים מרובה...</label>
+        </div>
+        <div class="checkbox-grid" id="customDaysContainer" style="display:none;"></div>
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="closeModal('daysModal')">ביטול</button>
+            <button class="btn-modal-confirm" onclick="confirmDays()">אישור</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal שעות -->
+<div class="modal-overlay" id="hoursModal">
+    <div class="modal-box">
+        <h3 class="modal-title">בחירת שעות פעילות</h3>
+        <div class="modal-options">
+            <label><input type="radio" name="hourSelection" value="כל שעות היום" checked> כל שעות היום</label>
+            <label><input type="radio" name="hourSelection" value="custom"> בחירת שעות מסויימות...</label>
+        </div>
+        <div class="checkbox-grid hours-grid" id="customHoursContainer" style="display:none;"></div>
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="closeModal('hoursModal')">ביטול</button>
+            <button class="btn-modal-confirm" onclick="confirmHours()">אישור</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const consumerData = {
+        "מיזוג": { "מזגן": ["power", "hp", "qty"], "מזגן VRF": ["power", "hp", "qty"], "מזגן אינוורטר": ["power", "hp", "qty"], "רדיאטור": ["power", "qty"], "מפזר חום": ["power", "qty"], "תנור ספירלה": ["power", "qty"], "משאבת חום": ["power", "qty"], "מאווררים וונטות": ["power", "qty"] },
+        "תאורה": { "נורות": ["power", "qty"], "פסי לד": ["power_per_meter", "qty"], "תאורת חוץ/לילה": ["power", "qty"] },
+        "מטבח": { "קומקום (הרתחה חד פעמית)": ["power", "qty", "usage_avg"], "מיחם (שמירת חום)": ["power", "qty"], "מיני בר": ["power", "qty"], "מקרר": ["power", "volume", "qty"], "מקפיא": ["power", "volume", "qty"], "תנור אפייה": ["power", "qty"], "פלטות חימום": ["power", "pots", "qty"], "חדר קירור": ["power", "nominal_power", "qty"], "מדיח כלים": ["power", "qty", "usage_avg"], "כיריים": ["power", "qty", "usage_avg"] },
+        "תפעול": { "דוד חשמל": ["power", "qty"], "מחמם מהיר": ["power", "qty", "usage_avg"], "מכונת כביסה": ["power", "qty", "usage_avg"], "מייבש כביסה": ["power", "qty", "usage_avg"], "מייבשי ידים": ["power", "qty", "usage_avg"] },
+        "משרד": { "מסכים": ["power", "qty"], "מערכות מיחשוב": ["power", "qty"], "אבטחה": ["power", "qty"], "שרתים": ["power", "qty"], "מכונות הדפסה/צילום": ["power", "qty"] },
+        "כללי": { "מטען רכב": ["power", "qty"], "מעלית": ["power", "qty", "usage_avg"], "משאבות": ["power", "qty"], "משאבת מים": ["power", "qty"], "משאבת סחרור": ["power", "qty"] },
+        "אחר": "custom"
+    };
+
+    const fieldDefinitions = {
+        "power": { label: "הספק (W)" }, "power_per_meter": { label: "הספק למטר (W)" }, "hp": { label: "כוח סוס" },
+        "qty": { label: "כמות" }, "usage_avg": { label: "שימוש ממוצע (דק'/שעה)" }, "volume": { label: "נפח (ליטר)" },
+        "pots": { label: "כמות סירים" }, "nominal_power": { label: "הספק נומינלי (W)" }
+    };
+
+    const DAYS_ARR = ['יום א\'', 'יום ב\'', 'יום ג\'', 'יום ד\'', 'יום ה\'', 'יום ו\'', 'יום ז\''];
+    const HOURS_ARR = Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0') + ':00');
+
+    let locationCounter = 0;
+    let currentRowForModal = null; // שומר את השורה שעבורה פתחנו את החלון
+
+    // אתחול צ'קבוקסים דינמיים בחלונות
+    function initModals() {
+        document.getElementById('customDaysContainer').innerHTML = DAYS_ARR.map(d => `<label><input type="checkbox" class="chk-day" value="${d}"> ${d}</label>`).join('');
+        document.getElementById('customHoursContainer').innerHTML = HOURS_ARR.map(h => `<label><input type="checkbox" class="chk-hour" value="${h}"> ${h}</label>`).join('');
+        
+        // הצגה/הסתרה של צ'קבוקסים לפי ה-Radio
+        document.querySelectorAll('input[name="daySelection"]').forEach(r => r.addEventListener('change', (e) => {
+            document.getElementById('customDaysContainer').style.display = e.target.value === 'custom' ? 'grid' : 'none';
+        }));
+        document.querySelectorAll('input[name="hourSelection"]').forEach(r => r.addEventListener('change', (e) => {
+            document.getElementById('customHoursContainer').style.display = e.target.value === 'custom' ? 'grid' : 'none';
+        }));
+    }
+
+    // הוספת מיקום
+    function addLocation() {
+        locationCounter++;
+        const container = document.getElementById("locations-container");
+        const locId = `loc-${locationCounter}`;
+        
+        const locDiv = document.createElement("div");
+        locDiv.className = "card";
+        locDiv.id = locId;
+
+        let locHTML = `
+            <div class="location-header" onclick="toggleLocation(event, '${locId}')">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="text" class="location-title-input" value="מיקום ${locationCounter}">
+                </div>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <button class="btn-delete" onclick="deleteLocation(event, '${locId}')">מחק</button>
+                    <span class="toggle-icon loc-icon">▼</span>
+                </div>
+            </div>
+            <div class="location-content" id="content-${locId}">
+        `;
+
+        for (const category in consumerData) {
+            const catId = `cat-${locationCounter}-${category.replace(/\s+/g, '')}`;
+            locHTML += `
+                <div class="category-wrapper">
+                    <div class="category-header" onclick="toggleCategory('${locId}', '${catId}')">
+                        <span>${category}</span>
+                        <span class="toggle-icon" id="icon-${catId}">▼</span>
+                    </div>
+                    <div class="category-content" id="content-${catId}">
+                        <div class="consumers-list" id="list-${catId}"></div>
+                        <button class="btn-add" onclick="addConsumer('list-${catId}', '${category}')">+ הוסף ${category === 'אחר' ? 'צרכן אחר' : 'צרכן'}</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        locHTML += `</div>`;
+        locDiv.innerHTML = locHTML;
+        container.appendChild(locDiv);
+        
+        // פותח אוטומטית את המיקום החדש
+        setTimeout(() => openLocation(locId), 50);
+    }
+
+    function deleteLocation(event, locId) {
+        event.stopPropagation(); // מונע פתיחה/סגירה בלחיצה על מחיקה
+        document.getElementById(locId).remove();
+    }
+
+    // לוגיקת אקורדיון - מיקומים
+    function toggleLocation(event, locId) {
+        // מונע סגירה אם לוחצים על התיבת טקסט
+        if(event.target.tagName === 'INPUT') return;
+        
+        const content = document.getElementById(`content-${locId}`);
+        const icon = document.querySelector(`#${locId} .loc-icon`);
+        
+        if (content.classList.contains('active')) {
+            content.classList.remove('active');
+            icon.classList.remove('active-icon');
+        } else {
+            openLocation(locId);
+        }
+    }
+
+    function openLocation(locId) {
+        // סגירת כל שאר המיקומים
+        document.querySelectorAll('.location-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.loc-icon').forEach(i => i.classList.remove('active-icon'));
+        
+        document.getElementById(`content-${locId}`).classList.add('active');
+        document.querySelector(`#${locId} .loc-icon`).classList.add('active-icon');
+    }
+
+    // לוגיקת אקורדיון - קטגוריות
+    function toggleCategory(locId, catId) {
+        const content = document.getElementById(`content-${catId}`);
+        const icon = document.getElementById(`icon-${catId}`);
+        
+        if (content.classList.contains('active')) {
+            content.classList.remove('active');
+            icon.classList.remove('active-icon');
+        } else {
+            // סגירת כל הקטגוריות *בתוך אותו מיקום*
+            document.querySelectorAll(`#content-${locId} .category-content`).forEach(c => c.classList.remove('active'));
+            document.querySelectorAll(`#content-${locId} .category-header .toggle-icon`).forEach(i => i.classList.remove('active-icon'));
+            
+            content.classList.add('active');
+            icon.classList.add('active-icon');
+        }
+    }
+
+    // הוספת צרכן
+    function addConsumer(containerId, category) {
+        const container = document.getElementById(containerId);
+        const rowId = 'row-' + Date.now();
+        const row = document.createElement("div");
+        row.className = "item-row";
+        row.id = rowId;
+
+        let typeHtml = category === 'אחר' ? 
+            `<div class="field-wrapper"><label>שם הצרכן</label><input type="text" placeholder="הכנס שם..."></div>` : 
+            `<div class="field-wrapper"><label>סוג הצרכן</label><select onchange="updateDynamicFields(this, '${category}', '${rowId}')"><option value="">-- בחר --</option>` + 
+            Object.keys(consumerData[category]).map(item => `<option value="${item}">${item}</option>`).join('') + `</select></div>`;
+
+        row.innerHTML = `
+            <div class="col-type">${typeHtml}</div>
+            <div class="col-dyn" id="dyn1-${rowId}"></div>
+            <div class="col-dyn" id="dyn2-${rowId}"></div>
+            <div class="col-dyn" id="dyn3-${rowId}"></div>
+            <div class="col-days">
+                <div class="field-wrapper">
+                    <label>ימים בשבוע</label>
+                    <button type="button" class="btn-popup-select" id="btn-days-${rowId}" onclick="openModal('daysModal', '${rowId}')"><span>כל הימים</span> <span>▼</span></button>
+                </div>
+            </div>
+            <div class="col-hours">
+                <div class="field-wrapper">
+                    <label>שעות פעילות</label>
+                    <button type="button" class="btn-popup-select" id="btn-hours-${rowId}" onclick="openModal('hoursModal', '${rowId}')"><span>כל שעות היום</span> <span>▼</span></button>
+                </div>
+            </div>
+            <div style="display:flex; align-items:flex-end; padding-bottom:5px;">
+                <button type="button" class="btn-delete" title="מחק צרכן" onclick="this.closest('.item-row').remove()">✕</button>
+            </div>
+        `;
+        container.appendChild(row);
+        row.dataset.days = JSON.stringify(['כל הימים']);
+        row.dataset.hours = JSON.stringify(['כל שעות היום']);
+        if (category === 'אחר') renderDynamicFieldsDirect(rowId, ["power", "qty"]);
+    }
+
+    function updateDynamicFields(selectElem, category, rowId) {
+        const fields = (selectElem.value && consumerData[category][selectElem.value]) ? consumerData[category][selectElem.value] : [];
+        renderDynamicFieldsDirect(rowId, fields);
+    }
+
+    function renderDynamicFieldsDirect(rowId, fieldsArray) {
+        for(let i = 1; i <= 3; i++) {
+            const div = document.getElementById(`dyn${i}-${rowId}`);
+            const key = fieldsArray[i - 1];
+            div.innerHTML = key ? `<div class="field-wrapper"><label>${fieldDefinitions[key].label}</label><input type="number" min="0" data-field-key="${key}"></div>` : '';
+        }
+    }
+
+    // ================= ניהול Modal =================
+    function openModal(modalId, rowId) {
+        currentRowForModal = rowId;
+        document.getElementById(modalId).style.display = 'flex';
+        // פה אפשר להוסיף קוד שיקרא את הערך הקיים מהשורה ויסמן את הצ'קבוקסים בהתאם. (כרגע נפתח על מצב הדיפולט / הבחירה הקודמת בחלון).
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+        currentRowForModal = null;
+    }
+
+    function confirmDays() {
+        if(!currentRowForModal) return;
+        const selectedRadio = document.querySelector('input[name="daySelection"]:checked').value;
+        let btnText = selectedRadio;
+        let daysArray;
+
+        if (selectedRadio === 'custom') {
+            const checked = Array.from(document.querySelectorAll('.chk-day:checked')).map(c => c.value);
+            daysArray = checked;
+            if(checked.length === 0) btnText = 'לא נבחרו ימים';
+            else if(checked.length === 7) btnText = 'כל הימים';
+            else btnText = `${checked.length} ימים נבחרו`;
+        } else if (selectedRadio === 'כל הימים') {
+            daysArray = ['כל הימים'];
+        } else if (selectedRadio === 'שבת יהודי') {
+            daysArray = ['שבת יהודי'];
+        } else {
+            daysArray = [selectedRadio];
+        }
+
+        const row = document.getElementById(currentRowForModal);
+        row.dataset.days = JSON.stringify(daysArray);
+        document.getElementById(`btn-days-${currentRowForModal}`).querySelector('span:first-child').innerText = btnText;
+        closeModal('daysModal');
+    }
+
+    function confirmHours() {
+        if(!currentRowForModal) return;
+        const selectedRadio = document.querySelector('input[name="hourSelection"]:checked').value;
+        let btnText = selectedRadio;
+        let hoursArray;
+
+        if (selectedRadio === 'custom') {
+            const checked = Array.from(document.querySelectorAll('.chk-hour:checked')).map(c => c.value);
+            hoursArray = checked;
+            if(checked.length === 0) btnText = 'לא נבחרו שעות';
+            else if(checked.length === 24) btnText = 'כל שעות היום';
+            else btnText = `${checked.length} שעות נבחרו`;
+        } else {
+            hoursArray = ['כל שעות היום'];
+        }
+
+        const row = document.getElementById(currentRowForModal);
+        row.dataset.hours = JSON.stringify(hoursArray);
+        document.getElementById(`btn-hours-${currentRowForModal}`).querySelector('span:first-child').innerText = btnText;
+        closeModal('hoursModal');
+    }
+
+    // ================= ייצוא לקובץ =================
+    function exportToFile() {
+        const clientDetails = {
+            name: document.getElementById('client_name').value,
+            phone: document.getElementById('client_phone').value,
+            address: document.getElementById('client_address').value,
+            contract: document.getElementById('client_contract').value,
+            filledBy: document.getElementById('client_filledBy').value,
+            notes: document.getElementById('client_notes').value
+        };
+
+        const locations = [];
+        document.querySelectorAll('#locations-container .card').forEach(locDiv => {
+            const locName = locDiv.querySelector('.location-title-input').value;
+            const consumers = [];
+            locDiv.querySelectorAll('.item-row').forEach(row => {
+                const typeSelect = row.querySelector('.col-type select');
+                const typeTextInput = row.querySelector('.col-type input[type="text"]');
+                let category = null, type = null;
+                if (typeSelect) {
+                    // מוצא את הקטגוריה לפי ה-onchange שנשמר בזמן היצירה
+                    const onchangeAttr = typeSelect.getAttribute('onchange') || '';
+                    const m = onchangeAttr.match(/updateDynamicFields\(this, '([^']+)'/);
+                    category = m ? m[1] : null;
+                    type = typeSelect.value;
+                } else if (typeTextInput) {
+                    category = 'אחר';
+                    type = typeTextInput.value;
+                }
+                if (!type) return; // שורה ריקה, לא נבחר סוג
+
+                const fields = {};
+                row.querySelectorAll('input[data-field-key]').forEach(inp => {
+                    fields[inp.dataset.fieldKey] = parseFloat(inp.value) || 0;
+                });
+
+                let days = ['כל הימים'], hours = ['כל שעות היום'];
+                try { days = JSON.parse(row.dataset.days || '["כל הימים"]'); } catch(e){}
+                try { hours = JSON.parse(row.dataset.hours || '["כל שעות היום"]'); } catch(e){}
+
+                consumers.push({ category, type, fields, days, hours });
+            });
+            locations.push({ name: locName, consumers });
+        });
+
+        const exportObj = {
+            formVersion: '1.0',
+            exportedAt: new Date().toISOString(),
+            clientDetails,
+            locations
+        };
+
+        const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const safeName = (clientDetails.name || 'לקוח').replace(/[^\wא-ת]+/g, '_');
+        const dateStr = new Date().toISOString().slice(0,10);
+        a.href = url;
+        a.download = `נתוני_צריכה_${safeName}_${dateStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    window.onload = () => {
+        initModals();
+        addLocation();
+    };
+</script>
+
+</body>
+</html>

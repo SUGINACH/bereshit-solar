@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מדריך מלא למחשבון הסולארי - כל שלב, כל נוסחה, כל חיבור</title>
+<style>
+    :root {
+        --primary: #1a3a5f; --primary-light: #2c5480; --secondary: #f39c12;
+        --success: #27ae60; --explain: #5b3a8e; --explain-light: #f4effa;
+        --estimate: #c0791a; --estimate-bg: #fdf1de; --exact-bg: #e6f7ed;
+        --border: #dfe6ee; --text: #2c3e50; --muted: #7f8c8d;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: var(--text); margin: 0; line-height: 1.7; }
+    a { color: var(--primary-light); }
+
+    /* ===== Top bar ===== */
+    .topbar { background: linear-gradient(90deg, var(--primary), var(--primary-light)); color: white; padding: 22px 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.15); position: sticky; top: 0; z-index: 200; }
+    .topbar h1 { margin: 0; font-size: 1.5em; }
+    .topbar p { margin: 6px 0 0; opacity: 0.85; font-size: 0.95em; }
+
+    /* ===== Layout ===== */
+    .layout { display: flex; max-width: 1500px; margin: 0 auto; align-items: flex-start; }
+    .toc { width: 270px; flex-shrink: 0; position: sticky; top: 90px; max-height: calc(100vh - 110px); overflow-y: auto; padding: 20px 15px; }
+    .toc h3 { font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0 0 12px; }
+    .toc a { display: block; padding: 7px 10px; border-radius: 6px; color: var(--text); text-decoration: none; font-size: 0.88em; margin-bottom: 2px; border-right: 3px solid transparent; }
+    .toc a:hover { background: white; border-right-color: var(--secondary); }
+    .toc a.sub { padding-right: 26px; font-size: 0.82em; color: var(--muted); }
+    main { flex: 1; padding: 30px 40px 100px; min-width: 0; }
+
+    /* ===== Intro ===== */
+    .intro-box { background: white; border-radius: 12px; padding: 30px 35px; margin-bottom: 40px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-right: 5px solid var(--explain); }
+    .intro-box h2 { margin-top: 0; color: var(--explain); }
+    .legend { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.9em; }
+
+    /* ===== Stage ===== */
+    .stage { margin-bottom: 55px; scroll-margin-top: 90px; }
+    .stage-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .stage-num { width: 42px; height: 42px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2em; flex-shrink: 0; }
+    .stage-header h2 { margin: 0; color: var(--primary); font-size: 1.4em; }
+    .stage-sub { color: var(--muted); font-size: 0.9em; margin: -12px 0 20px 58px; }
+
+    /* ===== Mockup block (replica of the live calculator, inert) ===== */
+    .mockup-wrap { position: relative; margin-bottom: 4px; }
+    .mockup-label { position: absolute; top: -11px; right: 20px; background: var(--primary); color: white; font-size: 0.72em; padding: 2px 12px; border-radius: 10px; z-index: 5; }
+    .mockup-block { background: #fbfcfd; border: 2px dashed #c3d0de; border-radius: 10px; padding: 25px 25px 20px; }
+    .mockup-block label { display: block; font-weight: 600; margin: 12px 0 5px; font-size: 0.9em; color: var(--primary); }
+    .mockup-block label:first-child { margin-top: 0; }
+    .mockup-block input, .mockup-block select { width: 100%; padding: 9px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9em; background: white; color: #555; pointer-events: none; }
+    .mockup-block .m-row { display: flex; gap: 15px; flex-wrap: wrap; }
+    .mockup-block .m-row > div { flex: 1; min-width: 160px; }
+    .mockup-btn { display: inline-block; background: #b8c4d0; color: white; padding: 10px 22px; border-radius: 6px; font-size: 0.88em; font-weight: bold; margin-top: 14px; cursor: not-allowed; }
+    .mockup-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85em; }
+    .mockup-table th, .mockup-table td { border: 1px solid var(--border); padding: 8px 10px; text-align: center; }
+    .mockup-table th { background: #eef2f6; color: var(--primary); }
+    .mockup-table td:first-child { text-align: right; color: var(--muted); }
+
+    /* ===== Explanation panel ===== */
+    .explain-panel { background: var(--explain-light); border-radius: 0 0 10px 10px; padding: 22px 25px; border: 2px solid #ddd0ee; border-top: none; }
+    .explain-panel h4 { color: var(--explain); margin: 18px 0 8px; font-size: 0.95em; display: flex; align-items: center; gap: 7px; }
+    .explain-panel h4:first-child { margin-top: 0; }
+    .explain-panel p { margin: 4px 0 10px; font-size: 0.92em; }
+    .explain-panel ul { margin: 4px 0 10px; padding-right: 20px; font-size: 0.92em; }
+    .explain-panel li { margin-bottom: 4px; }
+
+    .badge { display: inline-block; font-size: 0.75em; font-weight: bold; padding: 3px 12px; border-radius: 10px; margin-left: 8px; }
+    .badge-exact { background: var(--exact-bg); color: var(--success); border: 1px solid var(--success); }
+    .badge-estimate { background: var(--estimate-bg); color: var(--estimate); border: 1px solid var(--estimate); }
+    .badge-conditional { background: #eaf1fb; color: #2966b0; border: 1px solid #2966b0; }
+
+    .formula-box { background: #26314a; color: #d7e6ff; font-family: 'Courier New', monospace; padding: 14px 18px; border-radius: 8px; margin: 10px 0; font-size: 0.88em; direction: ltr; text-align: left; overflow-x: auto; white-space: pre; }
+    .formula-box .comment { color: #8fa3c4; }
+
+    .connect-box { background: white; border-radius: 8px; padding: 12px 15px; margin: 8px 0; font-size: 0.88em; border-right: 3px solid var(--primary-light); }
+    .connect-box b { color: var(--primary); }
+
+    .verified-note { background: #e6f7ed; border-right: 3px solid var(--success); padding: 10px 14px; border-radius: 6px; font-size: 0.85em; margin-top: 10px; }
+
+    /* ===== Flow diagrams ===== */
+    .diagram-wrap { background: white; border-radius: 12px; padding: 25px; margin: 25px 0 40px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); text-align: center; }
+    .diagram-wrap h3 { color: var(--primary); margin-top: 0; font-size: 1.05em; }
+
+    /* ===== Divider between major parts ===== */
+    .part-divider { display: flex; align-items: center; gap: 15px; margin: 60px 0 35px; }
+    .part-divider .line { flex: 1; height: 2px; background: linear-gradient(90deg, var(--secondary), transparent); }
+    .part-divider span { color: var(--secondary); font-weight: bold; font-size: 1.1em; white-space: nowrap; }
+
+    @media (max-width: 1000px) {
+        .layout { flex-direction: column; }
+        .toc { position: static; width: 100%; max-height: none; }
+        main { padding: 20px; }
+    }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <h1>📘 מדריך מלא למחשבון הסולארי</h1>
+    <p>עותק "מת" של המחשבון (ללא פונקציונליות) עם הסבר מלא לכל שלב: מטרה, חיבורים, ודרך החישוב המדויקת</p>
+</div>
+
+<div class="layout">
+    <nav class="toc">
+        <h3>תוכן עניינים</h3>
+        <a href="#intro">🔑 איך לקרוא את הדף</a>
+        <a href="#diagram-master">🗺️ מפת זרימה כללית</a>
+        <div style="height:10px;"></div>
+        <h3>חלק א׳ - איסוף נתונים</h3>
+        <a href="#stage-1">1. פרטי לקוח</a>
+        <a href="#stage-2">2. בחירת מסלול צריכה</a>
+        <a href="#stage-2a" class="sub">2א. מסלול קובץ</a>
+        <a href="#stage-2b" class="sub">2ב. מסלול מטריצה ידנית</a>
+        <a href="#stage-2c" class="sub">2ג. מסלול סך שנתי + סוג נכס</a>
+        <a href="#stage-3">3. נתוני ייצור (מערכת קיימת)</a>
+        <a href="#stage-4">4. ניתוח סטטיסטי של הצריכה</a>
+        <div style="height:10px;"></div>
+        <h3>חלק ב׳ - מפרט המערכת</h3>
+        <a href="#stage-5">5. גג, הספק ותפוקה</a>
+        <a href="#stage-6">6. דרישות הלכתיות ואגירה</a>
+        <a href="#stage-7">7. פרמטרים פיננסיים ומיסוי</a>
+        <a href="#stage-8">8. הגדרות מתקדמות (תעריפים)</a>
+        <div style="height:10px;"></div>
+        <h3>חלק ג׳ - מנועי החישוב</h3>
+        <a href="#stage-9">9. מנוע התעריף המדורג</a>
+        <a href="#stage-10">10. מנוע תזרים 25 השנה</a>
+        <a href="#stage-11">11. ערך האגירה - שתי שיטות</a>
+        <a href="#stage-12">12. מנוע הדיספאץ׳ השעתי</a>
+        <a href="#stage-13">13. המתמטיקה הפיננסית (IRR/NPV/PMT)</a>
+        <div style="height:10px;"></div>
+        <h3>חלק ד׳ - פלט</h3>
+        <a href="#stage-14">14. תוצאות ותרשים תזרים</a>
+        <a href="#stage-15">15. דוח סופי וייצוא</a>
+    </nav>
+
+    <main>
+        <div class="intro-box" id="intro">
+            <h2>🔑 איך לקרוא את הדף הזה</h2>
+            <p>זהו לא המחשבון עצמו - זו מהדורה "מתה" שלו: אותו מבנה, אותם שדות, אותו עיצוב, אבל בלי שום קוד שרץ. המטרה: לתעד בדיוק מה כל חלק עושה, למה הוא קיים, לאן הנתונים שלו זורמים, ואיך בדיוק מחושב כל מספר שיוצא ממנו.</p>
+            <p>הדף מחולק ל-15 שלבים לאורך 4 חלקים: איסוף נתונים ← מפרט המערכת ← מנועי החישוב ← פלט. כל שלב מציג תחילה "תצוגה" (העתק ויזואלי של אותו חלק במחשבון האמיתי) ומיד אחריו "הסבר" (התפקיד, החיבורים, ודרך החישוב).</p>
+            <div class="legend">
+                <div class="legend-item"><span class="badge badge-exact">מדויק</span> חישוב נוסחתי מלא - אותה תוצאה תמיד מאותם קלטים</div>
+                <div class="legend-item"><span class="badge badge-estimate">הערכה</span> קירוב מבוסס הנחות - מדויק ככל שההנחות מתאימות למציאות</div>
+                <div class="legend-item"><span class="badge badge-conditional">תלוי נתונים</span> הדיוק עולה כשיש יותר מידע זמין</div>
+            </div>
+        </div>
+
+        <div class="diagram-wrap" id="diagram-master">
+            <h3>🗺️ מפת זרימה כללית - איך כל החלקים מתחברים</h3>
+            <svg viewBox="0 0 900 380" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+                <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5b6b80" stroke-width="1.5"/></marker></defs>
+                <rect x="30" y="20" width="170" height="50" rx="8" fill="#eef2f6" stroke="#1a3a5f"/>
+                <text x="115" y="50" text-anchor="middle" font-size="13" fill="#1a3a5f" font-weight="bold">1. פרטי לקוח</text>
+
+                <rect x="20" y="100" width="190" height="60" rx="8" fill="#fdf1de" stroke="#c0791a"/>
+                <text x="115" y="122" text-anchor="middle" font-size="12" fill="#c0791a" font-weight="bold">2. נתוני צריכה</text>
+                <text x="115" y="140" text-anchor="middle" font-size="10" fill="#7f8c8d">קובץ / מטריצה / סך שנתי</text>
+
+                <rect x="20" y="185" width="190" height="50" rx="8" fill="#e6f7ed" stroke="#27ae60"/>
+                <text x="115" y="215" text-anchor="middle" font-size="12" fill="#1e7e34" font-weight="bold">3. נתוני ייצור (אופציונלי)</text>
+
+                <line x1="210" y1="130" x2="270" y2="160" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah)"/>
+                <line x1="210" y1="210" x2="270" y2="175" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah)"/>
+
+                <rect x="270" y="140" width="190" height="55" rx="8" fill="#eef2f6" stroke="#1a3a5f"/>
+                <text x="365" y="163" text-anchor="middle" font-size="12" fill="#1a3a5f" font-weight="bold">סדרה שעתית מאוחדת</text>
+                <text x="365" y="180" text-anchor="middle" font-size="10" fill="#7f8c8d">8,760 נקודות (תאריך, קוט"ש)</text>
+
+                <line x1="460" y1="167" x2="520" y2="167" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah)"/>
+                <rect x="520" y="140" width="170" height="55" rx="8" fill="#f4effa" stroke="#5b3a8e"/>
+                <text x="605" y="163" text-anchor="middle" font-size="12" fill="#5b3a8e" font-weight="bold">4. ניתוח סטטיסטי</text>
+                <text x="605" y="180" text-anchor="middle" font-size="10" fill="#7f8c8d">חציון, ממוצע מנוכה...</text>
+
+                <rect x="270" y="20" width="380" height="55" rx="8" fill="#eef2f6" stroke="#1a3a5f"/>
+                <text x="460" y="43" text-anchor="middle" font-size="12" fill="#1a3a5f" font-weight="bold">5-8. מפרט המערכת</text>
+                <text x="460" y="60" text-anchor="middle" font-size="10" fill="#7f8c8d">גג/הספק · הלכה/אגירה · פיננסי/מס · תעריפים</text>
+
+                <line x1="605" y1="140" x2="605" y2="95" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah)"/>
+                <line x1="460" y1="75" x2="460" y2="140" stroke="#5b6b80" stroke-width="1.5" stroke-dasharray="3,3"/>
+
+                <rect x="360" y="230" width="280" height="55" rx="8" fill="#fdf1de" stroke="#c0791a"/>
+                <text x="500" y="253" text-anchor="middle" font-size="12" fill="#c0791a" font-weight="bold">9-12. מנועי החישוב</text>
+                <text x="500" y="270" text-anchor="middle" font-size="10" fill="#7f8c8d">תעריף מדרגות · תזרים 25 שנה · אגירה</text>
+
+                <line x1="500" y1="195" x2="500" y2="230" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah)"/>
+                <line x1="460" y1="75" x2="500" y2="230" stroke="#5b6b80" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#ah)"/>
+
+                <rect x="360" y="315" width="280" height="50" rx="8" fill="#e6f7ed" stroke="#27ae60"/>
+                <text x="500" y="345" text-anchor="middle" font-size="12" fill="#1e7e34" font-weight="bold">13-15. תוצאות + דוח סופי</text>
+                <line x1="500" y1="285" x2="500" y2="315" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah)"/>
+                <line x1="115" y1="70" x2="500" y2="320" stroke="#5b6b80" stroke-width="1" stroke-dasharray="2,4" opacity="0.5"/>
+            </svg>
+            <p style="font-size:0.85em; color:#7f8c8d; margin-top:10px;">קו מקווקו = פרטי הלקוח מוזרמים ישירות גם לדוח הסופי, ללא מעבר דרך מנועי החישוב</p>
+        </div>
+
+        <div class="part-divider"><span>חלק א׳ · איסוף נתונים</span><div class="line"></div></div>
+
+        <section class="stage" id="stage-1">
+            <div class="stage-header"><span class="stage-num">1</span><h2>פרטי לקוח</h2></div>
+            <div class="stage-sub">שני מסלולי הזנה: ידני, או ייבוא מקובץ שכבר נאסף בשטח</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה</span>
+            <div class="mockup-block">
+                <div class="m-row">
+                    <div><div class="mockup-btn" style="background:#1a3a5f;">✏️ הזנה ידנית</div></div>
+                    <div><div class="mockup-btn">📥 ייבוא מקובץ</div></div>
+                </div>
+                <div class="m-row" style="margin-top:15px;">
+                    <div><label>שם הלקוח</label><input placeholder="ישראל ישראלי"></div>
+                    <div><label>כתובת</label><input placeholder="רחוב, עיר"></div>
+                </div>
+                <div class="m-row">
+                    <div><label>טלפון</label><input placeholder="050-0000000"></div>
+                    <div><label>תאריך</label><input placeholder="dd/mm/yyyy"></div>
+                </div>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>זיהוי הלקוח לצורך הדוח הסופי. השדות האלה לא משתתפים בשום חישוב כספי - הם מטא-דאטה בלבד.</p>
+                <h4>🔗 חיבורים</h4>
+                <div class="connect-box">מוזן ל: <b>שלב 15 (דוח סופי)</b> - שם/כתובת מופיעים בכותרת ההצעה ובקובץ האקסל המיוצא.</div>
+                <div class="connect-box">מקור אפשרי: אם עובדים דרך "טופס איסוף נתוני חשמל" הנפרד וממלאים שם פרטי לקוח שם, ה-JSON המיוצא ממנו מכיל את אותם שדות בדיוק - <b>מסלול הייבוא כאן קורא אותם ישירות</b>, כדי שלא יוזנו פעמיים.</div>
+                <h4>⚙️ שיטת החישוב <span class="badge badge-exact">מדויק</span></h4>
+                <p>אין כאן חישוב - העתקת טקסט בלבד (string copy) משדה לשדה, או קריאת JSON.parse על קובץ שיובא.</p>
+            </div>
+        </section>
+
+        <section class="stage" id="stage-2">
+            <div class="stage-header"><span class="stage-num">2</span><h2>בחירת מסלול נתוני צריכה</h2></div>
+            <div class="stage-sub">3 רמות דיוק, כי השוק מגוון - לא לכל לקוח יש קובץ חשמל מפורט</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה</span>
+            <div class="mockup-block">
+                <label>איך יש לך את נתוני הצריכה?</label>
+                <select><option>📄 קובץ (CSV / Excel / JSON ממכשירים)</option><option>🧮 מטריצה ידנית (עונה × פסגה/שפל)</option><option>🔢 סך צריכה שנתית + סוג נכס</option></select>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>נקודת ההסתעפות המרכזית של כל הכלי. מה שנבחר כאן קובע איזה משלושת "מנועי הסינתזה" ירוץ, אבל <b>שלושתם מייצרים בדיוק אותה תבנית פלט</b>: מערך של 8,760 זוגות (תאריך-שעה, קוט"ש) - כך שכל מה שקורה אחר כך (סטטיסטיקה, סימולציית אגירה, תעריפים) לא צריך לדעת בכלל מאיזה מסלול הנתונים הגיעו.</p>
+                <h4>🔗 חיבורים</h4>
+                <div class="connect-box">כל שלושת המסלולים מזינים את אותו משתנה פנימי (<code>globalRawSeries</code>) שמוזן לשלבים 4, 6, 12.</div>
+            </div>
+        </section>
+
+        <section class="stage" id="stage-2a">
+            <div class="stage-header"><span class="stage-num">2א</span><h2>מסלול קובץ</h2></div>
+            <div class="stage-sub">הרמה המדויקת ביותר - נתוני מונה אמיתיים</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה</span>
+            <div class="mockup-block">
+                <label>העלאת קובץ צריכה</label>
+                <div class="m-row"><div><input placeholder="בחר קובץ..."></div><div style="flex:0 0 auto;"><div class="mockup-btn">נתח קובץ ⚡</div></div></div>
+                <p style="font-size:0.8em; color:#7f8c8d; margin-top:10px;">תומך CSV גולמי מחברת החשמל, Excel, או JSON מטופס איסוף הנתונים</p>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>קריאת קובץ אמיתי (CSV/Excel מחברת החשמל, או JSON מהטופס הנפרד) והפיכתו לסדרה שעתית נקייה.</p>
+                <h4>⚙️ שיטת החישוב <span class="badge badge-exact">מדויק</span> <span class="badge badge-conditional">בכפוף לאיכות הקובץ</span></h4>
+                <p><b>שלב 1 - זיהוי סוג הקובץ:</b> לפי סיומת (csv/xlsx/json), מפוענח בהתאם (PapaParse / SheetJS / JSON.parse).</p>
+                <p><b>שלב 2 - טיפול בריבוי מונים:</b> קובץ IEC אמיתי יכול לכלול כמה מונים לאותו נכס (דו-כיווני, צריכה נפרד, ייצור, ולעיתים אף שני מוני-ייצור זהים בפועל). המערכת מקבצת את כל השורות לפי (תאריך+שעה) ולפי סוג מונה, ואז משחזרת את הצריכה האמיתית:</p>
+                <div class="formula-box">צריכה_אמיתית = משיכה_מרשת + מקסימום(0, ייצור − הזרמה_לרשת)
+<span class="comment">// משיכה_מרשת: מהמונה הדו-כיווני (או "צריכה" אם אין דו-כיווני)
+// ייצור-הזרמה = מה שנוצר ונוצל ישירות באתר בלי לעבור דרך הרשת
+// כשיש 2 מוני-ייצור זהים בפועל: לוקחים ממוצע, לא סכום (כדי לא לכפול-לספור)</span></div>
+                <div class="verified-note">✓ אומת מול 2 קבצים אמיתיים מאותו אתר (אחד עם 4 מונים, אחד מסונן ל-2) - התוצאה זהה עד כדי 0.03 קוט"ש בכל אחת מ-288 הנקודות שנבדקו.</div>
+                <p><b>שלב 3 - סיווג פסגה/שפל:</b> לכל שעה, לפי חודש ויום בשבוע:</p>
+                <ul>
+                    <li><b>חורף (דצ׳-פבר׳):</b> פסגה 17:00-22:00, <u>כל</u> ימות השבוע (כולל שבת)</li>
+                    <li><b>קיץ (יונ׳-ספט׳):</b> פסגה 17:00-23:00, ימי חול בלבד</li>
+                    <li><b>מעבר (מרץ-מאי, אוק׳-נוב׳):</b> פסגה 17:00-22:00, ימי חול בלבד</li>
+                </ul>
+                <p style="font-size:0.85em;">מקור: פרסום רשמי של רשות החשמל בתוקף מ-1.1.2026. רשימת חגים מוכרת ידנית לכיסוי שנים 2020-2030 (מגבלה: לא מכסה חגי עונת מעבר כמו פסח).</p>
+            </div>
+        </section>
+
+        <section class="stage" id="stage-2b">
+            <div class="stage-header"><span class="stage-num">2ב</span><h2>מסלול מטריצה ידנית</h2></div>
+            <div class="stage-sub">כשיודעים בערך את הצריכה בלי קובץ בכלל</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה</span>
+            <div class="mockup-block">
+                <table class="mockup-table">
+                    <thead><tr><th>עונה</th><th>שפל (קוט"ש/שעה)</th><th>פסגה (קוט"ש/שעה)</th></tr></thead>
+                    <tbody><tr><td>חורף</td><td>2</td><td>4</td></tr><tr><td>קיץ</td><td>2.5</td><td>6</td></tr><tr><td>מעבר</td><td>2</td><td>3</td></tr></tbody>
+                </table>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>קלט מהיר כשהלקוח/איש המכירות יכול להעריך בעצמו "בערך כמה קוט"ש לשעה" בכל שילוב עונה/זמן, בלי קובץ בכלל.</p>
+                <h4>⚙️ שיטת החישוב <span class="badge badge-estimate">הערכה</span></h4>
+                <p>הפשוט מבין שלושת המסלולים: לכל אחת מ-8,760 השעות בשנה, מסווגים (עונה, פסגה/שפל) ושולפים ישירות את הערך המתאים מהטבלה - בלי נירמול, בלי חישוב ביניים. אותה שעה תמיד מקבלת אותו ערך קבוע מהתא המתאים.</p>
+                <div class="formula-box">for כל שעה בשנה:
+    (עונה, פסגה?) = סווג(שעה)
+    צריכה[שעה] = מטריצה[עונה][פסגה?]</div>
+                <p style="font-size:0.85em; color:#7f8c8d;">מדויק כמו שהמשתמש הצליח להעריך - אין כאן "אמת" חיצונית, רק שיקוף ישיר של מה שהוזן.</p>
+            </div>
+        </section>
+
+        <section class="stage" id="stage-2c">
+            <div class="stage-header"><span class="stage-num">2ג</span><h2>מסלול סך צריכה שנתית + סוג נכס</h2></div>
+            <div class="stage-sub">כשיש רק מספר אחד (מחשבון שנתי כולל) - חייבים גם סוג נכס לדיוק</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה</span>
+            <div class="mockup-block">
+                <div class="m-row">
+                    <div><label>סך צריכה שנתית (קוט"ש)</label><input placeholder="15000"></div>
+                    <div><label>סוג נכס</label><select><option>בית פרטי</option><option>בית כנסת</option><option>ישיבה / פנימייה</option><option>...</option></select></div>
+                </div>
+                <div class="mockup-btn" style="margin-top:15px;">🔄 המר לדו"ח דמוי דו"ח חח"י</div>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>הרמה הכי גסה, אבל הכי נגישה - כל מי שיש לו חשבון חשמל שנתי יכול להשתמש בה. <b>סוג הנכס הוא חובה</b>, לא קישוט: בלעדיו אין דרך לדעת אם ה-15,000 קוט"ש מתפלגים כמו בית פרטי (שיא ערב/סופ"ש) או כמו בית כנסת (שיא תפילות/שבת) - וזה משנה מהותית את חישוב שווי האגירה בהמשך.</p>
+                <h4>🔗 חיבורים</h4>
+                <div class="connect-box">מקור טבלת ההתפלגות: נתונים אמיתיים לפי 10 סוגי נכס (בית פרטי, משרד, מוסד לימודי, מוסד אקדמי, ישיבה, בית כנסת, מלון, צימרים, קמעונאי, תעשייתי) - כל שורה מאומתת מתמטית (סכום עונות=100%, סכום פסגה+שפל=100%) ומול תיאור מילולי (למשל: מוסד לימודי מראה קיץ=15% הכי נמוך מכל 10 הסוגים, בדיוק כמו "סגור ביולי-אוגוסט").</div>
+                <h4>⚙️ שיטת החישוב <span class="badge badge-estimate">הערכה מכוילת</span></h4>
+                <p>לכל סוג נכס יש 10 יחסים (% חורף/קיץ/מעבר, % פסגה/שפל בנפרד לחורף ולקיץ, % חול/שישי-שבת). בעיה: אלו לא בלתי-תלויים - למשל בעונת מעבר יש הרבה פחות שעות-פסגה זמינות מאשר בחורף, אז מכפלה פשוטה של שלושת האחוזים תפר את היחסים. הפתרון: <b>Iterative Proportional Fitting</b> (IPF) - 15 סבבי כיול הדדי:</p>
+                <div class="formula-box">משקל_ראשוני(שעה) = 1  לכל שעה בשנה
+חזור 15 פעמים:
+    כייל לפי יחס עונות (חורף/קיץ/מעבר)
+    כייל לפי יחס פסגה/שפל בתוך כל עונה
+    כייל לפי יחס חול/שישי-שבת
+צריכה[שעה] = סך_שנתי × משקל(שעה) / סכום_כל_המשקלים</div>
+                <div class="verified-note">✓ נבדק לכל 10 סוגי הנכס: אחרי ההתכנסות, הסטייה מהיעד המקורי קטנה מ-0.5 נקודת אחוז בכל אחד מהיחסים.</div>
+            </div>
+        </section>
+
+        <section class="stage" id="stage-3">
+            <div class="stage-header"><span class="stage-num">3</span><h2>נתוני ייצור (מערכת קיימת)</h2></div>
+            <div class="stage-sub">רלוונטי רק אם יש כבר מערכת סולארית מותקנת שרוצים להרחיב</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה</span>
+            <div class="mockup-block">
+                <label>האם קיימת מערכת סולארית כיום?</label>
+                <select><option>אין מערכת קיימת</option><option>יש מערכת קיימת - הזן הספק</option></select>
+                <div class="m-row" style="margin-top:12px;">
+                    <div><label>הספק מערכת קיימת (קוו"ט)</label><input placeholder="0"></div>
+                </div>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>קובע את הפרמטר <b>P0</b> - הספק מותקן שכבר קיים באתר, לפני התוספת המתוכננת. זה משפיע ישירות על מדרגת התעריף (שלב 9), כי המדרגה נקבעת לפי ההספק <u>המצטבר</u> (קיים + חדש), לא רק החדש.</p>
+                <h4>🔗 חיבורים</h4>
+                <div class="connect-box">מקור אוטומטי אפשרי: אם מעלים בשלב 2א קובץ שכותרתו מציינת "סוג מונה: ייצור" (כלומר זה דוח ממונה ייצור נפרד, לא דוח צריכה) - השדה כאן מתמלא אוטומטית לפי שיא הייצור שנצפה בקובץ.</div>
+                <h4>⚙️ שיטת החישוב <span class="badge badge-estimate">הערכה</span> (בזיהוי האוטומטי בלבד)</h4>
+                <div class="formula-box">הספק_משוער (קוו"ט) = שיא_ייצור_שעתי_שנצפה (קוט"ש) × 2.0
+<span class="comment">// קירוב: שיא אמצע-יום טיפוסי הוא כ-50% מההספק הנקוב,
+// בשל זווית שמש/עננות/הצללה חלקית לאורך היום</span></div>
+                <p style="font-size:0.85em; color:#7f8c8d;">זו הערכת פתיחה בלבד לעריכה ידנית - לא מספר "סופי". הזנה ידנית ישירה תמיד עדיפה אם ידוע ההספק המדויק מתעודת ההתקנה.</p>
+            </div>
+        </section>
+
+        <section class="stage" id="stage-4">
+            <div class="stage-header"><span class="stage-num">4</span><h2>ניתוח סטטיסטי של הצריכה</h2></div>
+            <div class="stage-sub">מציג את הנתונים לפני שממשיכים - "תראה מה יש לך" לפני "תחשב מה זה שווה"</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה</span>
+            <div class="mockup-block">
+                <table class="mockup-table">
+                    <thead><tr><th></th><th>כללי</th><th>חורף</th><th>קיץ</th></tr></thead>
+                    <tbody>
+                        <tr><td>חציון צריכה בפסגה</td><td>4.2</td><td>3.8</td><td>5.1</td></tr>
+                        <tr><td>ממוצע מנוכה (חיתוך 15%)</td><td>4.5</td><td>4.0</td><td>5.4</td></tr>
+                        <tr><td>ממוצע 15% הגבוהים</td><td>7.1</td><td>6.2</td><td>8.3</td></tr>
+                        <tr><td>ממוצע 15% הנמוכים</td><td>1.8</td><td>1.9</td><td>2.1</td></tr>
+                    </tbody>
+                </table>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>תמונת מצב לפני שממשיכים לחישובי הכדאיות - עוזר לזהות "האם הנתונים הגיוניים" (למשל חשבון שנראה נמוך מדי) לפני שמשקיעים בהמשך התהליך. מציג בנפרד עמודת "כללי", "חורף" ו"קיץ" כי דפוסי הצריכה שונים מאוד בין העונות.</p>
+                <h4>⚙️ שיטת החישוב <span class="badge badge-exact">מדויק</span></h4>
+                <p>4 מדדים סטטיסטיים סטנדרטיים, מחושבים רק על שעות פסגה (הרלוונטיות לחיסכון):</p>
+                <ul>
+                    <li><b>חציון:</b> הערך האמצעי אחרי מיון - עמיד בפני ערכים קיצוניים בודדים</li>
+                    <li><b>ממוצע מנוכה (Trimmed Mean):</b> ממוצע אחרי הסרת 15% העליון ו-15% התחתון - מייצג "יום רגיל" בלי ימים חריגים</li>
+                    <li><b>ממוצע 15% הגבוהים:</b> מציג את "ימי השיא" - רלוונטי לבדיקת האם האגירה מכסה גם מקרי קיצון</li>
+                    <li><b>ממוצע 15% הנמוכים:</b> מציג את "ימי השפל" - רלוונטי לבדיקה שהמערכת לא מוגזמת מדי</li>
+                </ul>
+            </div>
+        </section>
+
+        <div class="part-divider"><span>חלק ב׳ · מפרט המערכת</span><div class="line"></div></div>
+
+        <section class="stage" id="stage-5">
+            <div class="stage-header"><span class="stage-num">5</span><h2>גג, הספק ותפוקה</h2></div>
+            <div class="stage-sub">כמה חשמל תייצר המערכת המוצעת, ובאיזה שטח גג</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה</span>
+            <div class="mockup-block">
+                <label>הספק המערכת המבוקש (קוו"ט)</label>
+                <input placeholder="10">
+                <p style="font-size:0.8em; color:#27ae60; margin:4px 0 12px;">שטח גג נדרש (7.5 מ"ר לקוו"ט): 75 מ"ר</p>
+                <div class="m-row">
+                    <div><label>כיוון אופטימלי</label><select><option>דרום (100%)</option><option>מזרח/מערב (85%)</option></select></div>
+                    <div><label>מקדם הצללה</label><input placeholder="0.95"></div>
+                </div>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>ההספק (קוו"ט) הוא המשתנה שממנו נגזר כמעט הכל בהמשך: עלות ההשקעה, מדרגת התעריף, והתפוקה השנתית. שדה יחיד ומרכזי, לא שני שדות נפרדים ל-DC/AC (המקור לא מפצל ביניהם).</p>
+                <h4>🔗 חיבורים</h4>
+                <div class="connect-box">מוזן ל: <b>שלב 9</b> (יחד עם P0 משלב 3, קובע את מדרגת התעריף) ו-<b>שלב 10</b> (בסיס לחישוב עלות ותפוקה).</div>
+                <h4>⚙️ שיטת החישוב <span class="badge badge-exact">מדויק</span></h4>
+                <div class="formula-box">שטח_גג_נדרש (מ"ר) = הספק (קוו"ט) × 7.5
+תפוקה_שנתית (קוט"ש) = הספק × תפוקה_בסיסית × מקדם_כיוון × מקדם_הצללה
+<span class="comment">// תפוקה_בסיסית = 1,600 קוט"ש לקוו"ט לשנה - מאומת מהאקסל המקורי</span></div>
+            </div>
+        </section>
+
+        <section class="stage" id="stage-6">
+            <div class="stage-header"><span class="stage-num">6</span><h2>דרישות הלכתיות ואגירה</h2></div>
+            <div class="stage-sub">גיבוי שבת/חג, וגודל האגירה בפועל</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה</span>
+            <div class="mockup-block">
+                <label><input type="checkbox" disabled> ייעוד אגירה לשבת (גיבוי מלא ללא תלות ברשת)</label>
+                <label><input type="checkbox" disabled> ייעוד אגירה לשבת+חג</label>
+                <div class="m-row" style="margin-top:10px;">
+                    <div><label>צריכה משוערת לשבת (קוט"ש)</label><input placeholder="15"></div>
+                    <div><label>קיבולת אגירה בפועל (קוט"ש)</label><input placeholder="0"></div>
+                </div>
+                <div class="m-row">
+                    <div><label>הספק ממיר / קצב טעינה-פריקה (קוו"ט)</label><input placeholder="0"></div>
+                </div>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>שני דברים נפרדים באותו שלב: (1) האם רוצים שהאגירה תשמש גם לגיבוי שבת/חג (רלוונטי לחישוב ערך נוסף בשלב 10), ו-(2) גודל האגירה בפועל שייבדק כלכלית.</p>
+                <h4>⚙️ שיטת החישוב <span class="badge badge-estimate">הצעה בלבד, ניתנת לעריכה מלאה</span></h4>
+                <p>כפתור "הצע גודל" מציע נקודת פתיחה (לא כופה):</p>
+                <div class="formula-box">אם נדרש גיבוי שבת+חג:  הצעה = (צריכת_שבת × 2.2) / DoD
+אם נדרש גיבוי שבת בלבד: הצעה = (צריכת_שבת × 1.2) / DoD
+אחרת:                   הצעה = הספק_מערכת × 0.75
+<span class="comment">// DoD (Depth of Discharge) = 95% - כמה מהקיבולת הנומינלית ניתן לנצל בפועל
+// המקדמים 2.2/1.2 הם מרווח בטיחות, לא ערך מדוד</span></div>
+                <p>הספק הממיר קובע כמה מהר הסוללה יכולה להיטען/להתרוקן בפועל - ברירת מחדל 0.2C (טעינה מלאה בכ-5 שעות), משפיע ישירות על דיוק שלב 12.</p>
+                <p style="font-size:0.85em; color:#7f8c8d;">שני השדות (קיבולת, הספק ממיר) תמיד ניתנים לעריכה חופשית - סוללות אמיתיות נמכרות בגדלים בדידים, לא "כל מספר".</p>
+            </div>
+        </section>
+
+        <section class="stage" id="stage-7">
+            <div class="stage-header"><span class="stage-num">7</span><h2>פרמטרים פיננסיים ומיסוי</h2></div>
+            <div class="stage-sub">כל מה שקובע כמה זה עולה וכמה משלמים עליו למדינה</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה</span>
+            <div class="mockup-block">
+                <div class="m-row">
+                    <div><label>סוג התאגדות</label><select><option>אדם פרטי</option><option>עסק/חברה</option></select></div>
+                    <div><label>מע"מ (%)</label><input placeholder="18"></div>
+                </div>
+                <div class="m-row">
+                    <div><label>עלות פאנלים (₪/קוו"ט)</label><input placeholder="2400"></div>
+                    <div><label>עלות תא סוללה (₪/קוט"ש)</label><input placeholder="510"></div>
+                </div>
+                <div class="m-row">
+                    <div><label>אחוז מימון (%)</label><input placeholder="80"></div>
+                    <div><label>ריבית שנתית (%)</label><input placeholder="7"></div>
+                </div>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>כל המשתנים הכלכליים החיצוניים (לא נגזרים מהמערכת עצמה, אלא מתנאי השוק/המימון/המס של הלקוח הספציפי).</p>
+                <h4>⚙️ שיטת החישוב <span class="badge badge-exact">מדויק</span> (כשהערכים נכונים לעדכני)</h4>
+                <p><b>מע"מ - כיוון קריטי:</b> אדם פרטי לא מקזז מע"מ, אז המע"מ הוא עלות אמיתית שמתווספת למחיר. עסק/חברה מקזז מע"מ, אז המחיר הבסיסי (ללא מע"מ) הוא העלות הנטו האמיתית שלו.</p>
+                <div class="formula-box">CAPEX_בפועל = (עלות_פאנלים + עלות_אגירה) × (1 + מע"מ)   <span class="comment">// רק לאדם פרטי</span>
+CAPEX_בפועל = (עלות_פאנלים + עלות_אגירה)              <span class="comment">// עסק - נשאר נטו</span></div>
+                <p><b>תשלום הלוואה שנתי (PMT):</b></p>
+                <div class="formula-box">PMT = (ריבית × קרן) / (1 - (1+ריבית)^(-שנים))</div>
+                <p><b>עלות תפעול שנתית (Opex):</b> מבוססת על הספק המערכת (לא על נפח האגירה!) - שני שיעורים שונים:</p>
+                <ul>
+                    <li>סולארי בלבד: 80 ₪ לקוו"ט לשנה</li>
+                    <li>כולל אגירה ושירות מלא: 250 ₪ לקוו"ט לשנה</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="stage" id="stage-8">
+            <div class="stage-header"><span class="stage-num">8</span><h2>הגדרות מתקדמות (תעריפים ורגולציה)</h2></div>
+            <div class="stage-sub">קבועים רגולטוריים שמתעדכנים מעת לעת ברשות החשמל - ניתנים לעריכה כאן במקום בקוד</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה</span>
+            <div class="mockup-block">
+                <table class="mockup-table">
+                    <thead><tr><th>פסגה קיץ</th><th>שפל קיץ</th><th>פסגה חורף</th><th>שפל חורף</th><th>פסגה מעבר</th><th>שפל מעבר</th></tr></thead>
+                    <tbody><tr><td>1.4597</td><td>0.4358</td><td>0.9774</td><td>0.4022</td><td>0.4293</td><td>0.3945</td></tr></tbody>
+                </table>
+                <div class="m-row" style="margin-top:12px;">
+                    <div><label>שיעור היוון NPV (%)</label><input placeholder="3.5"></div>
+                    <div><label>בלאי שנתי בתפוקה (%)</label><input placeholder="0.25"></div>
+                </div>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>כל קבוע כאן הוא נתון <b>רגולטורי או שוקי</b>, לא נתון-לקוח - הוא זהה לכל מי שמשתמש במחשבון, עד שרשות החשמל תפרסם עדכון. הפרדתם לכאן (ולא קידוד קשיח) מאפשרת לעדכן במקום אחד כשמתפרסמים תעריפים חדשים.</p>
+                <h4>🔗 חיבורים</h4>
+                <div class="connect-box">משמש את <b>שלב 9</b> (מדרגות תעריף), <b>שלב 10</b> (היוון, בלאי, פרמיה אורבנית), ו<b>שלב 11</b> (תעו"ז לחישוב ארביטראז').</div>
+                <h4>⚙️ מקור הערכים <span class="badge badge-exact">מדויק - מאומת מול המקור</span></h4>
+                <p>תעריפי התעו"ז מאומתים מול פרסום רשמי של רשות החשמל בתוקף מ-1.1.2026. שיעור ההיוון (3.5%), הבלאי (0.25% לינארי - לא מצטבר), ומדרגות התעריף המלאות (הכוללות רמה רביעית 300-630 קוו"ט שלא הייתה בגרסה מוקדמת יותר) - כולם חולצו ואומתו ישירות מקובצי האקסל המקוריים של המודל הפיננסי.</p>
+            </div>
+        </section>
+
+        <div class="part-divider"><span>חלק ג׳ · מנועי החישוב</span><div class="line"></div></div>
+
+        <div class="diagram-wrap">
+            <h3>⚙️ שלושת מנועי החישוב וכיצד הם מתחברים</h3>
+            <svg viewBox="0 0 820 260" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+                <defs><marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5b6b80" stroke-width="1.5"/></marker></defs>
+                <rect x="30" y="30" width="220" height="60" rx="8" fill="#fdf1de" stroke="#c0791a"/>
+                <text x="140" y="55" text-anchor="middle" font-size="13" fill="#c0791a" font-weight="bold">9. תעריף מדרגות</text>
+                <text x="140" y="73" text-anchor="middle" font-size="10" fill="#7f8c8d">₪/קוט"ש למכירה</text>
+
+                <rect x="30" y="120" width="220" height="60" rx="8" fill="#eaf1fb" stroke="#2966b0"/>
+                <text x="140" y="145" text-anchor="middle" font-size="13" fill="#2966b0" font-weight="bold">11-12. ערך האגירה</text>
+                <text x="140" y="163" text-anchor="middle" font-size="10" fill="#7f8c8d">נוסחה או סימולציה שעתית</text>
+
+                <line x1="250" y1="60" x2="330" y2="100" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah2)"/>
+                <line x1="250" y1="150" x2="330" y2="115" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah2)"/>
+
+                <rect x="330" y="80" width="260" height="65" rx="8" fill="#eef2f6" stroke="#1a3a5f"/>
+                <text x="460" y="105" text-anchor="middle" font-size="13" fill="#1a3a5f" font-weight="bold">10. תזרים 25 שנה</text>
+                <text x="460" y="123" text-anchor="middle" font-size="10" fill="#7f8c8d">לכל שנה: הכנסה − עלויות − מס − הלוואה</text>
+
+                <line x1="590" y1="112" x2="650" y2="112" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah2)"/>
+                <rect x="650" y="82" width="140" height="60" rx="8" fill="#e6f7ed" stroke="#27ae60"/>
+                <text x="720" y="107" text-anchor="middle" font-size="12" fill="#1e7e34" font-weight="bold">13. IRR/NPV</text>
+                <text x="720" y="124" text-anchor="middle" font-size="10" fill="#7f8c8d">Newton-Raphson</text>
+
+                <rect x="330" y="190" width="260" height="55" rx="8" fill="white" stroke="#5b3a8e" stroke-dasharray="3,3"/>
+                <text x="460" y="212" text-anchor="middle" font-size="11" fill="#5b3a8e">שלב 8 (תעריפים/היוון/בלאי) מזין את כל שלושת המנועים</text>
+                <text x="460" y="228" text-anchor="middle" font-size="10" fill="#7f8c8d">מוצג כאן פעם אחת, לא שלוש</text>
+            </svg>
+        </div>
+
+        <section class="stage" id="stage-9">
+            <div class="stage-header"><span class="stage-num">9</span><h2>מנוע התעריף המדורג</h2></div>
+            <div class="stage-sub">כמה ₪ מקבלים על כל קוט"ש שנמכר לרשת - תלוי בהספק המצטבר</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה (תוצאה בטבלה, לא קלט)</span>
+            <div class="mockup-block">
+                <table class="mockup-table">
+                    <thead><tr><th>מדרגה (קוו"ט)</th><th>0-15</th><th>15-100</th><th>100-300</th><th>300-630</th></tr></thead>
+                    <tbody><tr><td>תעריף (אג׳/קוט"ש)</td><td>48.00</td><td>39.36</td><td>34.37</td><td>28.44</td></tr></tbody>
+                </table>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>ברגולציה הישראלית, מערכת סולארית לא מקבלת תעריף אחיד על כל התפוקה - היא מקבלת תעריף <b>משוקלל לפי מדרגות</b>, כמו מס הכנסה מדורג. מערכת קטנה (0-15 קוו"ט) מקבלת את התעריף הגבוה ביותר; ככל שההספק גדל, "נכנסים" למדרגות זולות יותר, אבל רק על החלק שמעל כל סף.</p>
+                <h4>🔗 חיבורים</h4>
+                <div class="connect-box">קלט: <b>P0</b> (שלב 3, הספק קיים) + <b>הספק מבוקש</b> (שלב 5) → יחד נותנים P1 = P0+הספק החדש.</div>
+                <div class="connect-box">פלט: תעריף משוקלל יחיד (₪/קוט"ש) → מוזן ל<b>שלב 10</b> כבסיס לחישוב ההכנסה השנתית.</div>
+                <h4>⚙️ שיטת החישוב <span class="badge badge-exact">מדויק</span></h4>
+                <p>10 מקרים אפשריים, לפי הצירוף המדויק של P0 ו-P1 ביחס לספי 15/100/300/630 קוו"ט. הנוסחה למקרה הנפוץ (P0≤15, P1 בין 15-100):</p>
+                <div class="formula-box">תעריף = [(15−P0)×T15 + (P1−15)×T100] / (P1−P0)
+
+<span class="comment">// דוגמה: P0=0, P1=39 קוו"ט
+// = [(15-0)×0.48 + (39-15)×0.3936] / 39 = 0.4268 ₪/קוט"ש</span></div>
+                <p>כשיש אגירה, מדרגת ה-15-100 מקבלת הנחה של 5% (מהקובץ המקורי - "מחשבון כולל אגירה"): <code>T100_עם_אגירה = T100 × 0.95</code></p>
+                <div class="verified-note">✓ הדוגמה למעלה (0.4268₪) מאומתת תא-מול-תא מול קובץ האקסל המקורי, כולל הגרסה עם הנחת האגירה (0.41472₪).</div>
+            </div>
+        </section>
+
+        <section class="stage" id="stage-10">
+            <div class="stage-header"><span class="stage-num">10</span><h2>מנוע תזרים 25 השנה</h2></div>
+            <div class="stage-sub">הלב של המחשבון - מריץ 25 פעמים את אותה סדרת חישובים, שנה אחר שנה</div>
+
+            <div class="diagram-wrap">
+                <h3>🔁 לולאת שנה בודדת (חוזרת 25 פעם)</h3>
+                <svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+                    <defs><marker id="ah3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5b6b80" stroke-width="1.5"/></marker></defs>
+                    <rect x="15" y="70" width="130" height="55" rx="8" fill="#eef2f6" stroke="#1a3a5f"/>
+                    <text x="80" y="93" text-anchor="middle" font-size="11" fill="#1a3a5f" font-weight="bold">בלאי תפוקה</text>
+                    <text x="80" y="109" text-anchor="middle" font-size="9" fill="#7f8c8d">לינארי, 0.25%/שנה</text>
+                    <line x1="145" y1="97" x2="185" y2="97" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah3)"/>
+
+                    <rect x="185" y="70" width="130" height="55" rx="8" fill="#fdf1de" stroke="#c0791a"/>
+                    <text x="250" y="93" text-anchor="middle" font-size="11" fill="#c0791a" font-weight="bold">הכנסת מכירה</text>
+                    <text x="250" y="109" text-anchor="middle" font-size="9" fill="#7f8c8d">תפוקה × (תעריף+פרמיה)</text>
+                    <line x1="315" y1="97" x2="355" y2="97" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah3)"/>
+
+                    <rect x="355" y="70" width="130" height="55" rx="8" fill="#eaf1fb" stroke="#2966b0"/>
+                    <text x="420" y="93" text-anchor="middle" font-size="11" fill="#2966b0" font-weight="bold">+ ערך אגירה</text>
+                    <text x="420" y="109" text-anchor="middle" font-size="9" fill="#7f8c8d">משלב 11</text>
+                    <line x1="485" y1="97" x2="525" y2="97" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah3)"/>
+
+                    <rect x="525" y="70" width="120" height="55" rx="8" fill="#fdeaea" stroke="#c0392b"/>
+                    <text x="585" y="93" text-anchor="middle" font-size="11" fill="#c0392b" font-weight="bold">− הוצאות</text>
+                    <text x="585" y="109" text-anchor="middle" font-size="9" fill="#7f8c8d">תפעול, מס, הלוואה, החלפות</text>
+                    <line x1="645" y1="97" x2="685" y2="97" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah3)"/>
+
+                    <rect x="685" y="70" width="65" height="55" rx="8" fill="#e6f7ed" stroke="#27ae60"/>
+                    <text x="717" y="93" text-anchor="middle" font-size="10" fill="#1e7e34" font-weight="bold">תזרים</text>
+                    <text x="717" y="107" text-anchor="middle" font-size="10" fill="#1e7e34" font-weight="bold">נטו</text>
+
+                    <path d="M 717 130 Q 717 175 400 175 Q 80 175 80 130" fill="none" stroke="#7f8c8d" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#ah3)"/>
+                    <text x="400" y="192" text-anchor="middle" font-size="10" fill="#7f8c8d">חזרה על התהליך לשנה הבאה (עד 25)</text>
+                </svg>
+            </div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>מייצר את "עמוד השדרה" של כל התוצאות: 25 מספרי תזרים (אחד לכל שנה), שמהם נגזרים כל המדדים בשלב 13 (IRR, NPV, שנת החזר).</p>
+
+                <h4>⚙️ שלב א׳ - בלאי תפוקה <span class="badge badge-exact">מדויק</span></h4>
+                <div class="formula-box">שנה 1:      תפוקה = תפוקה_בסיסית (100%, אין בלאי)
+שנה n≥2:    תפוקה = תפוקה_בסיסית × (1 − 0.0025 × (n−1))
+<span class="comment">// לינארי - לא מעריכי! שנה 25: מקדם = 1-0.0025×24 = 0.94 (94% מהתפוקה המקורית)</span></div>
+
+                <h4>⚙️ שלב ב׳ - הכנסת מכירה + פרמיה אורבנית <span class="badge badge-exact">מדויק</span></h4>
+                <div class="formula-box">פרמיה = 0.06 ₪/קוט"ש  <span class="comment">// רק אם "אזור עירוני" מסומן, ורק לשנים 1-17!</span>
+                                       <span class="comment">// משנה 18 ואילך: פרמיה = 0</span>
+הכנסה = תפוקה_השנה × (תעריף_מדרגות + פרמיה)</div>
+
+                <h4>⚙️ שלב ג׳ - החזר הלוואה (PPMT/IPMT) <span class="badge badge-exact">מדויק</span></h4>
+                <p>תשלום ה-PMT (שלב 7) קבוע כל שנה, אבל היחס בין קרן לריבית בתוכו משתנה - בשנים הראשונות רוב התשלום הוא ריבית, בשנים האחרונות רוב התשלום הוא קרן. זה משפיע על חישוב המס (רק הריבית מוכרת כהוצאה לעסק).</p>
+
+                <h4>⚙️ שלב ד׳ - מיסוי <span class="badge badge-exact">מדויק (לפי הכללים שהוזנו)</span></h4>
+                <div class="formula-box"><span class="comment">// אדם פרטי:</span>
+חייב_במס = הכנסה − תפעול
+אם חייב_במס > 27,900: מס = (חייב_במס − 27,900) × 10%
+
+<span class="comment">// עסק/חברה: (עם פחת מואץ 25% בשנים 1-4)</span>
+פחת = CAPEX × 25%  (רק שנים 1-4, אחרת 0)
+חייב_במס = הכנסה − תפעול − פחת − ריבית_הלוואה
+אם חייב_במס > 0: מס = חייב_במס × 23%</div>
+
+                <h4>⚙️ שלב ה׳ - עלויות החלפה <span class="badge badge-estimate">הנחת עבודה, לא נתון מהמקור</span></h4>
+                <p>שנה 14: החלפת ממיר (15% מעלות הפאנלים). שנה 15: החלפת סוללה (60% מעלות תא הסוללה). אלו הנחות סבירות מקובלות בענף, לא ערכים שאומתו מול קובץ מקור ספציפי.</p>
+
+                <h4>🔗 חיבורים - שני סוגי תזרים</h4>
+                <p>המנוע מייצר <b>שני</b> מסלולי תזרים במקביל, כי לשתי שאלות שונות יש שתי תשובות שונות:</p>
+                <ul>
+                    <li><b>תזרים "פרויקט"</b> (ללא מימון) - מניח קניה במזומן מלא. משמש לחישוב IRR פרויקט (שלב 13).</li>
+                    <li><b>תזרים "הון עצמי"</b> (עם מימון) - רק ההשקעה בפועל (אחרי הלוואה), עם ניכוי תשלומי הלוואה. משמש לחישוב IRR להון ו-NPV.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="stage" id="stage-11">
+            <div class="stage-header"><span class="stage-num">11</span><h2>ערך האגירה - שתי שיטות מקבילות</h2></div>
+            <div class="stage-sub">אותו מספר סופי, שתי דרכים שונות להגיע אליו - תלוי כמה מידע יש</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה (בטבלת התוצאות)</span>
+            <div class="mockup-block">
+                <div class="m-row">
+                    <div style="text-align:center;"><span class="badge badge-conditional">מבוסס סימולציה שעתית אמיתית</span></div>
+                    <div style="text-align:center;"><span class="badge" style="background:#eee; color:#888; border-color:#ccc;">הערכה גנרית</span></div>
+                </div>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>כמה שווה, בשנה, לקנות סוללה: לטעון בזול (שעות שפל) ולפרוק ביוקר (שעות פסגה), במקום לקנות ישירות מהרשת בפסגה. יש שתי שיטות לחשב את זה - הבחירה ביניהן אוטומטית, לפי מה שזמין.</p>
+
+                <h4>⚙️ שיטה א׳ - נוסחה גנרית <span class="badge badge-estimate">הערכה</span> (כשאין קובץ צריכה אמיתי)</h4>
+                <p>מבוססת על ספירת ימי-פסגה בפועל מלוח השנה (לא קבוע ידני!) לכל אחת משלוש העונות. <b>עודכן:</b> תעריף הפסגה המשמש כאן <u>אינו</u> תעריף התעו"ז הרשמי - הוא מגיע מטבלת "תעריף משלים" נפרדת (מאומתת מול קובצי המקור), התלויה בגודל המערכת (עד/מעל 300 קוט"ט):</p>
+                <div class="formula-box">חורף: תוספת = קיבולת_שמישה × ימי_פסגה_חורף × [(תעריף_משלים_חורף − תעריף_רגיל)/2 + (תעריף_משלים_חורף − תעריף_שפל_חורף)/2]
+קיץ/מעבר: תוספת = קיבולת_שמישה × ימי_פסגה × (תעריף_משלים_עונה − תעריף_רגיל)
+ערך_שנתי = סכום שלוש העונות − הפסדי טעינה/פריקה (7%/6%)
+<span class="comment">// תעריף_משלים ≠ תעריף התעו"ז הרשמי! זו טבלה נפרדת שמשמשת בפועל את נוסחת המקור
+// חורף משתמש בנוסחה א-סימטרית (ממוצע מול תעריף רגיל ומול שפל) - שונה מקיץ/מעבר
+// מניח מחזור טעינה-פריקה אחד ליום-פסגה - לא סימולציה אמיתית של עומס
+// מאומת מול הקובץ המקורי: 19.98 קוט"ט, תעריף 0.4147 -> 123.72 ₪/קוו"ש/שנה (התאמה מדויקת)</span></div>
+
+                <h4>⚙️ שיטה ב׳ - סימולציה שעתית אמיתית <span class="badge badge-exact">מדויק</span> (כשיש קובץ צריכה)</h4>
+                <p>ר׳ שלב 12 - עוברת שעה-אחר-שעה על נתוני הצריכה האמיתיים ומחשבת בפועל כמה נחסך.</p>
+
+                <h4>🔗 חיבורים - איך המערכת בוחרת</h4>
+                <div class="connect-box">אם הרצתם את הסימולציה (שלב 12) <b>עבור אותה קיבולת אגירה</b> שמוזנת כרגע בשלב 6 - המערכת משתמשת בתוצאה המדויקת שלה אוטומטית, ומציגה תג ירוק "מבוסס סימולציה שעתית אמיתית". אם שיניתם את גודל הסוללה אחרי הרצת הסימולציה בלי להריץ מחדש - מוצגת אזהרה כתומה, והמערכת נופלת חזרה לנוסחה הגנרית עד שתריצו מחדש.</div>
+            </div>
+        </section>
+
+        <section class="stage" id="stage-12">
+            <div class="stage-header"><span class="stage-num">12</span><h2>מנוע הדיספאץ' השעתי</h2></div>
+            <div class="stage-sub">עובר על כל שעה בשנה (8,760 פעמים) ומדמה בדיוק מה הסוללה הייתה עושה</div>
+
+            <div class="diagram-wrap">
+                <h3>🔁 החלטה בכל שעה בודדת</h3>
+                <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+                    <defs><marker id="ah4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#5b6b80" stroke-width="1.5"/></marker></defs>
+                    <rect x="270" y="10" width="160" height="45" rx="22" fill="#eef2f6" stroke="#1a3a5f"/>
+                    <text x="350" y="37" text-anchor="middle" font-size="12" fill="#1a3a5f" font-weight="bold">שעה הבאה בשנה</text>
+                    <line x1="350" y1="55" x2="350" y2="85" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah4)"/>
+
+                    <polygon points="350,85 440,120 350,155 260,120" fill="#fdf1de" stroke="#c0791a"/>
+                    <text x="350" y="115" text-anchor="middle" font-size="11" fill="#c0791a" font-weight="bold">שעת שפל</text>
+                    <text x="350" y="130" text-anchor="middle" font-size="11" fill="#c0791a" font-weight="bold">או פסגה?</text>
+
+                    <line x1="260" y1="120" x2="130" y2="120" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah4)"/>
+                    <text x="195" y="112" text-anchor="middle" font-size="10" fill="#7f8c8d">שפל</text>
+                    <rect x="15" y="95" width="115" height="50" rx="8" fill="#eaf1fb" stroke="#2966b0"/>
+                    <text x="72" y="115" text-anchor="middle" font-size="10" fill="#2966b0" font-weight="bold">טען מהרשת</text>
+                    <text x="72" y="130" text-anchor="middle" font-size="9" fill="#7f8c8d">עד למקסימום</text>
+
+                    <line x1="440" y1="120" x2="570" y2="120" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah4)"/>
+                    <text x="505" y="112" text-anchor="middle" font-size="10" fill="#7f8c8d">פסגה</text>
+                    <rect x="570" y="95" width="115" height="50" rx="8" fill="#e6f7ed" stroke="#27ae60"/>
+                    <text x="627" y="115" text-anchor="middle" font-size="10" fill="#1e7e34" font-weight="bold">פרוק לצריכה</text>
+                    <text x="627" y="130" text-anchor="middle" font-size="9" fill="#7f8c8d">עד גבול הזמין</text>
+
+                    <line x1="72" y1="145" x2="72" y2="185" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah4)"/>
+                    <line x1="627" y1="145" x2="627" y2="185" stroke="#5b6b80" stroke-width="1.5" marker-end="url(#ah4)"/>
+                    <rect x="180" y="185" width="340" height="55" rx="8" fill="white" stroke="#5b6b80"/>
+                    <text x="350" y="207" text-anchor="middle" font-size="11" fill="#2c3e50" font-weight="bold">עדכון מצב הטעינה (SoC) + רישום עלות/חיסכון</text>
+                    <text x="350" y="223" text-anchor="middle" font-size="10" fill="#7f8c8d">עם הפסדי טעינה (7%) ופריקה (6%)</text>
+                    <line x1="72" y1="185" x2="345" y2="212" stroke="#5b6b80" stroke-width="1" opacity="0.4"/>
+                    <line x1="627" y1="185" x2="355" y2="212" stroke="#5b6b80" stroke-width="1" opacity="0.4"/>
+                </svg>
+            </div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>בניגוד לנוסחה הגנרית (שלב 11-א), כאן <b>אין הנחות על "יום טיפוסי"</b> - המנוע עובר שעה-שעה על הצריכה האמיתית מהקובץ, ומדמה בדיוק איך סוללה ספציפית (בגודל ובהספק ממיר שהוזנו) הייתה מתנהגת מול הצריכה האמיתית של הלקוח הזה.</p>
+                <h4>🌍 הנחת המודל הרגולטורי - חשוב להבין</h4>
+                <p>כל המחשבון בנוי סביב <b>"הסדרה תעריפית"</b>: 100% מהתפוקה הסולארית נמכרת לרשת (מחושב בנפרד בשלב 9-10), והצריכה העצמית ממשיכה להירכש מהרשת כרגיל. במסלול הזה, <b>האגירה לא קשורה לייצור הסולארי בכלל</b> - היא נטענת מהרשת בזול (שפל) ומשמשת להוזלת הצריכה בפסגה. זו הסיבה שהמנוע הזה לא כולל עמודת "ייצור" בכלל.</p>
+                <h4>⚙️ שיטת החישוב <span class="badge badge-exact">מדויק ביחס לנתוני הקלט</span></h4>
+                <div class="formula-box"><span class="comment">// טעינה (שעת שפל):</span>
+מרחב_פנוי = קיבולת_נומינלית − מצב_נוכחי
+טעינה = מינימום(מרחב_פנוי, הספק_ממיר × משך_הצעד)
+מצב_נוכחי += טעינה
+עלות += (טעינה / יעילות_טעינה) × תעריף_שפל
+
+<span class="comment">// פריקה (שעת פסגה):</span>
+זמין = מקסימום(0, מצב_נוכחי − רזרבת_מינימום) × יעילות_פריקה
+פריקה = מינימום(צריכה_בפועל, זמין, הספק_ממיר × משך_הצעד)
+מצב_נוכחי −= פריקה / יעילות_פריקה
+חיסכון += פריקה × תעריף_פסגה  <span class="comment">// זו עלות שנחסכה מקנייה בפסגה</span></div>
+                <div class="verified-note">✓ המנוע אומת מול קובץ צריכה שעתי אמיתי (שנה מלאה) של אתר עם סוללה קיימת בגודל ידוע - תוצאת "אחוז כיסוי פסגה" שהמנוע חישב (68.3%) התאימה לערך שחושב בפועל באתר עצמו (68.7%), הפרש 0.4 נקודות אחוז.</div>
+                <p style="font-size:0.85em; color:#7f8c8d;">שימו לב: זו הדמיה שמבוססת רק על נתוני קלט הצריכה שהוזנו - אם הקובץ מכסה רק חלק מהשנה, גם התוצאה תשקף רק את אותו חלק.</p>
+            </div>
+        </section>
+
+        <section class="stage" id="stage-13">
+            <div class="stage-header"><span class="stage-num">13</span><h2>המתמטיקה הפיננסית (IRR / NPV / PMT)</h2></div>
+            <div class="stage-sub">שלוש פונקציות סטנדרטיות שממירות את 25 מספרי התזרים למדדים שאפשר להשוות ביניהם</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה (בטבלת התוצאות)</span>
+            <div class="mockup-block">
+                <table class="mockup-table">
+                    <thead><tr><th>תשואת פרויקט (IRR)</th><th>תשואה להון (IRR)</th><th>NPV</th><th>שנת החזר</th></tr></thead>
+                    <tbody><tr><td>11.2%</td><td>19.8%</td><td>₪184,500</td><td>7</td></tr></tbody>
+                </table>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>25 מספרי תזרים (חיובי/שלילי, אחד לכל שנה) הם קשים להשוואה ישירה. שלוש הפונקציות האלה מכווצות אותם למדד יחיד שאפשר להשוות בין תרחישים (עם/בלי אגירה, גדלים שונים, לקוחות שונים).</p>
+
+                <h4>⚙️ PMT - תשלום הלוואה קבוע <span class="badge badge-exact">מדויק</span></h4>
+                <div class="formula-box">PMT = (ריבית × קרן) / (1 − (1+ריבית)^(−תקופה))</div>
+
+                <h4>⚙️ NPV - ערך נוכחי נקי <span class="badge badge-exact">מדויק</span></h4>
+                <p>מהוון כל תזרים עתידי לפי "מה הוא שווה היום" - שקל בעוד 10 שנים שווה פחות משקל היום.</p>
+                <div class="formula-box">NPV = Σ (תזרים_שנה_n / (1+שיעור_היוון)^n),  n = 0 עד 25</div>
+
+                <h4>⚙️ IRR - שיעור תשואה פנימי <span class="badge badge-exact">מדויק (מתכנס נומרית)</span></h4>
+                <p>שיעור ההיוון ה<i>יחיד</i> שבו ה-NPV יוצא בדיוק אפס - כלומר "מה שיעור הרווח האמיתי של ההשקעה הזו". לא ניתן לפתור בנוסחה סגורה (משוואה מדרגה 25), אז נפתר נומרית:</p>
+                <div class="formula-box"><span class="comment">// שיטת ניוטון-רפסון: ניחוש התחלתי 10%, עד 100 איטרציות</span>
+נחש_חדש = נחש_נוכחי − NPV(נחש_נוכחי) / נגזרת_NPV(נחש_נוכחי)
+חזור עד שההפרש בין נחשים עוקבים קטן מ-0.0000001</div>
+                <p>מחושב <b>פעמיים</b> לכל תרחיש - פעם על תזרים "פרויקט" (ללא מימון) ופעם על תזרים "הון עצמי" (עם מימון) - ר׳ שלב 10 להסבר ההבדל.</p>
+
+                <h4>⚙️ שנת החזר <span class="badge badge-exact">מדויק</span></h4>
+                <p>הצטברות התזרים (הון עצמי) שנה אחר שנה, עד לנקודה שבה הסכום המצטבר חוצה אפס - זו השנה שבה "מחזירים את ההשקעה".</p>
+            </div>
+        </section>
+
+        <div class="part-divider"><span>חלק ד׳ · פלט</span><div class="line"></div></div>
+
+        <section class="stage" id="stage-14">
+            <div class="stage-header"><span class="stage-num">14</span><h2>תוצאות ותרשים תזרים</h2></div>
+            <div class="stage-sub">כל מה שחושב בשלבים 9-13, מוצג יחד להשוואה</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה</span>
+            <div class="mockup-block">
+                <table class="mockup-table">
+                    <thead><tr><th>מדד</th><th>סולארי בלבד</th><th>סולארי + אגירה</th></tr></thead>
+                    <tbody>
+                        <tr><td>השקעה כוללת</td><td>₪96,000</td><td>₪184,500</td></tr>
+                        <tr><td>רווח מצטבר (25 שנה)</td><td>₪412,000</td><td>₪671,000</td></tr>
+                        <tr><td>תשואה להון</td><td>15.4%</td><td>19.8%</td></tr>
+                    </tbody>
+                </table>
+                <p style="text-align:center; color:#7f8c8d; font-size:0.8em; margin-top:10px;">[ תרשים SVG של תזרים מצטבר לאורך 25 שנה, שתי עקומות להשוואה ]</p>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>הצגה משווה של שני תרחישים תמיד יחד (סולארי בלבד מול סולארי+אגירה), כדי שההחלטה "האם כדאי גם אגירה" תהיה מבוססת מספרים ישירים, לא תחושת בטן.</p>
+                <h4>⚙️ שיטת החישוב <span class="badge badge-exact">מדויק</span> - אין כאן חישוב חדש, רק תצוגה</h4>
+                <p>כל מספר בטבלה הזו כבר חושב בשלבים קודמים (9-13) - השלב הזה רק מארגן ומציג. תג "מבוסס סימולציה שעתית אמיתית" / "הערכה גנרית" (ר׳ שלב 11) מוצג ליד שורת ערך האגירה, כדי שתמיד ידוע מאיזה מקור המספר הגיע.</p>
+            </div>
+        </section>
+
+        <section class="stage" id="stage-15">
+            <div class="stage-header"><span class="stage-num">15</span><h2>דוח סופי וייצוא</h2></div>
+            <div class="stage-sub">מסמך מוכן להצגה/הדפסה ללקוח</div>
+
+            <div class="mockup-wrap"><span class="mockup-label">תצוגה</span>
+            <div class="mockup-block">
+                <div class="m-row">
+                    <div><div class="mockup-btn">🔄 עדכן דוח</div></div>
+                    <div><div class="mockup-btn" style="background:#8e44ad;">🖨️ הדפס / PDF</div></div>
+                    <div><div class="mockup-btn">📥 ייצוא ל-Excel</div></div>
+                </div>
+            </div></div>
+
+            <div class="explain-panel">
+                <h4>🎯 מטרה ותפקיד</h4>
+                <p>מסמך אחד שמרכז הכל: פרטי לקוח (שלב 1) + מפרט טכני (שלבים 5-6) + תקציר כלכלי (שלב 14) + הנחות היסוד (שלב 8) - מוכן להדפסה או שליחה, בלי צורך "להרכיב" ידנית ממקורות שונים.</p>
+                <h4>⚙️ שיטת החישוב <span class="badge badge-exact">מדויק</span> - שוב, רק ריכוז נתונים שכבר חושבו</h4>
+                <p>שקיפות: הדוח כולל תמיד סעיף "הנחות יסוד" עם התאריך והמקור של כל קבוע רגולטורי ששימש (תעריפים, שיעור היוון, מע"מ) - כדי שאם התעריפים יתעדכנו, ברור למה ההצעה "פגה תוקף".</p>
+                <h4>🔗 חדש: העברה למערכת הצעות המחיר</h4>
+                <p>כפתור נוסף ("העבר תוצאות למערכת הצעות המחיר") שולח את תוצאות הסימולציה - כולל <b>הנחות היסוד הגולמיות</b> (תעריף, תפוקה, ערך אגירה, פרמיה אורבנית) ולא רק את המספרים הסופיים - לטופס יצירת ההצעה (Index.html). המחשבון שם מריץ מנוע פיננסי עצמאי משלו, שמשתמש בהנחות שהועברו כדי לחשב מחדש באופן עקבי (מאומת: הפרש של פחות מ-0.2% בין שני המנועים, במקרה בו אין למחשבון ההצעה מודל מס/פחת/החלפת ציוד - ראו הערה למטה).</p>
+                <div class="connect-box">אם המחשבון נפתח דרך קישור ממערכת ההצעות (עם <code>?clientId=...</code>), מוצג פס "מחובר ללקוח" עליון, וההעברה חוזרת אוטומטית לאותו לקוח.</div>
+                <p style="font-size:0.85em; color:#7f8c8d;">⚠️ מגבלה ידועה: מנוע ההצעה (Index.html/PrintQuote) אינו כולל (נכון לכתיבת שורות אלה) לוגיקת מס/פחת/החלפת ציוד מקבילה לזו שבמחשבון זה (שלב 7) - לכן בתרחישים עם מיסוי עסקי או לוח החלפות משמעותי, ייתכן פער של מספר אחוזים בין המספר המוצג כאן לבין מה שיוצג בהצעה הסופית. אין בכך "טעות" - זו פשוט רמת פירוט שונה בין שני הכלים.</p>
+            </div>
+        </section>
+
+        <div class="intro-box" style="border-right-color: var(--success); margin-top:50px;">
+            <h2 style="color:var(--success);">✅ סיכום - מפת מדויק/הערכה של כל המחשבון</h2>
+            <table class="mockup-table" style="font-size:0.9em;">
+                <thead><tr><th>שלב</th><th>סטטוס</th><th>הערה</th></tr></thead>
+                <tbody>
+                    <tr><td>9. תעריף מדרגות</td><td><span class="badge badge-exact">מדויק</span></td><td>נוסחה מלאה, מאומתת תא-מול-תא</td></tr>
+                    <tr><td>10. תזרים 25 שנה</td><td><span class="badge badge-exact">מדויק</span></td><td>למעט לוח החלפות (הנחת עבודה)</td></tr>
+                    <tr><td>11-12. ערך אגירה</td><td><span class="badge badge-conditional">תלוי נתונים</span></td><td>מדויק עם קובץ צריכה, הערכה בלעדיו</td></tr>
+                    <tr><td>13. IRR/NPV/PMT</td><td><span class="badge badge-exact">מדויק</span></td><td>מתמטיקה פיננסית סטנדרטית</td></tr>
+                    <tr><td>2ב. מטריצה ידנית</td><td><span class="badge badge-estimate">הערכה</span></td><td>איכות תלויה בהערכת המשתמש</td></tr>
+                    <tr><td>2ג. סך שנתי+סוג נכס</td><td><span class="badge badge-estimate">הערכה מכוילת</span></td><td>מבוסס נתוני שוק אמיתיים לפי סוג נכס</td></tr>
+                    <tr><td>2א. קובץ IEC</td><td><span class="badge badge-exact">מדויק</span></td><td>כפוף לאיכות/שלמות הקובץ שהועלה</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+</div>
+</body>
+</html>

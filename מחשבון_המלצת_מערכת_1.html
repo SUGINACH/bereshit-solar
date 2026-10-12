@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מחשבון המלצת מערכת — לאיש המכירות</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f0f4f8;margin:0;padding:20px;color:#2f3640}
+  .container{max-width:1100px;margin:0 auto;background:#fff;padding:30px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,.05)}
+  h1{color:#1a3a5f;text-align:center;margin-bottom:4px}
+  .subtitle{text-align:center;color:#7f8c8d;margin-bottom:6px;font-size:.95em}
+  .purpose-banner{background:#eaf4fc;border:1px solid #bce3ff;border-radius:8px;padding:14px 18px;margin:18px 0 26px;font-size:.92em;color:#1a3a5f;line-height:1.7}
+  .purpose-banner b{color:#2980b9}
+  h2.sect{border-bottom:2px solid #3498db;padding-bottom:8px;margin-top:34px;color:#2c3e50;font-size:1.25em}
+  .hint{font-size:.85em;color:#7f8c8d;margin-top:-4px;margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-bottom:10px}
+  .card{background:#f8fafc;border:1px solid #e2e8f0;padding:18px;border-radius:8px}
+  .card label{display:block;font-size:.88em;font-weight:bold;margin-top:12px;margin-bottom:4px;color:#34495e}
+  .card label:first-child{margin-top:0}
+  .card input,.card select{width:100%;padding:9px;border:1px solid #dcdde1;border-radius:6px;box-sizing:border-box;font-family:inherit}
+  .badge-tag{display:inline-block;font-size:.72em;font-weight:bold;padding:2px 8px;border-radius:10px;margin-right:6px;vertical-align:middle}
+  .badge-client{background:#fdf0e0;color:#a9660b}
+  .badge-fixed{background:#e6f4ea;color:#1e7e34}
+  .field-note{font-size:.78em;color:#95a5a6;margin-top:3px}
+  .btn{background:#3498db;color:#fff;padding:13px;border:none;border-radius:6px;cursor:pointer;width:100%;font-size:1.05rem;font-weight:bold;margin-top:18px}
+  .btn:hover{background:#2980b9}
+  .btn-secondary{background:#95a5a6}
+  .btn-secondary:hover{background:#7f8c8d}
+  .btn-link{background:none;border:none;color:#3498db;cursor:pointer;text-decoration:underline;font-size:.88em;padding:0}
+  .settings-btn{background:#34495e;color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:.88em;font-weight:bold;float:left;margin-top:-46px}
+  .settings-btn:hover{background:#2c3e50}
+  .results{display:none;margin-top:30px}
+  .confidence{display:inline-block;padding:5px 14px;border-radius:14px;font-weight:bold;font-size:.85em;margin-bottom:16px}
+  .conf-high{background:#e6f4ea;color:#1e7e34}
+  .conf-mid{background:#fff8e6;color:#8a6d1f}
+  .conf-low{background:#fdecea;color:#922b21}
+  .rec-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:10px}
+  .rec-card{border-radius:10px;padding:20px;border:2px solid}
+  .rec-card.pv{background:#eef7ff;border-color:#3498db}
+  .rec-card.bat{background:#f3eefc;border-color:#8e44ad}
+  .rec-card h3{margin-top:0;font-size:1.1em}
+  .rec-num{font-size:1.9em;font-weight:800;color:#1a3a5f;margin:4px 0}
+  .rec-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #dcdde1;font-size:.92em}
+  .rec-row:last-child{border-bottom:none}
+  .scope-note{background:#fff8e6;border:1px solid #f5d98e;color:#8a6d1f;border-radius:8px;padding:12px 16px;margin-top:22px;font-size:.88em;line-height:1.7}
+  details.trans{margin-top:22px;border:1px solid #dcdde1;border-radius:8px;padding:0}
+  details.trans summary{cursor:pointer;padding:14px 18px;font-weight:bold;color:#2c3e50;background:#f8fafc;border-radius:8px}
+  .trans-body{padding:6px 18px 18px}
+  .step-block{border-right:3px solid #3498db;padding:10px 14px;margin:12px 0;background:#fafcff;border-radius:0 6px 6px 0}
+  .step-block h4{margin:0 0 6px;color:#1a3a5f;font-size:.96em}
+  .step-block .kv{font-size:.87em;color:#34495e;line-height:1.8}
+  .step-block code{background:#eef2f5;padding:1px 5px;border-radius:4px;font-size:.9em}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;justify-content:center;align-items:center}
+  .modal-content{background:#fff;padding:24px 28px;border-radius:12px;width:92%;max-width:640px;max-height:85vh;overflow-y:auto}
+  .modal-content h3{margin-top:0;color:#1a3a5f;border-bottom:2px solid #3498db;padding-bottom:12px}
+  .cfg-group{background:#f8fafc;border:1px solid #e2e8f0;padding:12px 14px;border-radius:8px;margin-bottom:12px}
+  .cfg-group h4{margin:0 0 8px;font-size:.95em;color:#2c3e50}
+  .cfg-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .cfg-row label{flex:1;font-size:.85em;color:#34495e}
+  .cfg-row input{width:110px;padding:6px;border:1px solid #dcdde1;border-radius:5px}
+  .modal-save{background:#27ae60;color:#fff;border:none;padding:11px;width:100%;border-radius:6px;font-weight:bold;cursor:pointer;margin-top:6px}
+  .close-btn{background:none;border:none;font-size:1.4em;cursor:pointer;color:#7f8c8d;float:left}
+  .table-mini{width:100%;border-collapse:collapse;font-size:.85em;margin-top:8px}
+  .table-mini th,.table-mini td{border:1px solid #e2e8f0;padding:6px 8px;text-align:center}
+  .table-mini th{background:#f0f4f8}
+  .warn-inline{color:#c0392b;font-size:.82em;margin-top:4px}
+  .ok-inline{color:#219653;font-size:.82em;margin-top:4px}
+
+  /* ===== CSV analysis / yield reports (restored detailed views) ===== */
+  .customer-metadata-bar{display:none;flex-wrap:wrap;justify-content:space-between;align-items:center;background:#fff;border:1px solid #3498db;border-radius:8px;padding:15px 20px;margin-top:18px;border-right:5px solid #3498db}
+  .metadata-item{display:flex;flex-direction:column;min-width:110px;margin:5px 8px}
+  .metadata-label{text-align:center;font-size:.76em;color:#7f8c8d;font-weight:600;margin-bottom:3px}
+  .metadata-value-customer{text-align:center;font-size:1em;color:#1a3a5f;font-weight:700}
+  .metadata-value{text-align:center;font-size:1.5em;color:#1a3a5f;font-weight:700}
+  .reports-container{display:none;gap:16px;margin-top:16px;align-items:start;flex-wrap:wrap}
+  .report-window{background:#fff;border:1px solid #dcdde1;border-radius:8px;flex:1;min-width:280px;padding:12px;box-shadow:0 3px 8px rgba(0,0,0,.06)}
+  .report-window h4{margin:0 0 8px;color:#1a3a5f;border-bottom:2px solid #3498db;padding-bottom:8px;font-size:1.02em;text-align:center}
+  .table-scroll{max-height:380px;overflow-y:auto;border-radius:6px;border:1px solid #eee}
+  .data-table{width:100%;border-collapse:collapse;font-size:.82em;text-align:center}
+  .data-table th{background:#f0f4f8;position:sticky;top:0;padding:8px 6px;border-bottom:2px solid #dcdde1;color:#2c3e50}
+  .data-table td{padding:6px;border-bottom:1px solid #eee}
+  .data-table tr:hover{background:#f9fbfd}
+  .day-cell{font-weight:bold;color:#7f8c8d;background:#fafafa}
+  .peak-cell{color:#c0392b;font-weight:bold;background-color:#fdedec}
+  .offpeak-cell{color:#27ae60;font-weight:bold;background-color:#e9f7ef}
+  .analytics-row{display:none;flex-direction:column;gap:12px;margin-top:18px}
+  .zman-winter{background-color:#f3ecfa !important}
+  .zman-summer{background-color:#fdf1e6 !important}
+  .zman-elul{background-color:#fdf6dc !important}
+  .vacation-mark{position:relative}
+  .vacation-mark::after{content:"🏖";font-size:.85em;margin-right:4px}
+  .zman-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:.82em;color:#34495e}
+  .zman-legend span{display:inline-flex;align-items:center;gap:5px}
+  .zman-swatch{width:14px;height:14px;border-radius:3px;display:inline-block;border:1px solid #dcdde1}
+  .battery-cube{background:#faf5ff;border:1px solid #d9c5ea;border-radius:8px;padding:12px;text-align:center}
+  .battery-cube .cube-size{font-weight:800;color:#1a3a5f;font-size:1.05em}
+  .battery-cube .cube-size span{display:block;font-weight:normal;font-size:.7em;color:#7f8c8d}
+  .battery-cube .cube-savings{color:#219653;font-weight:700;margin-top:6px;font-size:.92em}
+  .battery-cube .cube-savings span{display:block;font-weight:normal;font-size:.7em;color:#7f8c8d}
+</style>
+</head>
+<body>
+<div class="container">
+  <button class="settings-btn" onclick="openSettings()">⚙️ חוקי המשחק (קבועים)</button>
+  <h1>מחשבון המלצת מערכת</h1>
+  <div class="subtitle">מחשבון 1 מתוך 2 — לשימוש איש המכירות בשיחה עם הלקוח</div>
+
+  <div class="purpose-banner">
+    <b>מטרת המחשבון הזה בלבד:</b> להמליץ על גודל מערכת סולארית (וסוללת אגירה, אם רלוונטי) שממקסם את התשואה עבור לקוח ספציפי — לפני שהוחלט על גודל סופי.
+    הוא <b>לא</b> מציג תזרים מפורט ל-25 שנה ולא מפיק הצעת מחיר — זהו תפקידו של מחשבון 2 (בהמשך), שיקבל את הגודל שנבחר כאן כקלט.
+  </div>
+  <div id="clientConnectionBanner" style="display:none; background:#eafaf1; border:1px solid #a9dfbf; border-radius:8px; padding:10px 16px; margin-bottom:18px; font-size:.88em; color:#196f3d;"></div>
+
+  <!-- ============ CLIENT INPUT ============ -->
+  <h2 class="sect">1. נתוני הלקוח <span class="badge-tag badge-client">משתנה מלקוח ללקוח</span></h2>
+  <div class="hint">כל שדה כאן ייחודי ללקוח הנוכחי. שדות עם ⚠ הם קריטיים; בלעדיהם ההמלצה תהיה חלקית או תתייחס רק לסולארי.</div>
+
+  <div class="grid">
+    <div class="card">
+      <label>הספק מותקן קיים כבר (P0, קוט"ט)</label>
+      <input type="number" id="p0" value="0" min="0">
+      <div class="field-note">אם אין מתקן קודם — השאר 0.</div>
+
+      <label style="display:flex; align-items:center; gap:8px; margin-top:16px;">
+        <input type="checkbox" id="urbanEligible" checked style="width:auto; margin:0;">
+        <span>הלקוח זכאי לפרמיה אורבנית</span>
+      </label>
+      <div class="field-note">זכאות תלויה במיקום/סוג הפרויקט הספציפי. אם לא בטוחים — יש לבדוק מול הרשות לפני הצגת ההצעה ללקוח. ביטול הסימון מאפס את הפרמיה האורבנית (ברירת מחדל: 6 אג׳/קוו"ש למשך 17 שנה, ניתן לעריכה בהגדרות) לחלוטין מהחישוב.</div>
+
+      <label>⚠ שטח גג פנוי (מ"ר)</label>
+      <input type="number" id="roofArea" value="" placeholder="למשל 120">
+      <div class="field-note">קובע את התקרה העליונה של גודל המערכת. חלופה: אם אין מדידה — אפשר להזין הערכה גסה.</div>
+
+      <label>כיוון גג (אזימוט)</label>
+      <select id="azimuth">
+        <option value="1.0">דרום (100% תפוקה)</option>
+        <option value="0.88">דרום-מזרח / דרום-מערב (88%)</option>
+        <option value="0.85">מזרח / מערב (85%)</option>
+      </select>
+      <div class="field-note">מכפיל את התפוקה הצפויה. משפיע גם על ההמלצה וגם על סימולציית התפוקה למטה.</div>
+
+      <label>מקדם הצללה</label>
+      <input type="number" id="shading" value="0.95" step="0.05" min="0.5" max="1">
+      <div class="field-note">1.0 = ללא הצללה כלל. הערכה סבירה אם לא נבדק בפועל: 0.90–0.95.</div>
+
+      <label>הספק חיבור מקסימלי לחברת חשמל (קוט"ט)</label>
+      <input type="number" id="connLimit" value="" placeholder="השאר ריק אם לא ידוע">
+      <div class="field-note">אם ידוע — ישמש כתקרה נוספת (המחשבון ייקח את המגבלה המחמירה מבין השתיים).</div>
+
+      <label>תקציב מקסימלי להשקעה (₪, אופציונלי)</label>
+      <input type="number" id="budget" value="" placeholder="השאר ריק אם אין הגבלה">
+    </div>
+
+    <div class="card">
+      <label>סוג נכס</label>
+      <select id="propType">
+        <option value="home">בית פרטי</option>
+        <option value="business">עסק / מוסד (פעילות בשעות היום)</option>
+      </select>
+      <div class="field-note">קובע את "פרופיל הצריכה הטיפוסי" שישמש כברירת מחדל אם אין נתוני צריכה מדויקים.</div>
+
+      <label>⚠ נתוני צריכת חשמל</label>
+      <select id="consMode" onchange="onConsModeChange()">
+        <option value="csv">קובץ CSV שעתי/רבע-שעתי מחברת החשמל (המדויק ביותר)</option>
+        <option value="formImport">קובץ מטופס איסוף נתונים (מצאי מכשירים)</option>
+        <option value="detailed">קלט מפורט לפי עונה וסוג יום (בלי קובץ)</option>
+        <option value="manual">רק סה"כ צריכה שנתית ידועה (הערכה גסה)</option>
+        <option value="none">אין שום נתון צריכה זמין</option>
+      </select>
+
+      <div id="csvBlock">
+        <label>העלאת קובץ CSV</label>
+        <input type="file" id="csvFile" accept=".csv">
+        <button class="btn" style="margin-top:10px" onclick="processCsv()">נתח קובץ צריכה</button>
+        <div id="csvStatus" class="field-note"></div>
+      </div>
+      <div id="formImportBlock" style="display:none">
+        <label>קובץ JSON שיוצא מטופס איסוף נתוני חשמל</label>
+        <input type="file" id="formImportFile" accept=".json,.enc,.json.enc">
+        <button class="btn" style="margin-top:10px" onclick="processFormImport()">נתח קובץ טופס</button>
+        <div id="formImportStatus" class="field-note"></div>
+        <div class="field-note">תומך בקבצי הטופס גם מוצפנים וגם לא (מזהה אוטומטית), כולל טווחי תאריכים בלוח עברי/לועזי ופריסטים ("שנת לימודים ישיבתית" וכו'). מבוסס על מצאי מכשירים (הספק, כמות, ימים ושעות פעילות) ולא על מדידה בפועל — לכן זו הערכה הנדסית, לא מדידה.</div>
+      </div>
+      <div id="manualBlock" style="display:none">
+        <label>צריכה שנתית כוללת (קוו"ש)</label>
+        <input type="number" id="annualConsumption" placeholder="למשל 8000">
+        <div class="field-note">בהיעדר פירוט לפי שעות, המחשבון ישתמש בפרופיל טיפוסי לפי סוג הנכס. זו הערכה בלבד.</div>
+      </div>
+      <div id="noneBlock" style="display:none">
+        <div class="field-note" style="color:#922b21">בלי שום נתון צריכה, המחשבון ימליץ רק על גודל סולארי. לא תינתן המלצת אגירה.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:18px; background:#f5f9fa; border-color:#7f8c8d">
+    <label style="margin-top:0">🕯️ שבת וחגים — שני שיקולים שמשפיעים על האגירה</label>
+    <div class="field-note" style="margin-bottom:10px">רלוונטי רק אם הלקוח שומר שבת/חג ומשתמש (או ישתמש) באגירה. שני השדות עצמאיים זה מזה.</div>
+
+    <label style="display:flex; align-items:center; gap:8px;">
+      <input type="checkbox" id="generatorUsedShabbat" style="width:auto; margin:0;">
+      <span>עד כה נעשה שימוש בגנרטור בשעות שבת/חג</span>
+    </label>
+    <div class="field-note">אם כן — נתוני ה-CSV לשעות שבת/חג בחורף (שבהן שעות הפסגה חלות גם בשבת) אינם אמינים, כי הגנרטור ולא הרשת סיפק את החשמל. המחשבון יתעלם משעות אלה בחישוב הפסגה החורפית ויתבסס רק על ימי חול.</div>
+
+    <label style="display:flex; align-items:center; gap:8px; margin-top:14px;">
+      <input type="checkbox" id="normalizeShabbatData" onchange="onNormalizeShabbatToggle()" style="width:auto; margin:0;">
+      <span>נרמל נתוני שבת/חג חסרים בחורף (מלא בהערכה במקום להשאיר חסר)</span>
+    </label>
+    <div id="shabbatNormalizeBlock" style="display:none">
+      <label>אחוז צריכת שבת/חג ביחס לחציון ימי החול (%)</label>
+      <input type="number" step="1" id="shabbatNormalizePct" value="100">
+      <div class="field-note">100% = מניחים שצריכת השבת דומה לצריכת יום חול טיפוסי בחורף. הזן פחות מ-100 אם ידוע שבשבת צורכים פחות (למשל, פחות מכשירים פועלים), או יותר מ-100 אם צורכים יותר. משפיע רק על חורף (כי רק שם שבת נכנסת לחישוב הפסגה).</div>
+    </div>
+
+    <label style="display:flex; align-items:center; gap:8px; margin-top:14px;">
+      <input type="checkbox" id="shabbatBackupNeeded" onchange="onShabbatBackupToggle()" style="width:auto; margin:0;">
+      <span>נדרש גיבוי אגירה לשבת/חג (לא להסתמך על הרשת בשבת)</span>
+    </label>
+    <div id="shabbatBackupBlock" style="display:none">
+      <label>צריכה ממוצעת לשעה בזמן שבת/חג (קוט"ש)</label>
+      <input type="number" step="0.1" id="shabbatBackupLoad" placeholder="למשל 3.5">
+      <div class="field-note">אם הוזן קלט מפורט למעלה, אפשר להעתיק משם את הערך "ימי שבת וחג — חורף". המחשבון ישתמש בזה כדי: (א) לוודא שהסוללה גדולה מספיק לכסות כ-25.5 שעות שבת ברצף, וגם (ב) להפחית את תרומת האגירה לארביטראז' בחורף, כי חלק מהמחזור השבועי (שישי-שבת) "תפוס" בגיבוי ולא זמין לטעינה/פריקה יומית רגילה.</div>
+    </div>
+  </div>
+
+  <div id="detailedBlock" class="card" style="display:none; margin-top:18px; background:#fffdf5; border-color:#f39c12;">
+    <div class="field-note" style="margin-bottom:14px">
+      הזן צריכה ממוצעת לשעה (קוט"ש) לכל שילוב של עונה, סוג יום וטווח שעות. ככל שהנתונים מדויקים יותר, ההמלצה על גודל האגירה תהיה אמינה יותר.
+      <br>שים לב: עבור <b>עונת המעבר</b> (מרץ-מאי, אוק'-נוב') אין קלט נפרד — המחשבון יעריך אותה כממוצע בין קיץ לחורף (ראה פאנל השקיפות בתוצאות).
+    </div>
+
+    <!-- ===== קיץ ===== -->
+    <div style="border-right:4px solid #e79956; padding-right:14px; margin-bottom:20px;">
+      <label style="font-size:1.05em; color:#d35400;">☀️ קיץ (יוני–ספטמבר)</label>
+
+      <div style="background:#fff; border:1px solid #f0e2c8; border-radius:8px; padding:12px 14px; margin-top:10px;">
+        <label style="margin-top:0;">ימי חול</label>
+        <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px;">
+          <div><label style="font-weight:normal; font-size:.85em;">צריכה ממוצעת לשעה 17:00–23:00 (קוט"ש)</label><input type="number" step="0.1" id="d_summer_weekday_peak"></div>
+          <div><label style="font-weight:normal; font-size:.85em;">צריכה ממוצעת לשעה 9:00–17:00 (קוט"ש)</label><input type="number" step="0.1" id="d_summer_weekday_day"></div>
+        </div>
+      </div>
+
+      <div style="background:#fff; border:1px solid #f0e2c8; border-radius:8px; padding:12px 14px; margin-top:10px;">
+        <label style="margin-top:0;">ימי שישי וערבי חג</label>
+        <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px;">
+          <div><label style="font-weight:normal; font-size:.85em;">צריכה ממוצעת לשעה 17:00–23:00 (קוט"ש)</label><input type="number" step="0.1" id="d_summer_friday_peak"></div>
+          <div><label style="font-weight:normal; font-size:.85em;">צריכה ממוצעת לשעה 9:00–17:00 (קוט"ש)</label><input type="number" step="0.1" id="d_summer_friday_day"></div>
+        </div>
+      </div>
+
+      <div style="background:#fff; border:1px solid #f0e2c8; border-radius:8px; padding:12px 14px; margin-top:10px;">
+        <label style="margin-top:0;">ימי שבת וחג</label>
+        <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px;">
+          <div><label style="font-weight:normal; font-size:.85em;">צריכה ממוצעת לשעה 17:00–23:00 (קוט"ש)</label><input type="number" step="0.1" id="d_summer_shabbat_peak"></div>
+          <div><label style="font-weight:normal; font-size:.85em;">צריכה ממוצעת לשעה 9:00–17:00 (קוט"ש)</label><input type="number" step="0.1" id="d_summer_shabbat_day"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== חורף ===== -->
+    <div style="border-right:4px solid #8e44ad; padding-right:14px;">
+      <label style="font-size:1.05em; color:#8e44ad;">🌧️ חורף (דצמבר–פברואר)</label>
+
+      <div style="background:#fff; border:1px solid #e6d9f0; border-radius:8px; padding:12px 14px; margin-top:10px;">
+        <label style="margin-top:0;">ימי חול</label>
+        <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px;">
+          <div><label style="font-weight:normal; font-size:.85em;">צריכה ממוצעת לשעה 17:00–23:00 (קוט"ש)</label><input type="number" step="0.1" id="d_winter_weekday_peak"></div>
+          <div><label style="font-weight:normal; font-size:.85em;">צריכה ממוצעת לשעה 9:00–17:00 (קוט"ש)</label><input type="number" step="0.1" id="d_winter_weekday_day"></div>
+        </div>
+      </div>
+
+      <div style="background:#fff; border:1px solid #e6d9f0; border-radius:8px; padding:12px 14px; margin-top:10px;">
+        <label style="margin-top:0;">ימי שישי וערבי חג</label>
+        <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px;">
+          <div><label style="font-weight:normal; font-size:.85em;">צריכה ממוצעת לשעה 17:00–23:00 (קוט"ש)</label><input type="number" step="0.1" id="d_winter_friday_peak"></div>
+          <div><label style="font-weight:normal; font-size:.85em;">צריכה ממוצעת לשעה 9:00–17:00 (קוט"ש)</label><input type="number" step="0.1" id="d_winter_friday_day"></div>
+        </div>
+      </div>
+
+      <div style="background:#fff; border:1px solid #e6d9f0; border-radius:8px; padding:12px 14px; margin-top:10px;">
+        <label style="margin-top:0;">ימי שבת וחג</label>
+        <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px;">
+          <div><label style="font-weight:normal; font-size:.85em;">צריכה ממוצעת לשעה 17:00–23:00 (קוט"ש)</label><input type="number" step="0.1" id="d_winter_shabbat_peak"></div>
+          <div><label style="font-weight:normal; font-size:.85em;">צריכה ממוצעת לשעה 9:00–17:00 (קוט"ש)</label><input type="number" step="0.1" id="d_winter_shabbat_day"></div>
+        </div>
+        <div class="field-note" style="color:#8a6d1f">⚠ אם עד כה שימשו בגנרטור בשבת/חג — הזן כאן את הצריכה האמיתית המשוערת (הביקוש בפועל), לא רק את מה שהגנרטור/הרשת סיפקו בפועל.</div>
+      </div>
+      <div class="field-note" style="margin-top:10px">ℹ️ בחורף שעות הפסגה (17:00–21:00) חלות גם בשבת ובחג — לכן שלושת סוגי הימים משפיעים כולם על חישוב הפסגה בחורף (שלא כמו בקיץ, שם שישי/שבת/חג הם שעות שפל).</div>
+    </div>
+  </div>
+
+  <!-- ============ CSV ANALYSIS DISPLAY (customer metadata + 3 report windows + 3 analytics rows) ============ -->
+  <div id="customerMetadataContainer" class="customer-metadata-bar">
+    <div class="metadata-item"><span class="metadata-label">שם לקוח</span><span class="metadata-value-customer" id="md_name">-</span></div>
+    <div class="metadata-item"><span class="metadata-label">כתובת הצרכן</span><span class="metadata-value-customer" id="md_address">-</span></div>
+    <div class="metadata-item"><span class="metadata-label">מספר חוזה</span><span class="metadata-value-customer" id="md_contract">-</span></div>
+    <div class="metadata-item"><span class="metadata-label">סוג מונה</span><span class="metadata-value-customer" id="md_type">-</span></div>
+    <div class="metadata-item"><span class="metadata-label">קוד מונה</span><span class="metadata-value-customer" id="md_code">-</span></div>
+    <div class="metadata-item"><span class="metadata-label">מספר מונה</span><span class="metadata-value-customer" id="md_number">-</span></div>
+  </div>
+
+  <div id="reportsContainer" class="reports-container">
+    <div class="report-window">
+      <h4>דו"ח צריכה מקובץ: שעתי</h4>
+      <div class="table-scroll"><table class="data-table" id="hourlyTable">
+        <thead><tr><th>תאריך ושעה</th><th>יום</th><th>צריכה (קוו"ש)</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+    <div class="report-window" style="flex:1.5">
+      <h4>דו"ח צריכה יומי מעובד: שפל–פסגה</h4>
+      <div class="table-scroll"><table class="data-table" id="dailyMergedTable">
+        <thead><tr><th>תאריך</th><th>יום</th><th>סה"כ (קוו"ש)</th><th>שפל</th><th>פסגה</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <div class="zman-legend">
+        <span><i class="zman-swatch" style="background:#f3ecfa"></i> זמן חורף (חשוון–אדר)</span>
+        <span><i class="zman-swatch" style="background:#fdf1e6"></i> זמן קיץ (אייר–ט' אב)</span>
+        <span><i class="zman-swatch" style="background:#fdf6dc"></i> זמן אלול (אלול–י' תשרי)</span>
+        <span>🏖 חופשת מוסדות חינוך כלליים (יולי–אוגוסט)</span>
+      </div>
+      <div class="field-note">שעות כניסה/יציאת שבת המוצגות ליד שישי/שבת הן שקיעה משוערת (± דקה, לפי מיקום שנקבע בהגדרות) — לידיעה בלבד. סיווג שעות הפסגה/שפל בתעריף עצמו <b>אינו</b> משתנה לפיהן, ונשאר מבוסס יום-בשבוע בלבד (כפי שאומת מול קובץ ה-Excel).</div>
+    </div>
+    <div class="report-window">
+      <h4>דו"ח יומי מעובד: שעות פסגה בלבד</h4>
+      <div class="table-scroll"><table class="data-table" id="peakOnlyTable">
+        <thead><tr><th>תאריך</th><th>יום</th><th>פסגה (קוו"ש)</th><th>עלות (₪, לפני מע"מ)</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div id="analyticsRowsContainer" class="analytics-row">
+    <div class="customer-metadata-bar" style="display:flex;position:relative;padding-top:35px;border-color:#8e44ad;border-right:5px solid #8e44ad">
+      <div style="position:absolute;top:10px;right:20px;font-weight:bold;color:#8e44ad">🌧️ ימי פסגה — חורף בלבד</div>
+      <div class="metadata-item"><span class="metadata-label">חציון צריכה (קוט"ש)</span><span class="metadata-value" id="w_median_kwh">-</span></div>
+      <div class="metadata-item"><span class="metadata-label">חציון תשלום (₪)</span><span class="metadata-value" id="w_median_cost">-</span></div>
+      <div class="metadata-item"><span class="metadata-label">ממוצע צריכה (חיתוך 15%)</span><span class="metadata-value" id="w_trimmed_kwh">-</span></div>
+      <div class="metadata-item"><span class="metadata-label">ממוצע תשלום (חיתוך 15%)</span><span class="metadata-value" id="w_trimmed_cost">-</span></div>
+      <div class="metadata-item"><span class="metadata-label">ממוצע 15% גבוהים</span><span class="metadata-value" id="w_top15_kwh">-</span></div>
+      <div class="metadata-item"><span class="metadata-label">ממוצע 15% נמוכים</span><span class="metadata-value" id="w_bottom15_kwh">-</span></div>
+    </div>
+    <div class="customer-metadata-bar" style="display:flex;position:relative;padding-top:35px;border-color:#e79956;border-right:5px solid #e79956">
+      <div style="position:absolute;top:10px;right:20px;font-weight:bold;color:#e79956">☀️ ימי פסגה — קיץ בלבד</div>
+      <div class="metadata-item"><span class="metadata-label">חציון צריכה (קוט"ש)</span><span class="metadata-value" id="s_median_kwh">-</span></div>
+      <div class="metadata-item"><span class="metadata-label">חציון תשלום (₪)</span><span class="metadata-value" id="s_median_cost">-</span></div>
+      <div class="metadata-item"><span class="metadata-label">ממוצע צריכה (חיתוך 15%)</span><span class="metadata-value" id="s_trimmed_kwh">-</span></div>
+      <div class="metadata-item"><span class="metadata-label">ממוצע תשלום (חיתוך 15%)</span><span class="metadata-value" id="s_trimmed_cost">-</span></div>
+      <div class="metadata-item"><span class="metadata-label">ממוצע 15% גבוהים</span><span class="metadata-value" id="s_top15_kwh">-</span></div>
+      <div class="metadata-item"><span class="metadata-label">ממוצע 15% נמוכים</span><span class="metadata-value" id="s_bottom15_kwh">-</span></div>
+    </div>
+    <div class="customer-metadata-bar" style="display:flex;position:relative;padding-top:35px;border-color:#16a085;border-right:5px solid #16a085">
+      <div style="position:absolute;top:10px;right:20px;font-weight:bold;color:#16a085">🍂 ימי פסגה — מעבר בלבד</div>
+      <div class="metadata-item"><span class="metadata-label">חציון צריכה (קוט"ש)</span><span class="metadata-value" id="t_median_kwh">-</span></div>
+      <div class="metadata-item"><span class="metadata-label">חציון תשלום (₪)</span><span class="metadata-value" id="t_median_cost">-</span></div>
+      <div class="metadata-item"><span class="metadata-label">ממוצע צריכה (חיתוך 15%)</span><span class="metadata-value" id="t_trimmed_kwh">-</span></div>
+      <div class="metadata-item"><span class="metadata-label">ממוצע תשלום (חיתוך 15%)</span><span class="metadata-value" id="t_trimmed_cost">-</span></div>
+      <div class="metadata-item"><span class="metadata-label">ממוצע 15% גבוהים</span><span class="metadata-value" id="t_top15_kwh">-</span></div>
+      <div class="metadata-item"><span class="metadata-label">ממוצע 15% נמוכים</span><span class="metadata-value" id="t_bottom15_kwh">-</span></div>
+    </div>
+    <div class="field-note">📌 הסטטיסטיקות מחושבות על ימי-פסגה בלבד (לא כל השנה), לפי סיווג הפסגה המדויק (כולל אנומליית שבת בחורף). "חיתוך 15%" = ממוצע אחרי הסרת 15% הימים הקיצוניים משני הצדדים.</div>
+  </div>
+
+  <!-- ============ SOLAR YIELD ESTIMATE SECTION ============ -->
+  <h2 class="sect">☀️ תפוקה סולארית משוערת — סימולציה לתקופה</h2>
+  <div class="hint">כלי המחשה: מציג עקומת ייצור יומית/שעתית/חודשית משוערת לתקופה נתונה, לפי שטח הגג/כיוון/הצללה שהוזנו למעלה. זהו כלי תצוגה בלבד — אינו משנה את ההמלצה שתחושב למטה (שמבוססת על ממוצע שנתי מלא).</div>
+  <div class="card" style="background:#fffdf5;border-color:#f39c12">
+    <div style="display:flex;gap:15px;align-items:flex-end;flex-wrap:wrap">
+      <div style="flex:1;min-width:150px"><label style="margin-top:0">מתאריך</label><input type="date" id="yieldStartDate"></div>
+      <div style="flex:1;min-width:150px"><label style="margin-top:0">עד תאריך</label><input type="date" id="yieldEndDate"></div>
+      <div style="flex:1;min-width:150px"><button class="btn" style="margin-top:0;background:#f39c12" onclick="calcYield()">חשב תפוקה משוערת</button></div>
+    </div>
+  </div>
+
+  <div id="yieldReportsContainer" class="reports-container">
+    <div class="report-window">
+      <h4>דו"ח תפוקה משוערת: יומי</h4>
+      <div class="table-scroll"><table class="data-table" id="yieldDailyTable">
+        <thead><tr><th>תאריך</th><th>יום</th><th>תפוקה (קוו"ש)</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+    <div class="report-window">
+      <h4>דו"ח תפוקה משוערת: חודשי</h4>
+      <div class="table-scroll"><table class="data-table" id="yieldMonthlyTable">
+        <thead><tr><th>חודש</th><th>ימים</th><th>סה"כ תפוקה (קוו"ש)</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+    <div class="report-window">
+      <h4>דו"ח תפוקה משוערת: שעתי (יום לדוגמה)</h4>
+      <div class="table-scroll"><table class="data-table" id="yieldHourlyTable">
+        <thead><tr><th>תאריך</th><th>שעה</th><th>תפוקה (קוו"ש)</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <button class="btn" onclick="runRecommendation()">🧮 חשב המלצה</button>
+
+  <!-- ============ RESULTS ============ -->
+  <div id="results" class="results">
+    <h2 class="sect" style="margin-top:26px">2. ההמלצה</h2>
+    <div id="confidenceBadge"></div>
+
+    <div id="urbanStatusNote" style="font-size:.85em; margin:8px 0 4px; font-weight:bold;"></div>
+    <div class="rec-grid">
+      <div class="rec-card pv">
+        <h3>☀️ מערכת סולארית מומלצת</h3>
+        <div class="rec-num" id="pv_kwp">—</div>
+        <div class="rec-row"><span>תעריף ייצור שהושג</span><span id="pv_tariff">—</span></div>
+        <div class="rec-row"><span>עלות השקעה משוערת</span><span id="pv_cost">—</span></div>
+        <div class="rec-row"><span>הכנסה שנתית (שנה 1)</span><span id="pv_rev">—</span></div>
+        <div class="rec-row"><span>תשואה להון (IRR, אחרי מימון)</span><span id="pv_irr">—</span></div>
+        <div class="rec-row"><span>תשואת פרויקט (IRR, ללא תלות במימון)</span><span id="pv_irr_project">—</span></div>
+        <div class="rec-row"><span>זמן החזר משוער</span><span id="pv_payback">—</span></div>
+      </div>
+      <div class="rec-card bat">
+        <h3>🔋 אגירה מומלצת</h3>
+        <div class="rec-num" id="bat_kwh">—</div>
+        <div class="rec-row"><span>עלות השקעה משוערת</span><span id="bat_cost">—</span></div>
+        <div class="rec-row"><span>חיסכון שנתי משוער (שנה 1)</span><span id="bat_saving">—</span></div>
+        <div class="rec-row"><span>תשואה להון של המערכת המשולבת (IRR)</span><span id="bat_irr">—</span></div>
+        <div class="rec-row"><span>תשואת פרויקט משולבת (IRR, ללא תלות במימון)</span><span id="bat_irr_project">—</span></div>
+        <div class="rec-row"><span>זמן החזר משוער (סוללה בלבד)</span><span id="bat_payback">—</span></div>
+      </div>
+    </div>
+
+    <div class="scope-note">
+      ℹ️ המספרים כאן הם <b>הערכה לצורך המלצה</b> בלבד (מבוססת על מודל 25 שנה שרץ "מתחת למכסה המנוע"). לקבלת דוח מלא, מפורט שנה-שנה, עם תנאי מימון מדויקים ותנאי חיבור סופיים — יש להעביר את הגדלים שהומלצו כאן למחשבון 2.
+    </div>
+
+    <div id="transferToQuoteSection" style="display:none; margin-top:16px;">
+      <button class="btn" style="background:#8e44ad" onclick="transferDataToQuote()">↵ העבר תוצאות למערכת הצעות המחיר</button>
+      <div id="transferStatus" class="field-note" style="margin-top:8px"></div>
+    </div>
+
+    <details class="trans">
+      <summary>🔍 שקיפות מלאה — איך הגענו למספרים האלה</summary>
+      <div class="trans-body" id="transparencyBody"></div>
+    </details>
+
+    <h2 class="sect">🔋 סימולציית דיספאץ' סוללה אמיתית (מבוססת הימים בפועל בקובץ)</h2>
+    <div class="hint">בניגוד לתחזית ההמלצה (שמבוססת על "יום טיפוסי" ממוצע), הסימולציה כאן עוברת על כל יום ויום בפועל מתוך קובץ ה-CSV (365 הימים האחרונים), כולל הפסדי טעינה/פריקה מפורשים — ולכן מדויקת יותר, אך דורשת שקובץ CSV נותח למעלה וש"חשב המלצה" כבר רץ (כדי לדעת את גודל המערכת לצורך התעריף).</div>
+    <button class="btn" style="background:#8e44ad" onclick="runBatteryDispatchSimulation()">▶️ הרץ סימולציית דיספאץ' אמיתית</button>
+    <div id="simStatus" class="field-note" style="margin-top:8px"></div>
+
+    <div id="batterySimSection" style="display:none; margin-top:20px">
+      <h4 style="color:#1a3a5f">קוביות גדלים — חיסכון שנתי בפועל לכל גודל שנבדק</h4>
+      <div id="batteryGrid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-bottom:24px"></div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px">
+        <div>
+          <h4 style="color:#1a3a5f">חיסכון מצטבר מול תוספת שולית</h4>
+          <div style="position:relative; height:300px"><canvas id="comboChart"></canvas></div>
+        </div>
+        <div>
+          <h4 style="color:#1a3a5f">יחס רווח מול הגודל המינימלי שנבדק</h4>
+          <div style="position:relative; height:300px"><canvas id="ratioChart"></canvas></div>
+        </div>
+      </div>
+
+      <button id="exportSimExcelBtn" class="btn" style="display:none; background:#219653; margin-top:18px" onclick="exportSimulationToExcel()">📊 ייצוא תוצאות הסימולציה לאקסל</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal-content">
+    <button class="close-btn" onclick="closeSettings()">×</button>
+    <h3>חוקי המשחק — קבועים רגולטוריים/פיזיקליים</h3>
+    <p style="font-size:.85em;color:#7f8c8d;margin-top:-6px">אלה לא נתוני לקוח — אלה ערכים קבועים שחלים על כולם (עד שרשות החשמל מעדכנת אותם). הערכים כאן טעונים מתוך ניתוח קבצי ה-Excel המקוריים.</p>
+
+    <div class="cfg-group">
+      <h4>מדרגות תעריף הזרמה (₪/קוו"ש, ללא מע"מ)</h4>
+      <div class="cfg-row"><label>עד 15 קוט"ט</label><input type="number" step="0.0001" id="cfg_t15" value="0.48"></div>
+      <div class="cfg-row"><label>15–100 קוט"ט (ללא אגירה)</label><input type="number" step="0.0001" id="cfg_t100_noBat" value="0.3936"></div>
+      <div class="cfg-row"><label>15–100 קוט"ט (עם אגירה, הנחת 5%)</label><input type="number" step="0.0001" id="cfg_t100_bat" value="0.37392"></div>
+      <div class="cfg-row"><label>100–300 קוט"ט</label><input type="number" step="0.0001" id="cfg_t300" value="0.3437"></div>
+      <div class="cfg-row"><label>300–630 קוט"ט</label><input type="number" step="0.0001" id="cfg_t630" value="0.2844"></div>
+    </div>
+
+    <div class="cfg-group">
+      <h4>פרמיה אורבנית</h4>
+      <div class="cfg-row"><label>תוספת תעריף (₪/קוו"ש)</label><input type="number" step="0.001" id="cfg_urban" value="0.06"></div>
+      <div class="cfg-row"><label>תקופת זכאות (שנים)</label><input type="number" id="cfg_urbanYears" value="17"></div>
+    </div>
+
+    <div class="cfg-group">
+      <h4>תעריפי תעו"ז (₪/קוו"ש, ללא מע"מ)</h4>
+      <div class="cfg-row"><label>פסגה חורף</label><input type="number" step="0.0001" id="cfg_wp" value="0.9774"></div>
+      <div class="cfg-row"><label>שפל חורף</label><input type="number" step="0.0001" id="cfg_wl" value="0.4022"></div>
+      <div class="cfg-row"><label>פסגה קיץ</label><input type="number" step="0.0001" id="cfg_sp" value="1.4597"></div>
+      <div class="cfg-row"><label>שפל קיץ</label><input type="number" step="0.0001" id="cfg_sl" value="0.4358"></div>
+      <div class="cfg-row"><label>פסגה מעבר</label><input type="number" step="0.0001" id="cfg_tp" value="0.4293"></div>
+      <div class="cfg-row"><label>שפל מעבר</label><input type="number" step="0.0001" id="cfg_tl" value="0.3945"></div>
+      <div class="cfg-row"><label>ימי פסגה בחורף לשנה</label><input type="number" id="cfg_wDays" value="90"></div>
+      <div class="cfg-row"><label>ימי פסגה בקיץ לשנה</label><input type="number" id="cfg_sDays" value="84"></div>
+      <div class="cfg-row"><label>ימי פסגה במעבר לשנה</label><input type="number" id="cfg_tDays" value="98"></div>
+      <p style="font-size:.78em;color:#95a5a6;margin:4px 0 0">הערה: בחורף שעות הפסגה (17–21) חלות גם בשבת/חג — זו מדיניות שנשמרה מהמקור. בקיץ ובמעבר שבת/חג הן שעות שפל.</p>
+    </div>
+
+    <div class="cfg-group">
+      <h4>פאנלים סולאריים</h4>
+      <div class="cfg-row"><label>שטח גג לקוט"ט (מ"ר)</label><input type="number" step="0.1" id="cfg_m2" value="7.5"></div>
+      <div class="cfg-row"><label>תפוקה שנתית בסיסית (קוו"ש/קוט"ט)</label><input type="number" id="cfg_yield" value="1600"></div>
+      <div class="cfg-row"><label>שחיקה שנתית (%)</label><input type="number" step="0.01" id="cfg_degrad" value="0.25"></div>
+      <div class="cfg-row"><label>עלות הקמה (₪/קוט"ט)</label><input type="number" id="cfg_capexPv" value="2400"></div>
+      <div class="cfg-row"><label>תפעול שנתי (₪/קוט"ט)</label><input type="number" id="cfg_opexPv" value="80"></div>
+    </div>
+
+    <div class="cfg-group">
+      <h4>אגירה</h4>
+      <div class="cfg-row"><label>הפסד טעינה (%)</label><input type="number" step="0.01" id="cfg_chargeLoss" value="0.07"></div>
+      <div class="cfg-row"><label>הפסד פריקה (%)</label><input type="number" step="0.01" id="cfg_dischargeLoss" value="0.06"></div>
+      <div class="cfg-row"><label>עומק פריקה מותר (%)</label><input type="number" step="0.01" id="cfg_dod" value="0.95"></div>
+      <div class="cfg-row"><label>עלות לקוו"ש (₪)</label><input type="number" id="cfg_capexBat" value="510"></div>
+      <div class="cfg-row"><label>עלות ממיר היברידי (₪, קבועה)</label><input type="number" id="cfg_inverterCost" value="52330"></div>
+      <div class="cfg-row"><label>הזרמה מינימלית נדרשת (קוו"ש/קוט"ט/שנה)</label><input type="number" id="cfg_minInj" value="800"></div>
+      <div class="cfg-row"><label>תרומת הזרמה ישירה מהפאנלים (קוו"ש/קוט"ט/שנה)</label><input type="number" step="0.1" id="cfg_directInj" value="79"></div>
+      <div class="cfg-row"><label>שחיקת ערך אגירה שנתית (%)</label><input type="number" step="0.001" id="cfg_batDegrad" value="0.022"></div>
+      <div class="cfg-row"><label>עלות תפעול שנתית עם אגירה (₪/קוט"ט)</label><input type="number" id="cfg_opexPvBat" value="250"></div>
+    </div>
+
+    <div class="cfg-group">
+      <h4>תעריף משלים (אגירה) — לפי גודל מערכת</h4>
+      <p style="font-size:.78em;color:#95a5a6;margin:0 0 8px">זו הטבלה שבפועל קובעת את שווי הפסגה לחישוב האגירה במקור — <b>שונה</b> מטבלת התעו"ז הרשמית שלמעלה.</p>
+      <div class="cfg-row"><label>פסגה חורף — עד 300 קוט"ט</label><input type="number" step="0.0001" id="cfg_comp_w_lo" value="0.932"></div>
+      <div class="cfg-row"><label>פסגה חורף — מעל 300 קוט"ט</label><input type="number" step="0.0001" id="cfg_comp_w_hi" value="0.8339"></div>
+      <div class="cfg-row"><label>פסגה קיץ — עד 300 קוט"ט</label><input type="number" step="0.0001" id="cfg_comp_s_lo" value="1.3424"></div>
+      <div class="cfg-row"><label>פסגה קיץ — מעל 300 קוט"ט</label><input type="number" step="0.0001" id="cfg_comp_s_hi" value="1.2011"></div>
+      <div class="cfg-row"><label>פסגה מעבר — עד 300 קוט"ט</label><input type="number" step="0.0001" id="cfg_comp_t_lo" value="0.3721"></div>
+      <div class="cfg-row"><label>פסגה מעבר — מעל 300 קוט"ט</label><input type="number" step="0.0001" id="cfg_comp_t_hi" value="0.3329"></div>
+      <div class="cfg-row"><label>שימוש עצמי חיצוני (בלנד, %)</label><input type="number" step="1" id="cfg_blend" value="0"></div>
+      <div class="cfg-row"><label>מקור תעריף פסגה למעבר</label>
+        <select id="cfg_transMode" style="width:110px;padding:6px;border:1px solid #dcdde1;border-radius:5px">
+          <option value="source">מהמקור (55 אג')</option>
+          <option value="formula">לפי נוסחה עקבית</option>
+        </select>
+      </div>
+      <div class="cfg-row"><label>לכלול עונת מעבר בחישוב הארביטראז'</label><input type="checkbox" id="cfg_includeTrans" style="width:auto"></div>
+      <p style="font-size:.78em;color:#95a5a6;margin:4px 0 0">ברירת מחדל: כבוי. הפרש התעריפים בעונת המעבר, אחרי קיזוז הפסדי טעינה/פריקה (13% ביחד), נוטה תמיד להוביל להפסד לפי התעריפים הנוכחיים (וכך היה גם בשנים קודמות) — ולכן אינו נכלל כברירת מחדל בחישוב שווי האגירה ובסימולציה.</p>
+    </div>
+
+    <div class="cfg-group">
+      <h4>מימון (ברירת מחדל להערכה בלבד)</h4>
+      <div class="cfg-row"><label>אחוז מימון בהלוואה (%)</label><input type="number" id="cfg_loanPct" value="80"></div>
+      <div class="cfg-row"><label>ריבית שנתית (%)</label><input type="number" step="0.1" id="cfg_loanRate" value="7"></div>
+      <div class="cfg-row"><label>תקופת הלוואה (שנים)</label><input type="number" id="cfg_loanYears" value="10"></div>
+      <div class="cfg-row"><label>שיעור היוון ל-NPV (%)</label><input type="number" step="0.1" id="cfg_discount" value="3.5"></div>
+    </div>
+
+    <div class="cfg-group">
+      <h4>מיקום לחישוב שקיעה (כניסת/יציאת שבת משוערת בטבלה)</h4>
+      <p style="font-size:.78em;color:#95a5a6;margin:0 0 8px">לתצוגה בלבד — אינו משפיע על סיווג שעות הפסגה/שפל בתעריף (זה נשאר מבוסס לוח שנה, כפי שאומת מול ה-Excel).</p>
+      <div class="cfg-row"><label>קו רוחב (lat)</label><input type="number" step="0.0001" id="cfg_lat" value="32.0853"></div>
+      <div class="cfg-row"><label>קו אורך (lon)</label><input type="number" step="0.0001" id="cfg_lon" value="34.7818"></div>
+    </div>
+
+    <button class="modal-save" onclick="saveSettings()">שמור הגדרות</button>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   חוקי המשחק — קבועים (ברירות מחדל, ניתנים לעריכה בהגדרות)
+   כל הערכים מבוססים על ניתוח קבצי ה-Excel המקוריים.
+   ========================================================================== */
+let CFG = {
+  tiers: { t15:.48, t100_noBat:.3936, t100_bat:.37392, t300:.3437, t630:.2844, p15:15, p100:100, p300:300, p630:630 },
+  urban: { premium:.06, years:17 },
+  tou: {
+    winter:{peak:.9774, low:.4022, days:90},
+    summer:{peak:1.4597, low:.4358, days:84},
+    transition:{peak:.4293, low:.3945, days:98}
+  },
+  panel: { m2PerKwp:7.5, yieldPerKwp:1600, degradation:.0025, capexPerKwp:2400, opexPerKwp:80, opexPerKwpWithBattery:250 },
+  battery: { chargeLoss:.07, dischargeLoss:.06, dod:.95, capexPerKwh:510, inverterCost:52330,
+             minInjectionPerKwp:800, directInjectionPerKwp:79, degradationPerYear:.022,
+             // "תעריף משלים" — טבלה נפרדת מהתעו"ז הרשמי, המשמשת בפועל בנוסחת שווי האגירה במקור,
+             // מפוצלת לפי גודל מערכת (עד/מעל 300 קוט"ט). ראה פאנל השקיפות להסבר מלא.
+             compTariff: { upTo300:{winterPeak:.932, transitionPeak:.3721, summerPeak:1.3424},
+                           above300:{winterPeak:.8339, transitionPeak:.3329, summerPeak:1.2011} },
+             externalBlendPct: 0,       // "שימוש עצמי" — משקל לתעריף הרשמי+מע"מ מול התעריף המשלים (0% במקור)
+             transitionPeakMode: 'source', // 'source'=55 אג' כפי שמופיע במקור בפועל | 'formula'=לפי אותה נוסחת בלנד כמו חורף/קיץ
+             includeTransitionArbitrage: false }, // ברירת מחדל: לא לכלול — הפרש התעריפים בעונת המעבר, אחרי הפסדי טעינה/פריקה, נוטה להיות הפסד
+  finance: { loanPct:.8, loanRate:.07, loanYears:10, discountRate:.035 },
+  location: { lat:32.0853, lon:34.7818 } // ברירת מחדל: תל אביב (מרכז הארץ) — לשקיעה משוערת בלבד, ניתן לעריכה בהגדרות
+};
+
+function openSettings(){
+  document.getElementById('cfg_t15').value=CFG.tiers.t15;
+  document.getElementById('cfg_t100_noBat').value=CFG.tiers.t100_noBat;
+  document.getElementById('cfg_t100_bat').value=CFG.tiers.t100_bat;
+  document.getElementById('cfg_t300').value=CFG.tiers.t300;
+  document.getElementById('cfg_t630').value=CFG.tiers.t630;
+  document.getElementById('cfg_urban').value=CFG.urban.premium;
+  document.getElementById('cfg_urbanYears').value=CFG.urban.years;
+  document.getElementById('cfg_wp').value=CFG.tou.winter.peak;
+  document.getElementById('cfg_wl').value=CFG.tou.winter.low;
+  document.getElementById('cfg_sp').value=CFG.tou.summer.peak;
+  document.getElementById('cfg_sl').value=CFG.tou.summer.low;
+  document.getElementById('cfg_tp').value=CFG.tou.transition.peak;
+  document.getElementById('cfg_tl').value=CFG.tou.transition.low;
+  document.getElementById('cfg_wDays').value=CFG.tou.winter.days;
+  document.getElementById('cfg_sDays').value=CFG.tou.summer.days;
+  document.getElementById('cfg_tDays').value=CFG.tou.transition.days;
+  document.getElementById('cfg_m2').value=CFG.panel.m2PerKwp;
+  document.getElementById('cfg_yield').value=CFG.panel.yieldPerKwp;
+  document.getElementById('cfg_degrad').value=CFG.panel.degradation*100;
+  document.getElementById('cfg_capexPv').value=CFG.panel.capexPerKwp;
+  document.getElementById('cfg_opexPv').value=CFG.panel.opexPerKwp;
+  document.getElementById('cfg_chargeLoss').value=CFG.battery.chargeLoss;
+  document.getElementById('cfg_dischargeLoss').value=CFG.battery.dischargeLoss;
+  document.getElementById('cfg_dod').value=CFG.battery.dod;
+  document.getElementById('cfg_capexBat').value=CFG.battery.capexPerKwh;
+  document.getElementById('cfg_inverterCost').value=CFG.battery.inverterCost;
+  document.getElementById('cfg_minInj').value=CFG.battery.minInjectionPerKwp;
+  document.getElementById('cfg_directInj').value=CFG.battery.directInjectionPerKwp;
+  document.getElementById('cfg_batDegrad').value=CFG.battery.degradationPerYear;
+  document.getElementById('cfg_opexPvBat').value=CFG.panel.opexPerKwpWithBattery;
+  document.getElementById('cfg_comp_w_lo').value=CFG.battery.compTariff.upTo300.winterPeak;
+  document.getElementById('cfg_comp_w_hi').value=CFG.battery.compTariff.above300.winterPeak;
+  document.getElementById('cfg_comp_s_lo').value=CFG.battery.compTariff.upTo300.summerPeak;
+  document.getElementById('cfg_comp_s_hi').value=CFG.battery.compTariff.above300.summerPeak;
+  document.getElementById('cfg_comp_t_lo').value=CFG.battery.compTariff.upTo300.transitionPeak;
+  document.getElementById('cfg_comp_t_hi').value=CFG.battery.compTariff.above300.transitionPeak;
+  document.getElementById('cfg_blend').value=CFG.battery.externalBlendPct*100;
+  document.getElementById('cfg_transMode').value=CFG.battery.transitionPeakMode;
+  document.getElementById('cfg_includeTrans').checked=CFG.battery.includeTransitionArbitrage;
+  document.getElementById('cfg_loanPct').value=CFG.finance.loanPct*100;
+  document.getElementById('cfg_loanRate').value=CFG.finance.loanRate*100;
+  document.getElementById('cfg_loanYears').value=CFG.finance.loanYears;
+  document.getElementById('cfg_discount').value=CFG.finance.discountRate*100;
+  document.getElementById('cfg_lat').value=CFG.location.lat;
+  document.getElementById('cfg_lon').value=CFG.location.lon;
+  document.getElementById('settingsModal').style.display='flex';
+}
+function closeSettings(){ document.getElementById('settingsModal').style.display='none'; }
+function saveSettings(){
+  CFG.tiers.t15=+document.getElementById('cfg_t15').value;
+  CFG.tiers.t100_noBat=+document.getElementById('cfg_t100_noBat').value;
+  CFG.tiers.t100_bat=+document.getElementById('cfg_t100_bat').value;
+  CFG.tiers.t300=+document.getElementById('cfg_t300').value;
+  CFG.tiers.t630=+document.getElementById('cfg_t630').value;
+  CFG.urban.premium=+document.getElementById('cfg_urban').value;
+  CFG.urban.years=+document.getElementById('cfg_urbanYears').value;
+  CFG.tou.winter.peak=+document.getElementById('cfg_wp').value;
+  CFG.tou.winter.low=+document.getElementById('cfg_wl').value;
+  CFG.tou.summer.peak=+document.getElementById('cfg_sp').value;
+  CFG.tou.summer.low=+document.getElementById('cfg_sl').value;
+  CFG.tou.transition.peak=+document.getElementById('cfg_tp').value;
+  CFG.tou.transition.low=+document.getElementById('cfg_tl').value;
+  CFG.tou.winter.days=+document.getElementById('cfg_wDays').value;
+  CFG.tou.summer.days=+document.getElementById('cfg_sDays').value;
+  CFG.tou.transition.days=+document.getElementById('cfg_tDays').value;
+  CFG.panel.m2PerKwp=+document.getElementById('cfg_m2').value;
+  CFG.panel.yieldPerKwp=+document.getElementById('cfg_yield').value;
+  CFG.panel.degradation=(+document.getElementById('cfg_degrad').value)/100;
+  CFG.panel.capexPerKwp=+document.getElementById('cfg_capexPv').value;
+  CFG.panel.opexPerKwp=+document.getElementById('cfg_opexPv').value;
+  CFG.battery.chargeLoss=+document.getElementById('cfg_chargeLoss').value;
+  CFG.battery.dischargeLoss=+document.getElementById('cfg_dischargeLoss').value;
+  CFG.battery.dod=+document.getElementById('cfg_dod').value;
+  CFG.battery.capexPerKwh=+document.getElementById('cfg_capexBat').value;
+  CFG.battery.inverterCost=+document.getElementById('cfg_inverterCost').value;
+  CFG.battery.minInjectionPerKwp=+document.getElementById('cfg_minInj').value;
+  CFG.battery.directInjectionPerKwp=+document.getElementById('cfg_directInj').value;
+  CFG.battery.degradationPerYear=+document.getElementById('cfg_batDegrad').value;
+  CFG.panel.opexPerKwpWithBattery=+document.getElementById('cfg_opexPvBat').value;
+  CFG.battery.compTariff.upTo300.winterPeak=+document.getElementById('cfg_comp_w_lo').value;
+  CFG.battery.compTariff.above300.winterPeak=+document.getElementById('cfg_comp_w_hi').value;
+  CFG.battery.compTariff.upTo300.summerPeak=+document.getElementById('cfg_comp_s_lo').value;
+  CFG.battery.compTariff.above300.summerPeak=+document.getElementById('cfg_comp_s_hi').value;
+  CFG.battery.compTariff.upTo300.transitionPeak=+document.getElementById('cfg_comp_t_lo').value;
+  CFG.battery.compTariff.above300.transitionPeak=+document.getElementById('cfg_comp_t_hi').value;
+  CFG.battery.externalBlendPct=(+document.getElementById('cfg_blend').value)/100;
+  CFG.battery.transitionPeakMode=document.getElementById('cfg_transMode').value;
+  CFG.battery.includeTransitionArbitrage=document.getElementById('cfg_includeTrans').checked;
+  CFG.finance.loanPct=(+document.getElementById('cfg_loanPct').value)/100;
+  CFG.finance.loanRate=(+document.getElementById('cfg_loanRate').value)/100;
+  CFG.finance.loanYears=+document.getElementById('cfg_loanYears').value;
+  CFG.finance.discountRate=(+document.getElementById('cfg_discount').value)/100;
+  CFG.location.lat=+document.getElementById('cfg_lat').value;
+  CFG.location.lon=+document.getElementById('cfg_lon').value;
+  closeSettings();
+}
+window.addEventListener('click', e=>{ if(e.target===document.getElementById('settingsModal')) closeSettings(); });
+
+/* ==========================================================================
+   פונקציות פיננסיות סטנדרטיות
+   ========================================================================== */
+function pmtCalc(rate, nper, pv){ return rate===0 ? pv/nper : (rate*pv)/(1-Math.pow(1+rate,-nper)); }
+function ipmtAt(rate, per, nper, pv){
+  let bal=pv; const p=pmtCalc(rate,nper,pv);
+  for(let i=1;i<per;i++){ bal = bal*(1+rate) - p; }
+  return bal*rate;
+}
+function ppmtAt(rate, per, nper, pv){ return pmtCalc(rate,nper,pv) - ipmtAt(rate,per,nper,pv); }
+function npvCalc(rate, cfArrFromYear1){ return cfArrFromYear1.reduce((s,v,i)=> s+v/Math.pow(1+rate,i+1), 0); }
+function npvAt(rate, cf){ return cf.reduce((s,v,t)=> s+v/Math.pow(1+rate,t), 0); }
+function irrCalc(cf){
+  // שיטה עמידה: מחפשים תחום [-99%, +1000%] שבו ה-NPV מחליף סימן (שינוי סימן = יש שורש שם),
+  // מצמצמים בביסקציה (מובטחת התכנסות, לא יכולה "להתפוצץ"), ואז מלטשים בניוטון-רפסון לדיוק.
+  // אם אין שינוי סימן בתחום הסביר — אין IRR משמעותי (למשל השקעה שלא מחזירה את עצמה כלל) -> מחזירים null.
+  const lo0=-0.99, hi0=10;
+  const fLo=npvAt(lo0,cf), fHi=npvAt(hi0,cf);
+  if(!isFinite(fLo) || !isFinite(fHi) || fLo*fHi>0) return null; // אין שינוי סימן -> אין IRR הגיוני בטווח
+  let lo=lo0, hi=hi0, fL=fLo;
+  for(let i=0;i<100;i++){
+    const mid=(lo+hi)/2, fMid=npvAt(mid,cf);
+    if(!isFinite(fMid)) break;
+    if(Math.abs(fMid)<1e-6 || (hi-lo)<1e-10) { lo=hi=mid; break; }
+    if(fL*fMid<0){ hi=mid; } else { lo=mid; fL=fMid; }
+  }
+  let x=(lo+hi)/2;
+  // ליטוש בניוטון-רפסון, עם הגנה: אם חורג מהתחום המקורי, נשארים עם תוצאת הביסקציה
+  for(let i=0;i<20;i++){
+    const n=npvAt(x,cf);
+    const d=cf.reduce((s,v,t)=> s-t*v/Math.pow(1+x,t+1), 0);
+    if(!d || !isFinite(d)) break;
+    const x1=x-n/d;
+    if(!isFinite(x1) || x1<lo0 || x1>hi0) break; // חריגה מהתחום הסביר -> לא סומכים על צעד ניוטון הזה
+    if(Math.abs(x1-x)<1e-9){ x=x1; break; }
+    x=x1;
+  }
+  return x;
+}
+
+/* ==========================================================================
+   שלב 1: תעריף משוקלל (4 מדרגות, שתי טבלאות — עם/בלי אגירה)
+   ========================================================================== */
+function calcTariff(p0, p1, withStorage){
+  if(p1<=p0) return 0;
+  if(p1>CFG.tiers.p630){ console.warn('P1 מעל 630 קוט"ט — מחוץ לטווח מדרגות התעריף המוגדר (מקביל ל"טעות בנתונים" במקור).'); p1=CFG.tiers.p630; }
+  const t100 = withStorage ? CFG.tiers.t100_bat : CFG.tiers.t100_noBat;
+  const bands = [
+    [0, CFG.tiers.p15, CFG.tiers.t15],
+    [CFG.tiers.p15, CFG.tiers.p100, t100],
+    [CFG.tiers.p100, CFG.tiers.p300, CFG.tiers.t300],
+    [CFG.tiers.p300, CFG.tiers.p630, CFG.tiers.t630]
+  ];
+  let num=0;
+  for(const [lo,hi,rate] of bands){
+    const from=Math.max(p0,lo), to=Math.min(p1,hi);
+    if(to>from) num += (to-from)*rate;
+  }
+  return num/(p1-p0);
+}
+
+/* ==========================================================================
+   שלב 10: שווי לקוו"ש אגירה — לפי הפרשי עונה (חוקי משחק, לא תלוי-לקוח)
+   חשוב: "תעריף הפסגה" המשמש כאן אינו תעריף התעו"ז הרשמי, אלא "תעריף משלים"
+   נפרד (טבלה תלוית-גודל-מערכת), המעורבב עם התעו"ז הרשמי+מע"מ לפי אחוז
+   "שימוש עצמי". זו נוסחת המקור המדויקת (ולא פישוט).
+   ========================================================================== */
+function effectivePeakTariff(season, kwp){
+  if(season==='transition' && CFG.battery.transitionPeakMode==='source') return 0.55;
+  const tier = kwp<=300 ? CFG.battery.compTariff.upTo300 : CFG.battery.compTariff.above300;
+  const comp = season==='winter' ? tier.winterPeak : season==='summer' ? tier.summerPeak : tier.transitionPeak;
+  const official = CFG.tou[season].peak; // תעו"ז רשמי, ללא מע"מ
+  const blend = CFG.battery.externalBlendPct;
+  return comp*(1-blend) + official*1.18*blend;
+}
+function batteryValuePerKwh(tariff, kwp, winterDaysOverride){
+  const T=CFG.tou, B=CFG.battery;
+  const winterDays = winterDaysOverride!=null ? winterDaysOverride : T.winter.days;
+  const peakW = effectivePeakTariff('winter', kwp);
+  const peakS = effectivePeakTariff('summer', kwp);
+  const peakTr = effectivePeakTariff('transition', kwp);
+  const diffW = (peakW - tariff)/2 + (peakW - T.winter.low)/2;
+  const diffS = peakS - tariff;
+  const diffTr = peakTr - tariff;
+  const grossW = diffW*winterDays, grossS = diffS*T.summer.days, grossTr = diffTr*T.transition.days;
+  const lossW = -(B.chargeLoss*T.winter.low + B.dischargeLoss*tariff)*winterDays;
+  const lossS = -(B.chargeLoss+B.dischargeLoss)*tariff*T.summer.days;
+  const lossTr = -(B.chargeLoss+B.dischargeLoss)*tariff*T.transition.days;
+  const netW=grossW+lossW, netS=grossS+lossS;
+  const netTr = CFG.battery.includeTransitionArbitrage ? (grossTr+lossTr) : 0;
+  return { netW, netS, netTr, total: netW+netS+netTr, peakW, peakS, peakTr, winterDays };
+}
+
+/* ==========================================================================
+   בניית תזרים 25 שנה פנימי (לא מוצג — רק לחישוב IRR/NPV/רווח)
+   ========================================================================== */
+function buildCashflow(kwp, batteryKwh, tariffPv, batteryAnnualValue, urbanEligible, baseYieldPerKwp){
+  const P=CFG.panel, F=CFG.finance, B=CFG.battery;
+  const yieldPerKwp = baseYieldPerKwp || P.yieldPerKwp; // מאפשר להזרים תפוקה אפקטיבית (אחרי אזימוט/הצללה)
+  const capexPv = kwp * P.capexPerKwp;
+  const capexBat = batteryKwh>0 ? (batteryKwh*B.capexPerKwh + B.inverterCost) : 0;
+  const totalCapex = capexPv + capexBat;
+  const loan = totalCapex * F.loanPct;
+  const equity = totalCapex - loan;
+  const opexRate = batteryKwh>0 ? P.opexPerKwpWithBattery : P.opexPerKwp; // 250 עם אגירה (שירות מלא), 80 בלעדיה
+
+  const cfEquity=[-equity];   // "תשואה להון" — כמו עמודת L במקור: רק הון עצמי, אחרי תשלומי הלוואה
+  const cfProject=[-totalCapex]; // "תשואת פרויקט" — כמו עמודת H במקור: עלות מלאה, בלי תלות במימון
+  let batVal = batteryAnnualValue;
+  for(let y=1; y<=25; y++){
+    const hours = yieldPerKwp * (1 - P.degradation*(y-1));
+    const output = kwp*hours;
+    const effTariff = (urbanEligible && y<=CFG.urban.years) ? tariffPv+CFG.urban.premium : tariffPv;
+    const revenue = output*effTariff;
+    const opex = kwp*opexRate;
+    const loanActive = y<=F.loanYears;
+    const ppmt = loanActive ? ppmtAt(F.loanRate,y,F.loanYears,loan) : 0;
+    const ipmt = loanActive ? ipmtAt(F.loanRate,y,F.loanYears,loan) : 0;
+    cfEquity.push(revenue - opex + batVal - ppmt - ipmt);
+    cfProject.push(revenue - opex + batVal);
+    batVal *= (1-B.degradationPerYear);
+  }
+  const irrEquity = irrCalc(cfEquity);
+  const irrProject = irrCalc(cfProject);
+  const npvV = npvCalc(F.discountRate, cfEquity.slice(1));
+  const totalProfit = cfEquity.slice(1).reduce((s,v)=>s+v,0);
+  const annualYear1 = cfEquity[1];
+  return { capex:totalCapex, equity, irr:irrEquity, irrProject, npv:npvV, totalProfit, annualYear1, cfEquity, cfProject };
+}
+
+/* ==========================================================================
+   לוח עברי + שקיעה — מוטמע ממנוע ה-zmanim.js שהמשתמש סיפק (מאומת מול
+   4 נקודות ייחוס בלתי-תלויות: ר"ה תשפ"ה/תשפ"ו, ט' באב תשפ"ה, פורים תשפ"ד)
+   ========================================================================== */
+const _EPOCH = 347998; // JDN של א' תשרי שנה א'
+function hc_isLeap(y){ return (7*y+1)%19 < 7; }
+function hc_numMonths(y){ return hc_isLeap(y) ? 13 : 12; }
+function hc_elapsed(y){
+  const m = Math.floor((235*y-234)/19);
+  const p = 12084 + 13753*m;
+  let d = 29*m + Math.floor(p/25920);
+  if((3*(d+1))%7 < 3) d++;
+  return d;
+}
+function hc_delay(y){
+  const n0=hc_elapsed(y-1), n1=hc_elapsed(y), n2=hc_elapsed(y+1);
+  if(n2-n1===356) return 2;
+  if(n1-n0===382) return 1;
+  return 0;
+}
+function hc_newYear(y){ return _EPOCH + hc_elapsed(y) + hc_delay(y); }
+function hc_daysInYear(y){ return hc_newYear(y+1) - hc_newYear(y); }
+function hc_longCheshvan(y){ return hc_daysInYear(y)%10===5; }
+function hc_shortKislev(y){ return hc_daysInYear(y)%10===3; }
+function hc_daysInMonth(m,y){
+  const lp=hc_isLeap(y);
+  const table={1:30,2:hc_longCheshvan(y)?30:29,3:hc_shortKislev(y)?29:30,4:29,5:30,
+    6:lp?30:29,7:lp?29:30,8:lp?30:29,9:lp?29:30,10:lp?30:29,11:lp?29:30,12:lp?30:29,13:29};
+  return table[m]||29;
+}
+function hc_g2j(Y,M,D){
+  const a=Math.floor((14-M)/12), y=Y+4800-a, m=M+12*a-3;
+  return D + Math.floor((153*m+2)/5) + 365*y + Math.floor(y/4) - Math.floor(y/100) + Math.floor(y/400) - 32045;
+}
+function hc_j2h(j){
+  let y = Math.floor((j-_EPOCH)*98496.0/35975351.0)+1;
+  while(hc_newYear(y+1)<=j) y++;
+  while(hc_newYear(y)>j) y--;
+  let doy = j - hc_newYear(y) + 1;
+  let m=1, acc=0;
+  while(m<=hc_numMonths(y)){
+    const dim=hc_daysInMonth(m,y);
+    if(acc+dim>=doy) break;
+    acc+=dim; m++;
+  }
+  return { year:y, month:m, day:doy-acc };
+}
+function hc_h2j(y,m,d){
+  let j = hc_newYear(y) + d - 1;
+  for(let i=1;i<m;i++) j += hc_daysInMonth(i,y);
+  return j;
+}
+/** תאריך לועזי (Date object) -> {year,month,day} עברי. month: 1=תשרי...6=אדר(או אדרא'),7=אדרב'/ניסן תלוי leap */
+function toHebrewDate(dateObj){
+  const j = hc_g2j(dateObj.getFullYear(), dateObj.getMonth()+1, dateObj.getDate());
+  return hc_j2h(j);
+}
+// אינדקס חודש ברור לפי leap: מחזיר {nisan,iyar,av,elul,cheshvan} כמספרי חודש בפועל לאותה שנה
+function hc_monthIdx(y){
+  const lp=hc_isLeap(y);
+  return { cheshvan:2, nisan: lp?8:7, iyar: lp?9:8, av: lp?12:11, elul: lp?13:12 };
+}
+
+/** שקיעה (זווית מכוילת 90.78°, כמו במנוע המקורי) — לצורך הצגה בלבד (כניסת/יציאת שבת משוערת) */
+function hc_noaa(jd){
+  const T=(jd-2451545.0)/36525.0, r=Math.PI/180;
+  const L0=((280.46646+36000.76983*T+0.0003032*T*T)%360+360)%360;
+  const M=((357.52911+35999.05029*T-0.0001537*T*T)%360+360)%360;
+  const Mr=M*r;
+  const C=(1.914602-0.004817*T-0.000014*T*T)*Math.sin(Mr)+(0.019993-0.000101*T)*Math.sin(2*Mr)+0.000289*Math.sin(3*Mr);
+  const omega=125.04-1934.136*T;
+  const appLon=L0+C-0.00569-0.00478*Math.sin(omega*r);
+  let ob=23.0+(26.0+(21.448-T*(46.815+T*(0.00059-T*0.001813)))/60.0)/60.0;
+  ob += 0.00256*Math.cos(omega*r);
+  const decl=Math.asin(Math.sin(ob*r)*Math.sin(appLon*r))/r;
+  const y2=Math.tan(ob*r/2)**2, e=0.016708634-0.000042037*T, L0r=L0*r;
+  const eot=4.0/r*(y2*Math.sin(2*L0r)-2*e*Math.sin(Mr)+4*e*y2*Math.sin(Mr)*Math.cos(2*L0r)-0.5*y2*y2*Math.sin(4*L0r)-1.25*e*e*Math.sin(2*Mr));
+  return {decl,eot};
+}
+function hc_sunEvent(jd0,lat,lon,zenith,rising){
+  const r=Math.PI/180;
+  let utcMin=720.0;
+  for(let i=0;i<5;i++){
+    const {decl,eot}=hc_noaa(jd0+utcMin/1440.0);
+    const cosH=(Math.cos(zenith*r)-Math.sin(lat*r)*Math.sin(decl*r))/(Math.cos(lat*r)*Math.cos(decl*r));
+    if(cosH<-1||cosH>1) return null;
+    const H=Math.acos(Math.max(-1,Math.min(1,cosH)))/r;
+    const noon=720.0-4.0*lon-eot;
+    utcMin=noon+(rising?-4.0*H:4.0*H);
+  }
+  return ((utcMin/60.0)%24+24)%24;
+}
+function hc_israelDst(y,m,d){
+  const dt=new Date(y,m-1,d);
+  const apr2=new Date(y,3,2);
+  const fBack=((apr2.getDay()-5)%7+7)%7||7;
+  const dstStart=new Date(y,3,2-fBack);
+  const oct1=new Date(y,9,1);
+  const sBack=((oct1.getDay()-0)%7+7)%7||7;
+  const dstEnd=new Date(y,9,1-sBack);
+  return dt>=dstStart && dt<dstEnd;
+}
+/** שקיעה משוערת (HH:MM) למיקום CFG.location, לשימוש תצוגתי בלבד (כניסת/יציאת שבת) */
+function estimateSunsetHHMM(dateObj){
+  const Y=dateObj.getFullYear(), M=dateObj.getMonth()+1, D=dateObj.getDate();
+  const jd0 = hc_g2j(Y,M,D) - 0.5;
+  const tz = 2 + (hc_israelDst(Y,M,D)?1:0);
+  const ss = hc_sunEvent(jd0, CFG.location.lat, CFG.location.lon, 90.78, false);
+  if(ss===null) return '—';
+  const total = Math.round(((ss+tz)%24+24)%24*3600);
+  const h=Math.floor(total/3600), mnt=Math.floor((total%3600)/60);
+  return `${String(h).padStart(2,'0')}:${String(mnt).padStart(2,'0')}`;
+}
+
+/** סיווג זמן ישיבתי + חופשת מוסדות חינוך כללי, לפי תאריך לועזי בודד */
+function getZmanInfo(dateObj){
+  const hd = toHebrewDate(dateObj);
+  const midx = hc_monthIdx(hd.year);
+  const midxPrev = hc_monthIdx(hd.year-1);
+  let zman = null;
+  // זמן חורף: א' חשוון עד סוף אדר (או אדר ב' במעוברת) - נבדק מול השנה הנוכחית
+  if(hd.month===midx.cheshvan || (hd.month>midx.cheshvan && hd.month<midx.nisan)){
+    zman='winter';
+  }
+  // זמן קיץ: א' אייר עד ט' באב
+  else if(hd.month===midx.iyar || (hd.month>midx.iyar && hd.month<midx.av) || (hd.month===midx.av && hd.day<=9)){
+    zman='summer';
+  }
+  // זמן אלול: א' אלול עד י' תשרי (חוצה שנה עברית!)
+  else if(hd.month===midx.elul){
+    zman='elul';
+  } else if(hd.month===1 && hd.day<=10){ // תשרי של השנה הנוכחית, עד י' תשרי
+    zman='elul';
+  }
+  const isGeneralVacation = (dateObj.getMonth()+1===7 || dateObj.getMonth()+1===8);
+  return { zman, isGeneralVacation };
+}
+
+let csvSeasonStats = null; // {winter:{median,trimmed}, summer:{...}, transition:{...}}
+let globalHourlySeries = []; // {dt, kwh, isPeak, season} לכל שעה בקובץ שהועלה — לשימוש בסימולציית הדיספאץ'
+let lastRecommendation = null; // {p0, bestPv, bestBat, batTariff, shabbatBackupNeeded} מהריצה האחרונה של חשב המלצה
+let urlClientId = null; // clientId שהתקבל מ-URL (אם המחשבון נפתח מתוך מערכת ההצעות)
+let globalSimSizes = [], globalSimSavings = [], globalSimMarginal = []; // תוצאות הסימולציה, לשימוש בייצוא
+const HOLIDAYS = new Set(["2024-06-11","2024-06-12","2025-06-01","2025-06-02","2025-09-22","2025-09-23","2025-09-24","2026-09-11","2026-09-12","2026-09-13","2026-09-20","2026-09-21","2026-09-25","2026-09-26"]);
+
+function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function seasonOf(month){ if([12,1,2].includes(month)) return 'winter'; if(month>=6&&month<=9) return 'summer'; return 'transition'; }
+function classifyHour(dt){
+  const month=dt.getMonth()+1, hour=dt.getHours(), dow=dt.getDay();
+  const isShabbatHoliday = dow===6 || (dow===5 && hour>=17) || HOLIDAYS.has(ymd(dt));
+  const season = seasonOf(month);
+  let isPeak;
+  if(season==='winter') isPeak = hour>=17 && hour<22; // חל גם בשבת/חג — אנומליית חורף מתועדת
+  else if(season==='summer') isPeak = !isShabbatHoliday && hour>=17 && hour<23;
+  else isPeak = !isShabbatHoliday && hour>=17 && hour<22;
+  return {season, isPeak};
+}
+function parseIsraelDate(dateStr,timeStr){
+  if(!dateStr||!timeStr) return null;
+  const dp=dateStr.trim().split('/'), tp=timeStr.trim().split(':');
+  if(dp.length!==3||tp.length<2) return null;
+  let y=parseInt(dp[2],10); if(y<2000) y+=2000;
+  return new Date(y, parseInt(dp[1],10)-1, parseInt(dp[0],10), parseInt(tp[0],10), parseInt(tp[1],10));
+}
+function median(a){ if(!a.length) return 0; const s=[...a].sort((x,y)=>x-y), m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; }
+function trimmedMean(a,p=.15){ if(!a.length) return 0; const s=[...a].sort((x,y)=>x-y), c=Math.round(s.length*p); let t=s.slice(c,s.length-c); if(!t.length) t=s; return t.reduce((x,y)=>x+y,0)/t.length; }
+function top15Avg(a){ if(!a.length) return 0; const s=[...a].sort((x,y)=>y-x); const n=Math.max(1,Math.round(s.length*0.15)); return s.slice(0,n).reduce((x,y)=>x+y,0)/n; }
+function bottom15Avg(a){ if(!a.length) return 0; const s=[...a].sort((x,y)=>x-y); const n=Math.max(1,Math.round(s.length*0.15)); return s.slice(0,n).reduce((x,y)=>x+y,0)/n; }
+const DOW_HEB = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+
+function processCsv(){
+  const f = document.getElementById('csvFile').files[0];
+  const status = document.getElementById('csvStatus');
+  if(!f){ status.innerHTML='<span class="warn-inline">נא לבחור קובץ.</span>'; return; }
+  status.innerHTML = '<span class="field-note">מעבד קובץ...</span>';
+  Papa.parse(f, { complete(res){
+    const data = res.data;
+
+    // --- מטא-דאטה של הלקוח (שם/כתובת/חוזה/סוג-קוד-מספר מונה) ---
+    let cName='-', cAddress='-', cContract='-', cMeterType='-', cMeterCode='-', cMeterNum='-';
+    for(let i=0;i<Math.min(20,data.length);i++){
+      const row=data[i];
+      if(row && row[0] && typeof row[0]==='string'){
+        if(row[0].includes('שם לקוח') && data[i+2]){
+          cName=data[i+2][0]||'-'; cAddress=data[i+2][1]||'-'; cContract=data[i+2][2]||'-';
+        }
+        if(row[0].includes('סוג מונה') && data[i+2]){
+          cMeterType=data[i+2][0]||'-'; cMeterCode=data[i+2][1]||'-'; cMeterNum=data[i+2][2]||'-';
+        }
+      }
+    }
+    document.getElementById('md_name').innerText=cName;
+    document.getElementById('md_address').innerText=cAddress;
+    document.getElementById('md_contract').innerText=cContract;
+    document.getElementById('md_type').innerText=cMeterType;
+    document.getElementById('md_code').innerText=cMeterCode;
+    document.getElementById('md_number').innerText=cMeterNum;
+    document.getElementById('customerMetadataContainer').style.display='flex';
+
+    let startIdx=-1;
+    for(let i=0;i<data.length;i++){ if(data[i]&&typeof data[i][0]==='string'&&data[i][0].includes('קוד ומספר מונה')){ startIdx=i+1; break; } }
+    if(startIdx===-1){ status.innerHTML='<span class="warn-inline">לא זוהתה כותרת קובץ תקינה מחברת החשמל.</span>'; return; }
+
+    // --- מעבר ראשון: איסוף קריאות לפי חותמת-זמן, כולל תמיכה במונה כפול (דו-כיווני/ייצור/צריכה) ---
+    // ללקוח עם סולארי קיים (P0>0), ה-CSV עשוי להכיל מספר מונים לאותה שעה — יש לשחזר את הצריכה האמיתית:
+    // actualKwh = ייצור - הזרמה + יבוא (אחרת, ללקוח בלי סולארי, actualKwh = הצריכה הרגילה)
+    const timeSeriesMap = {};
+    for(let i=startIdx;i<data.length;i++){
+      const row=data[i]; if(!row||row.length<5) continue;
+      const meterType = (row[1]||'').toString().trim();
+      const dt=parseIsraelDate(row[2],row[3]); if(!dt||isNaN(dt.getTime())) continue;
+      const val1=parseFloat((row[4]||'').toString().replace(/[",]/g,'')) || 0;
+      const val2=parseFloat((row[5]||'').toString().replace(/[",]/g,'')) || 0;
+      const key = ymd(dt)+'_'+dt.getHours();
+      if(!timeSeriesMap[key]) timeSeriesMap[key] = { dt, importKwh:0, exportKwh:0, genKwh:0, stdKwh:0, hasSolar:false };
+      const rec = timeSeriesMap[key];
+      if(meterType==='דו-כיווני' || meterType==='דו כיווני'){ rec.importKwh=val1; rec.exportKwh=val2; rec.hasSolar=true; }
+      else if(meterType==='ייצור'){ rec.genKwh=val1; rec.hasSolar=true; }
+      else if(meterType==='צריכה' || meterType===''){ rec.stdKwh=val1; }
+      else { rec.stdKwh=val1; } // סוג לא מזוהה — מתייחסים כצריכה רגילה, בטוח יותר מלהתעלם
+    }
+
+    // --- מעבר שני: אגרגציה שעתית + יומית + חישוב מש"ב/זמן ישיבתי, על בסיס הצריכה האמיתית ---
+    const hourlyRows = [];               // {dt, kwh}
+    const daily = {};                    // dateKey -> {dt, total, offpeak, peak, season}
+    const seasonStats = { winter:{kwh:[],cost:[]}, summer:{kwh:[],cost:[]}, transition:{kwh:[],cost:[]} };
+    globalHourlySeries = []; // נשמר גלובלית לצורך סימולציית הדיספאץ' השעתית
+
+    const seriesKeys = Object.keys(timeSeriesMap).sort((a,b)=>timeSeriesMap[a].dt-timeSeriesMap[b].dt);
+    let anySolarMeterDetected = false;
+    for(const key of seriesKeys){
+      const rec = timeSeriesMap[key];
+      const dt = rec.dt;
+      let kwh;
+      if(rec.hasSolar){
+        anySolarMeterDetected = true;
+        kwh = Math.max(0, rec.genKwh - rec.exportKwh + rec.importKwh);
+      } else {
+        kwh = rec.stdKwh;
+      }
+      const {season,isPeak}=classifyHour(dt);
+      const dk=ymd(dt);
+      if(!daily[dk]) daily[dk]={ dt:new Date(dt.getFullYear(),dt.getMonth(),dt.getDate()), total:0, offpeak:0, peak:0, season };
+      daily[dk].total+=kwh;
+      if(isPeak) daily[dk].peak+=kwh; else daily[dk].offpeak+=kwh;
+      hourlyRows.push({dt,kwh});
+      globalHourlySeries.push({dt, kwh, isPeak, season});
+    }
+
+
+    // תעריף רשמי (תעו"ז, ללא מע"מ) לחישוב "עלות" תצוגתית של הפסגה היומית
+    const officialPeakTariff = { winter:CFG.tou.winter.peak, summer:CFG.tou.summer.peak, transition:CFG.tou.transition.peak };
+    const generatorUsedShabbat = document.getElementById('generatorUsedShabbat').checked;
+    let excludedWinterShabbatDays = 0;
+
+    const dailyKeys = Object.keys(daily).sort();
+    // נירמול ל-365 הימים האחרונים בקובץ בלבד (מייצג שנה שלמה, גם אם הועלה קובץ רב-שנתי) —
+    // חל רק על הסטטיסטיקה המוזנת להמלצה; הטבלאות הגולמיות ממשיכות להציג את כל הקובץ.
+    const allDates = dailyKeys.map(dk=>daily[dk].dt);
+    const maxDate = new Date(Math.max(...allDates));
+    const cutoffDate = new Date(maxDate); cutoffDate.setDate(cutoffDate.getDate()-365);
+
+    const peakOnlyRows = [];
+    const winterWeekdayKwh = []; // נאסף תמיד — בסיס אפשרי לנירמול שבת/חג
+    for(const dk of dailyKeys){
+      const d = daily[dk];
+      if(d.peak>0){
+        const cost = d.peak * officialPeakTariff[d.season];
+        peakOnlyRows.push({ dk, dt:d.dt, season:d.season, peak:d.peak, cost });
+        if(d.dt <= cutoffDate) continue; // מחוץ ל-365 הימים האחרונים — לא נכנס לסטטיסטיקה
+        // בחורף שעות הפסגה חלות גם בשבת/חג (אנומליה מתועדת) — אם היה גנרטור בשבת,
+        // הנתונים מהרשת לימים אלה אינם אמינים ולכן מוחרגים מחישוב הסטטיסטיקה החורפית בלבד
+        const dow = d.dt.getDay();
+        const isShabbatOrChag = dow===5 || dow===6 || HOLIDAYS.has(dk);
+        if(d.season==='winter' && !isShabbatOrChag) winterWeekdayKwh.push(d.peak);
+        if(d.season==='winter' && generatorUsedShabbat && isShabbatOrChag){
+          excludedWinterShabbatDays++;
+        } else {
+          seasonStats[d.season].kwh.push(d.peak);
+          seasonStats[d.season].cost.push(cost);
+        }
+      }
+    }
+
+    // --- נירמול נתוני שבת/חג חסרים בחורף (אם סומן) ---
+    // מחליף/משלים ימי שבת/חג חסרים בהערכה: חציון ימי-חול חורפיים × אחוז מוגדר (ברירת מחדל 100%)
+    const normalizeShabbat = document.getElementById('normalizeShabbatData').checked;
+    let shabbatNormalizeNote = '';
+    if(normalizeShabbat && winterWeekdayKwh.length>0){
+      const pct = parseFloat(document.getElementById('shabbatNormalizePct').value) || 100;
+      const weekdayMedian = median(winterWeekdayKwh);
+      const imputedValue = weekdayMedian * (pct/100);
+      const expectedShabbatDays = Math.round(CFG.tou.winter.days*2/7); // ~26 ימי שישי+שבת מתוך 90
+      const actualShabbatDaysCounted = seasonStats.winter.kwh.length - winterWeekdayKwh.length;
+      const missingCount = generatorUsedShabbat ? excludedWinterShabbatDays : Math.max(0, expectedShabbatDays-actualShabbatDaysCounted);
+      for(let i=0;i<missingCount;i++){
+        seasonStats.winter.kwh.push(imputedValue);
+        seasonStats.winter.cost.push(imputedValue*officialPeakTariff.winter);
+      }
+      shabbatNormalizeNote = ` <span style="color:#2980b9">ℹ️ נורמלו ${missingCount} ימי שבת/חג חסרים בחורף, לפי ${pct}% מחציון ימי החול (${weekdayMedian.toFixed(1)} קוו"ש) = ${imputedValue.toFixed(1)} קוו"ש ליום.</span>`;
+    }
+
+    // --- בניית טבלה 1: דו"ח שעתי (raw) ---
+    const hourlyBody = hourlyRows.map(r=>
+      `<tr><td>${r.dt.toLocaleDateString('he-IL')} ${String(r.dt.getHours()).padStart(2,'0')}:00</td><td class="day-cell">${DOW_HEB[r.dt.getDay()]}</td><td>${r.kwh.toFixed(2)}</td></tr>`
+    ).join('');
+    document.querySelector('#hourlyTable tbody').innerHTML = hourlyBody;
+
+    // --- בניית טבלה 2 (האמצעית): דו"ח יומי מעובד שפל-פסגה, עם סימון זמן ישיבתי + חופשה כללית ---
+    const dailyBody = dailyKeys.map(dk=>{
+      const d = daily[dk];
+      const {zman,isGeneralVacation} = getZmanInfo(d.dt);
+      const zmanClass = zman ? `zman-${zman}` : '';
+      const vacClass = isGeneralVacation ? 'vacation-mark' : '';
+      const dow = d.dt.getDay();
+      let dayLabel = DOW_HEB[dow];
+      if(dow===5){ dayLabel += `<br><span style="font-size:.7em;color:#7f8c8d">כניסה ~${estimateSunsetHHMM(d.dt)}</span>`; }
+      else if(dow===6){
+        const exitApprox = estimateSunsetHHMM(d.dt);
+        const [hh,mm] = exitApprox.split(':').map(Number);
+        const total = isNaN(hh) ? null : (hh*60+mm+35);
+        const exitStr = total!==null ? `${String(Math.floor(total/60)%24).padStart(2,'0')}:${String(total%60).padStart(2,'0')}` : '—';
+        dayLabel += `<br><span style="font-size:.7em;color:#7f8c8d">יציאה ~${exitStr}</span>`;
+      }
+      return `<tr><td class="${zmanClass} ${vacClass}">${d.dt.toLocaleDateString('he-IL')}</td><td class="day-cell">${dayLabel}</td><td>${d.total.toFixed(2)}</td><td class="offpeak-cell">${d.offpeak.toFixed(2)}</td><td class="peak-cell">${d.peak.toFixed(2)}</td></tr>`;
+    }).join('');
+    document.querySelector('#dailyMergedTable tbody').innerHTML = dailyBody;
+
+    // --- בניית טבלה 3: דו"ח יומי פסגה בלבד + עלות ---
+    const peakBody = peakOnlyRows.map(r=>
+      `<tr><td>${r.dt.toLocaleDateString('he-IL')}</td><td class="day-cell">${DOW_HEB[r.dt.getDay()]}</td><td class="peak-cell">${r.peak.toFixed(2)}</td><td>${r.cost.toFixed(2)}</td></tr>`
+    ).join('');
+    document.querySelector('#peakOnlyTable tbody').innerHTML = peakBody;
+
+    document.getElementById('reportsContainer').style.display='flex';
+
+    // --- 3 שורות אנליטיקה (חורף/קיץ/מעבר) — 6 סטטיסטיקות כל אחת ---
+    const prefixes = { winter:'w', summer:'s', transition:'t' };
+    csvSeasonStats = {};
+    for(const season of ['winter','summer','transition']){
+      const p = prefixes[season];
+      const kwhArr = seasonStats[season].kwh, costArr = seasonStats[season].cost;
+      document.getElementById(`${p}_median_kwh`).textContent = median(kwhArr).toFixed(1);
+      document.getElementById(`${p}_median_cost`).textContent = median(costArr).toFixed(1);
+      document.getElementById(`${p}_trimmed_kwh`).textContent = trimmedMean(kwhArr).toFixed(1);
+      document.getElementById(`${p}_trimmed_cost`).textContent = trimmedMean(costArr).toFixed(1);
+      document.getElementById(`${p}_top15_kwh`).textContent = top15Avg(kwhArr).toFixed(1);
+      document.getElementById(`${p}_bottom15_kwh`).textContent = bottom15Avg(kwhArr).toFixed(1);
+      csvSeasonStats[season] = { median:median(kwhArr), trimmed:trimmedMean(kwhArr), sampleDays:kwhArr.length };
+    }
+    document.getElementById('analyticsRowsContainer').style.display='flex';
+
+    const generatorNote = (generatorUsedShabbat && excludedWinterShabbatDays>0)
+      ? ` <span style="color:#8a6d1f">⚠ הוחרגו ${excludedWinterShabbatDays} ימי שבת/חג מהחורף (חשד לזיהום נתונים ע"י גנרטור) — הסטטיסטיקה החורפית מבוססת ימי חול בלבד.</span>`
+      : '';
+    const solarMeterNote = anySolarMeterDetected ? ` <span style="color:#2980b9">ℹ️ זוהה מונה סולארי קיים בקובץ — הצריכה חושבה כ"ייצור−הזרמה+יבוא" (צריכה אמיתית, לא רק קנייה מהרשת).</span>` : '';
+    status.innerHTML = `<span class="ok-inline">✓ נותח בהצלחה. ${dailyKeys.length} ימים בקובץ (הסטטיסטיקה מבוססת על 365 הימים האחרונים). ימי פסגה — חורף: ${csvSeasonStats.winter.sampleDays}, קיץ: ${csvSeasonStats.summer.sampleDays}, מעבר: ${csvSeasonStats.transition.sampleDays}.</span>${generatorNote}${shabbatNormalizeNote}${solarMeterNote}`;
+  }});
+}
+
+/* ==========================================================================
+   סימולציית תפוקה סולארית משוערת לתקופה (כלי המחשה — לא משפיע על ההמלצה)
+   מבוסס על עקומת עונתיות/שעתיות גנרית (פיזיקת קרינה כללית, לא תלוית-לקוח),
+   מוחלת על הקבועים המאומתים של המחשבון (7.5 מ"ר/קוט"ט, 1600 קוו"ש/קוט"ט/שנה)
+   ========================================================================== */
+const MONTH_YIELD_FACTOR = [0.66,0.77,0.96,1.10,1.19,1.29,1.29,1.24,1.10,0.96,0.77,0.67]; // ינו-דצמ, ממוצע=1.0
+const HOURLY_YIELD_PROFILE = { 6:0.01,7:0.04,8:0.08,9:0.11,10:0.13,11:0.14,12:0.14,13:0.13,14:0.11,15:0.08,16:0.04,17:0.01 }; // סה"כ ~1.0 (עקומת פעמון)
+
+function calcYield(){
+  const startVal = document.getElementById('yieldStartDate').value;
+  const endVal = document.getElementById('yieldEndDate').value;
+  if(!startVal || !endVal){ alert('נא לבחור טווח תאריכים.'); return; }
+  const roofArea = parseFloat(document.getElementById('roofArea').value);
+  const connLimit = parseFloat(document.getElementById('connLimit').value);
+  const azimuth = +document.getElementById('azimuth').value;
+  const shading = +document.getElementById('shading').value || 1;
+  const kwp = roofArea ? roofArea/CFG.panel.m2PerKwp : (connLimit || 0);
+  if(!kwp){ alert('נא להזין שטח גג פנוי או הספק חיבור כדי לחשב תפוקה.'); return; }
+
+  const annualYield = kwp * CFG.panel.yieldPerKwp * azimuth * shading;
+  const dailyAvg = annualYield/365;
+
+  const start=new Date(startVal), end=new Date(endVal);
+  if(end<start){ alert('תאריך הסיום חייב להיות אחרי תאריך ההתחלה.'); return; }
+
+  const dailyRows=[]; const monthlyAgg={};
+  let cursor=new Date(start);
+  while(cursor<=end){
+    const m=cursor.getMonth();
+    const dayYield = dailyAvg * MONTH_YIELD_FACTOR[m];
+    dailyRows.push({dt:new Date(cursor), yield:dayYield});
+    const mk = `${cursor.getFullYear()}-${String(m+1).padStart(2,'0')}`;
+    if(!monthlyAgg[mk]) monthlyAgg[mk]={days:0,total:0};
+    monthlyAgg[mk].days++; monthlyAgg[mk].total+=dayYield;
+    cursor.setDate(cursor.getDate()+1);
+  }
+
+  document.querySelector('#yieldDailyTable tbody').innerHTML = dailyRows.map(r=>
+    `<tr><td>${r.dt.toLocaleDateString('he-IL')}</td><td class="day-cell">${DOW_HEB[r.dt.getDay()]}</td><td>${r.yield.toFixed(2)}</td></tr>`
+  ).join('');
+
+  const monthNames=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+  document.querySelector('#yieldMonthlyTable tbody').innerHTML = Object.keys(monthlyAgg).sort().map(mk=>{
+    const [y,mm]=mk.split('-'); const agg=monthlyAgg[mk];
+    return `<tr><td>${monthNames[+mm-1]} ${y}</td><td>${agg.days}</td><td>${agg.total.toFixed(1)}</td></tr>`;
+  }).join('');
+
+  // יום לדוגמה לפירוט שעתי: היום האמצעי בטווח שנבחר
+  const midDay = dailyRows[Math.floor(dailyRows.length/2)];
+  const midDayYield = midDay.yield;
+  const hourlyBody = Object.entries(HOURLY_YIELD_PROFILE).map(([h,frac])=>
+    `<tr><td>${midDay.dt.toLocaleDateString('he-IL')}</td><td>${h}:00</td><td>${(midDayYield*frac).toFixed(2)}</td></tr>`
+  ).join('');
+  document.querySelector('#yieldHourlyTable tbody').innerHTML = hourlyBody;
+
+  document.getElementById('yieldReportsContainer').style.display='flex';
+}
+
+/* ==========================================================================
+   סימולציית דיספאץ' סוללה אמיתית — מבוססת על הימים בפועל בקובץ ה-CSV שהועלה
+   (לא הערכה סטטיסטית של "יום טיפוסי"), כולל הפסדי טעינה/פריקה מפורשים.
+   משתמשת באותה נוסחת שווי מאומתת של batteryValuePerKwh (תעריף משלים+בלנד),
+   רק "פרושה" לפי-יום במקום מוכפלת במספר ימים גנרי — כך שגדלים גדולים מהצריכה
+   בפועל מציגים תשואה פוחתת (diminishing returns) באופן אמיתי, לא משוער.
+   ========================================================================== */
+function runBatteryDispatchSimulation(){
+  if(!globalHourlySeries.length){ alert('יש לנתח קודם קובץ CSV (סעיף 1).'); return; }
+  if(!lastRecommendation){ alert('יש להריץ קודם "חשב המלצה" — הסימולציה משתמשת בגודל הסולארי שנבחר לצורך התעריף.'); return; }
+
+  const {p0, bestPv, batTariff} = lastRecommendation;
+  const maxDate = new Date(Math.max(...globalHourlySeries.map(r=>r.dt)));
+  const cutoffDate = new Date(maxDate); cutoffDate.setDate(cutoffDate.getDate()-365);
+
+  // אגרגציה יומית של קוו"ש-פסגה בפועל, מתוך 365 הימים האחרונים בקובץ
+  const dailyTou = {};
+  globalHourlySeries.forEach(r=>{
+    if(r.dt<=cutoffDate) return;
+    const dk = ymd(r.dt);
+    if(!dailyTou[dk]) dailyTou[dk] = {peak:0, season:r.season, dt:new Date(r.dt.getFullYear(),r.dt.getMonth(),r.dt.getDate())};
+    if(r.isPeak) dailyTou[dk].peak += r.kwh;
+  });
+
+  const perKwh = batteryValuePerKwh(batTariff, bestPv.kwp);
+  const includeTransition = CFG.battery.includeTransitionArbitrage;
+  // "שווי לקוו"ש שנפרק בפועל" — פירוק הנוסחה השנתית המאומתת ליחידת-יום, כדי לחשב יום-יום על נתונים אמיתיים
+  const valuePerKwhCycled = {
+    winter: perKwh.netW/CFG.tou.winter.days,
+    summer: perKwh.netS/CFG.tou.summer.days,
+    transition: includeTransition ? (perKwh.netTr/CFG.tou.transition.days) : 0
+  };
+
+  function savingsForSize(size){
+    let total=0;
+    for(const dk in dailyTou){
+      const d = dailyTou[dk];
+      if(d.peak<=0) continue;
+      if(d.season==='transition' && !includeTransition) continue;
+      total += Math.min(size, d.peak) * valuePerKwhCycled[d.season];
+    }
+    return total;
+  }
+
+  // טווח 20 גדלים לתצוגת "קוביות", מבוסס על התפלגות ימי הפסגה בפועל (חורף+קיץ, לא כולל מעבר כברירת מחדל)
+  const relevantPeaks = Object.values(dailyTou).filter(d=>d.peak>0 && (d.season!=='transition'||includeTransition)).map(d=>d.peak);
+  let minSize = bottom15Avg(relevantPeaks) || 5;
+  let maxSize = top15Avg(relevantPeaks) || 24;
+  if(minSize>=maxSize){ minSize=maxSize*0.5; maxSize=maxSize*1.5; }
+  const sizes20 = []; for(let i=0;i<20;i++) sizes20.push(minSize + (maxSize-minSize)*i/19);
+
+  globalSimSizes = sizes20.map(s=>+s.toFixed(1));
+  globalSimSavings = sizes20.map(savingsForSize);
+  // רגישות שולית (1-kWh steps) לגרף המשולב
+  const maxInt = Math.ceil(maxSize)+3;
+  const sizes1=[], savings1=[], marginal1=[];
+  let prevSav=0;
+  for(let i=1;i<=maxInt;i++){
+    const sav = savingsForSize(i);
+    sizes1.push(i); savings1.push(Math.round(sav)); marginal1.push(Math.round(sav-prevSav));
+    prevSav=sav;
+  }
+  globalSimMarginal = marginal1;
+
+  // --- קוביות ---
+  const minSaving = Math.min(...globalSimSavings);
+  const cubesHtml = globalSimSizes.map((size,i)=>{
+    const saving = globalSimSavings[i];
+    const ratio = minSaving>0 ? (saving/minSaving) : 1;
+    const isBest = i===globalSimSizes.length-1 ? false : saving===Math.max(...globalSimSavings);
+    return `<div class="battery-cube" style="${isBest?'border-color:#27ae60;border-width:2px':''}">
+      <div class="cube-size">${size} <span>קוט"ש אגירה</span></div>
+      <div class="cube-savings">₪${Math.round(saving).toLocaleString()} <span>חיסכון שנתי (סימולציה אמיתית)</span></div>
+      <div style="font-size:.75em;color:#8e44ad;margin-top:4px">יחס לגודל המינימלי: ×${ratio.toFixed(2)}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('batteryGrid').innerHTML = cubesHtml;
+  document.getElementById('batterySimSection').style.display='block';
+
+  renderComboChart(sizes1, savings1, marginal1);
+  renderRatioChart(globalSimSizes, globalSimSavings);
+
+  const transNote = includeTransition ? '' : ' (עונת המעבר לא נכללה — ניתן לשנות בהגדרות)';
+  document.getElementById('simStatus').innerHTML = `<span class="ok-inline">✓ סימולציה רצה על ${Object.keys(dailyTou).length} ימים בפועל מתוך 365 הימים האחרונים${transNote}.</span>`;
+  document.getElementById('exportSimExcelBtn').style.display='inline-flex';
+}
+
+let comboChartInst=null, ratioChartInst=null;
+function renderComboChart(labels, totalSavings, marginalSavings){
+  if(comboChartInst) comboChartInst.destroy();
+  const ctx = document.getElementById('comboChart').getContext('2d');
+  comboChartInst = new Chart(ctx, {
+    data: { labels, datasets: [
+      { type:'line', label:'חיסכון שנתי מצטבר (₪)', data:totalSavings, borderColor:'#2980b9', backgroundColor:'#2980b9', borderWidth:3, yAxisID:'y', tension:.25, pointRadius:2 },
+      { type:'bar', label:'תוספת חיסכון לקוט"ש הנוסף (₪)', data:marginalSavings, backgroundColor:'rgba(46,204,113,.7)', borderColor:'#27ae60', yAxisID:'y1' }
+    ]},
+    options: { responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+      scales:{ x:{title:{display:true,text:'גודל אגירה (קוט"ש)'}},
+               y:{type:'linear',position:'right',title:{display:true,text:'סה"כ חיסכון (₪)'}},
+               y1:{type:'linear',position:'left',title:{display:true,text:'תוספת שולית (₪)'},grid:{drawOnChartArea:false}} } }
+  });
+}
+function renderRatioChart(sizes, savings){
+  if(ratioChartInst) ratioChartInst.destroy();
+  const minSaving = Math.min(...savings) || 1;
+  const ratios = savings.map(s=>+(s/minSaving).toFixed(3));
+  const ctx = document.getElementById('ratioChart').getContext('2d');
+  ratioChartInst = new Chart(ctx, {
+    type:'line',
+    data:{ labels:sizes, datasets:[{ label:'יחס רווח (מול גודל מינימלי)', data:ratios, borderColor:'#8e44ad', backgroundColor:'rgba(142,68,173,.15)', borderWidth:3, fill:true, tension:.25, pointRadius:3 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      scales:{ x:{title:{display:true,text:'גודל אגירה (קוט"ש)'}},
+               y:{title:{display:true,text:'יחס רווח (× לעומת הגודל המינימלי שנבדק)'}} },
+      plugins:{ tooltip:{ callbacks:{ label:(ctx)=>`יחס רווח: ×${ctx.parsed.y}` } } } }
+  });
+}
+
+function exportSimulationToExcel(){
+  if(!globalSimSizes.length){ alert('יש להריץ קודם את הסימולציה.'); return; }
+  const wb = XLSX.utils.book_new();
+
+  // גיליון מאוחד ומפורט: 20 הקוביות + הרגישות השולית יחד
+  const rows = [['גודל אגירה (קוט"ש)','חיסכון שנתי (₪)','יחס לגודל המינימלי','תוספת שולית לקוט"ש (₪)']];
+  const minSaving = Math.min(...globalSimSavings) || 1;
+  globalSimSizes.forEach((size,i)=>{
+    rows.push([size, Math.round(globalSimSavings[i]), +(globalSimSavings[i]/minSaving).toFixed(3), '']);
+  });
+  rows.push([]);
+  rows.push(['--- רגישות שולית (כל קוט"ש בנפרד) ---']);
+  rows.push(['גודל (קוט"ש)','חיסכון מצטבר (₪)','תוספת שולית (₪)']);
+  globalSimSavings.length; // no-op guard
+  for(let i=0;i<globalSimMarginal.length;i++){
+    rows.push([i+1, '', globalSimMarginal[i]]);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:18},{wch:20},{wch:18},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, ws, 'סימולציית אגירה');
+
+  // גיליון גרפים כתמונות (Chart.js -> PNG -> הוספה כתמונה בגיליון נפרד באמצעות data URL בתא הערה)
+  const imgSheetRows = [['הגרפים מוצגים במחשבון עצמו; לצילום מסך לצורך הצגה — ראה את הדף המקורי.']];
+  const wsImg = XLSX.utils.aoa_to_sheet(imgSheetRows);
+  XLSX.utils.book_append_sheet(wb, wsImg, 'הערה');
+
+  XLSX.writeFile(wb, `סימולציית_אגירה_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+
+function onConsModeChange(){
+  const mode=document.getElementById('consMode').value;
+  document.getElementById('csvBlock').style.display = mode==='csv' ? 'block' : 'none';
+  document.getElementById('formImportBlock').style.display = mode==='formImport' ? 'block' : 'none';
+  document.getElementById('detailedBlock').style.display = mode==='detailed' ? 'block' : 'none';
+  document.getElementById('manualBlock').style.display = mode==='manual' ? 'block' : 'none';
+  document.getElementById('noneBlock').style.display = mode==='none' ? 'block' : 'none';
+}
+
+function onShabbatBackupToggle(){
+  const checked = document.getElementById('shabbatBackupNeeded').checked;
+  document.getElementById('shabbatBackupBlock').style.display = checked ? 'block' : 'none';
+  if(checked){
+    const loadField = document.getElementById('shabbatBackupLoad');
+    const detailedWinterShabbat = document.getElementById('d_winter_shabbat_peak');
+    if(!loadField.value && detailedWinterShabbat && detailedWinterShabbat.value){
+      loadField.value = detailedWinterShabbat.value; // הצעה אוטומטית מהקלט המפורט אם קיים, ניתנת לעריכה
+    }
+  }
+}
+
+function onNormalizeShabbatToggle(){
+  document.getElementById('shabbatNormalizeBlock').style.display = document.getElementById('normalizeShabbatData').checked ? 'block' : 'none';
+}
+
+/* פרופילים גנריים — משמשים רק אם אין CSV, כהערכה גסה */
+const GENERIC_PROFILE = {
+  home:     { peakShareOfTotal:.18, seasonSplit:{winter:.35, summer:.30, transition:.35} },
+  business: { peakShareOfTotal:.22, seasonSplit:{winter:.30, summer:.35, transition:.35} }
+};
+function genericSeasonStats(annualKwh, propType){
+  const prof = GENERIC_PROFILE[propType];
+  const peakTotal = annualKwh*prof.peakShareOfTotal;
+  const out={};
+  for(const s of ['winter','summer','transition']){
+    const seasonPeakKwh = peakTotal*prof.seasonSplit[s];
+    const days = CFG.tou[s].days;
+    const perDay = seasonPeakKwh/days;
+    out[s]={ median:perDay, trimmed:perDay, sampleDays:0 };
+  }
+  return out;
+}
+
+/* ==========================================================================
+   ייבוא מטופס איסוף נתונים (מצאי מכשירים) — תואם למבנה v3.0 של הטופס בפועל:
+   פענוח AES-GCM (אם הקובץ מוצפן, .json.enc), היררכיית מיקום→קטגוריה→שורה
+   (כל רמה יכולה לצמצם ימים/שעות/תקופות, מצטבר כחיתוך בין הרמות), ותקופות
+   לפי לוח לועזי/עברי/פריסטים ("שנת לימודים כללית" / "שנת לימודים ישיבתית" —
+   האחרון זהה בדיוק לזמני חורף/קיץ/אלול שכבר מומשו למעלה, ראה getZmanInfo).
+   מריץ סימולציית שנה מלאה (365 ימים) לדיוק גבוה — לא רק דלי יום-בשבוע.
+   ========================================================================== */
+const FORM_ENCRYPTION_KEY = "BereshitSolarSecureKey1234567890"; // תואם למפתח הקבוע ב-Form.html
+const FORM_DAY_MAP = {"יום א'":0,"יום ב'":1,"יום ג'":2,"יום ד'":3,"יום ה'":4,"יום ו'":5,"יום ז'":6};
+
+async function decryptFormFile(base64OrText){
+  try{ return JSON.parse(base64OrText); } catch(e){ /* לא JSON תקין — ממשיכים לנסות לפענח */ }
+  const combined = Uint8Array.from(atob(base64OrText.trim()), c=>c.charCodeAt(0));
+  const iv = combined.slice(0,12);
+  const ciphertextWithTag = combined.slice(12); // Web Crypto GCM: תג האימות (16 בייט) מוצמד בסוף אוטומטית
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(FORM_ENCRYPTION_KEY), "AES-GCM", false, ["decrypt"]);
+  const plainBuf = await crypto.subtle.decrypt({name:"AES-GCM", iv}, keyMaterial, ciphertextWithTag);
+  return JSON.parse(new TextDecoder().decode(plainBuf));
+}
+
+function expandFormDays(daysArr){
+  const set=new Set();
+  (daysArr && daysArr.length ? daysArr : [0,1,2,3,4,5,6]).forEach(d=>{
+    if(typeof d==='number'){ set.add(d); return; } // מבנה v3.0: מערך מספרים ישירות (0-6)
+    if(d==='כל הימים'){ for(let i=0;i<7;i++) set.add(i); }
+    else if(d==='שבת יהודי'){ set.add(5); set.add(6); }
+    else if(FORM_DAY_MAP.hasOwnProperty(d)){ set.add(FORM_DAY_MAP[d]); }
+  });
+  return set;
+}
+function expandFormHours(hoursArr){
+  const set=new Set();
+  (hoursArr && hoursArr.length ? hoursArr : Array.from({length:24},(_,i)=>i)).forEach(h=>{
+    if(typeof h==='number'){ set.add(h); return; } // מבנה v3.0: מערך מספרים ישירות (0-23)
+    if(h==='כל שעות היום'){ for(let i=0;i<24;i++) set.add(i); }
+    else { const hh=parseInt((h+'').split(':')[0],10); if(!isNaN(hh)) set.add(hh); }
+  });
+  return set;
+}
+function intersectSets(...sets){
+  const [first,...rest] = sets;
+  return new Set([...first].filter(v=>rest.every(s=>s.has(v))));
+}
+function toFormHebrewMonthDay(dateObj){
+  // ממיר תאריך עברי אמיתי (13 חודשים בשנה מעוברת) לספירת החודשים המפושטת של הטופס (12 חודשים, אדר מאוחד)
+  const hd = toHebrewDate(dateObj);
+  const leap = hc_isLeap(hd.year);
+  if(!leap) return {m:hd.month, d:hd.day};
+  if(hd.month<=5) return {m:hd.month, d:hd.day};
+  if(hd.month===6) return {m:6, d:hd.day};           // אדר א' -> חודש-טופס 6, ימים 1-30
+  if(hd.month===7) return {m:6, d:30+hd.day};         // אדר ב' -> ממשיך את אותו חודש-טופס 6, ימים 31-59
+  return {m:hd.month-1, d:hd.day};                    // ניסן(8)->7, אייר(9)->8, ... אלול(13)->12
+}
+function inGregorianRange(dateObj, startMMDD, endMMDD){
+  const mmdd = `${String(dateObj.getMonth()+1).padStart(2,'0')}-${String(dateObj.getDate()).padStart(2,'0')}`;
+  return startMMDD<=endMMDD ? (mmdd>=startMMDD && mmdd<=endMMDD) : (mmdd>=startMMDD || mmdd<=endMMDD);
+}
+function inHebrewRange(dateObj, startMMDD, endMMDD){
+  const {m,d} = toFormHebrewMonthDay(dateObj);
+  const cur = `${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  return startMMDD<=endMMDD ? (cur>=startMMDD && cur<=endMMDD) : (cur>=startMMDD || cur<=endMMDD);
+}
+function periodPredicate(periodObj){
+  if(!periodObj || periodObj.type==='all_year') return ()=>true;
+  if(periodObj.type==='gregorian') return (d)=> (periodObj.ranges||[]).some(r=>inGregorianRange(d,r.start,r.end));
+  if(periodObj.type==='hebrew') return (d)=> (periodObj.ranges||[]).some(r=>inHebrewRange(d,r.start,r.end));
+  if(periodObj.type==='school_year') return (d)=> !(d.getMonth()+1===7 || d.getMonth()+1===8); // ספטמבר-יוני
+  if(periodObj.type==='yeshiva') return (d)=> getZmanInfo(d).zman!==null; // חורף+קיץ+אלול, זהה ל-getZmanInfo
+  return ()=>true;
+}
+
+function formImportToSeasonStats(json){
+  // לכל צרכן: מחשבים חיתוך (לא איחוד!) בין הגבלות מיקום/קטגוריה/שורה — רמה יכולה רק לצמצם, לא להרחיב
+  const consumers=[];
+  (json.locations||[]).forEach(loc=>{
+    (loc.consumers||[]).forEach(c=>{
+      const f=c.fields||{};
+      const unitPowerW = f.power || f.power_per_meter || f.nominal_power || 0;
+      const qty = f.qty || 1;
+      const usageFraction = f.usage_avg ? (f.usage_avg/60) : 1;
+      const avgDrawKw = (unitPowerW/1000)*qty*usageFraction;
+      if(avgDrawKw<=0) return;
+      const days = intersectSets(expandFormDays(loc.locDays||c.locDays), expandFormDays(c.catDays), expandFormDays(c.days));
+      const hours = intersectSets(expandFormHours(loc.locHours||c.locHours), expandFormHours(c.catHours), expandFormHours(c.hours));
+      const predLoc = periodPredicate(c.locPeriods), predCat = periodPredicate(c.catPeriods), predRow = periodPredicate(c.periods);
+      consumers.push({ avgDrawKw, days, hours, pred:(d)=>predLoc(d)&&predCat(d)&&predRow(d) });
+    });
+  });
+
+  // סימולציית שנה מלאה (שנה נוכחית כשנת ייחוס), יום-יום, כדי לשקלל נכון תקופות/ימי-שבוע/עונות תעריף גם יחד
+  const year = new Date().getFullYear();
+  const dailyPeak = { winter:[], summer:[], transition:[] };
+  let cursor = new Date(year,0,1);
+  const end = new Date(year,11,31);
+  while(cursor<=end){
+    const dow = cursor.getDay();
+    let dayTotals = { winter:0, summer:0, transition:0 };
+    for(const c of consumers){
+      if(!c.days.has(dow) || !c.pred(cursor)) continue;
+      for(let h=0; h<24; h++){
+        if(!c.hours.has(h)) continue;
+        const dt = new Date(cursor.getFullYear(),cursor.getMonth(),cursor.getDate(),h);
+        const {season,isPeak} = classifyHour(dt);
+        if(isPeak) dayTotals[season] += c.avgDrawKw;
+      }
+    }
+    for(const s of ['winter','summer','transition']){
+      if(dayTotals[s]>0) dailyPeak[s].push(dayTotals[s]);
+    }
+    cursor.setDate(cursor.getDate()+1);
+  }
+
+  const seasonStats={};
+  for(const season of ['winter','summer','transition']){
+    const arr = dailyPeak[season];
+    seasonStats[season] = { median:median(arr), trimmed:trimmedMean(arr), sampleDays:0 }; // sampleDays=0: זו הערכה הנדסית, לא מדידה
+  }
+  return { seasonStats, applianceCount: consumers.length };
+}
+
+async function processFormImport(){
+  const fileInput = document.getElementById('formImportFile');
+  const status = document.getElementById('formImportStatus');
+  if(!fileInput.files.length){ status.innerHTML='<span class="warn-inline">נא לבחור קובץ.</span>'; return; }
+  status.innerHTML = '<span class="field-note">מעבד קובץ...</span>';
+  try{
+    const raw = await fileInput.files[0].text();
+    const json = await decryptFormFile(raw);
+    const {seasonStats, applianceCount} = formImportToSeasonStats(json);
+    formImportSeasonStats = seasonStats;
+    const cn = (json.clientDetails&&json.clientDetails.name) || 'לא צוין';
+    status.innerHTML = `<span class="ok-inline">✓ נותח בהצלחה (קובץ ${json.formVersion||'?'}). לקוח: ${cn}. ${applianceCount} מכשירים נמצאו. הערכת פסגה יומית — חורף: ${seasonStats.winter.trimmed.toFixed(1)} קוו"ש, קיץ: ${seasonStats.summer.trimmed.toFixed(1)} קוו"ש, מעבר: ${seasonStats.transition.trimmed.toFixed(1)} קוו"ש.</span>`;
+  } catch(err){
+    console.error(err);
+    status.innerHTML = '<span class="warn-inline">שגיאה בקריאת הקובץ — ודא שזהו קובץ שיוצא מהטופס (מוצפן או לא), ושלא נפגם.</span>';
+  }
+}
+let formImportSeasonStats = null;
+
+/* ==========================================================================
+   קלט מפורט: עונה (קיץ/חורף) × סוג יום (חול/שישי־ערב חג/שבת־חג) × טווח שעות
+   ממיר את 12 השדות ל"צריכת פסגה טיפוסית ליום" עבור winter/summer/transition,
+   בהתאם לכללי הפסגה בפועל: בחורף כל סוגי הימים נחשבים פסגה (17-21, 5 שעות),
+   בקיץ רק ימי חול נחשבים פסגה (17-22, 6 שעות) — שישי/שבת/חג הם שפל.
+   עונת המעבר אינה נאספת ישירות ומוערכת כממוצע בין קיץ לחורף (ימי חול, 5 שעות).
+   ========================================================================== */
+function readDetailedInput(){
+  const ids=['d_summer_weekday_peak','d_summer_weekday_day','d_summer_friday_peak','d_summer_friday_day',
+             'd_summer_shabbat_peak','d_summer_shabbat_day','d_winter_weekday_peak','d_winter_weekday_day',
+             'd_winter_friday_peak','d_winter_friday_day','d_winter_shabbat_peak','d_winter_shabbat_day'];
+  const v={};
+  let anyFilled=false;
+  for(const id of ids){
+    const el=document.getElementById(id);
+    const num=parseFloat(el.value);
+    v[id]=isNaN(num)?0:num;
+    if(!isNaN(num) && num>0) anyFilled=true;
+  }
+  if(!anyFilled) return null;
+  return v;
+}
+function detailedSeasonStats(){
+  const v = readDetailedInput();
+  if(!v) return null;
+  const WIN_HOURS = 5, SUM_HOURS = 6, TRANS_HOURS = 5; // שעות פסגה בפועל לכל עונה
+
+  // חורף: כל שלושת סוגי הימים הם פסגה (אנומליית חורף/שבת) — ממוצע משוקלל 5 ימי חול : 1 שישי : 1 שבת
+  const winterWeekdayKwh = v.d_winter_weekday_peak * WIN_HOURS;
+  const winterFridayKwh  = v.d_winter_friday_peak  * WIN_HOURS;
+  const winterShabbatKwh = v.d_winter_shabbat_peak * WIN_HOURS;
+  const winterTypical = (5*winterWeekdayKwh + 1*winterFridayKwh + 1*winterShabbatKwh) / 7;
+
+  // קיץ: רק ימי חול נחשבים פסגה (שישי מ-17:00 ואילך, ושבת/חג — שפל)
+  const summerTypical = v.d_summer_weekday_peak * SUM_HOURS;
+
+  // מעבר: לא נאסף ישירות — נאמד כממוצע בין קצב יום-החול של חורף וקיץ, על 5 שעות פסגה
+  const transitionRate = (v.d_winter_weekday_peak + v.d_summer_weekday_peak) / 2;
+  const transitionTypical = transitionRate * TRANS_HOURS;
+
+  return {
+    winter:     { median:winterTypical,    trimmed:winterTypical,    sampleDays:0 },
+    summer:     { median:summerTypical,    trimmed:summerTypical,    sampleDays:0 },
+    transition: { median:transitionTypical,trimmed:transitionTypical,sampleDays:0 },
+    _raw:v
+  };
+}
+
+/* ==========================================================================
+   מנוע ההמלצה — לולאת אופטימיזציה
+   ========================================================================== */
+function runRecommendation(){
+  const p0 = +document.getElementById('p0').value || 0;
+  const urbanEligible = document.getElementById('urbanEligible').checked;
+  const azimuth = +document.getElementById('azimuth').value;
+  const shading = +document.getElementById('shading').value || 1;
+  const effectiveYieldPerKwp = CFG.panel.yieldPerKwp * azimuth * shading; // ← אזימוט/הצללה משפיעים כעת גם כאן, לא רק בסימולציית התצוגה
+  const roofArea = parseFloat(document.getElementById('roofArea').value);
+  const connLimit = parseFloat(document.getElementById('connLimit').value);
+  const budget = parseFloat(document.getElementById('budget').value);
+  const propType = document.getElementById('propType').value;
+  const consMode = document.getElementById('consMode').value;
+
+  if(!roofArea && !connLimit){ alert('נא להזין שטח גג פנוי או הספק חיבור מקסימלי — לפחות אחד מהשניים.'); return; }
+
+  // ---- טווח חיפוש לגודל הסולארי ----
+  const maxByRoof = roofArea ? roofArea/CFG.panel.m2PerKwp : Infinity;
+  const maxByConn = connLimit || Infinity;
+  const maxByBudget = budget ? budget/CFG.panel.capexPerKwp : Infinity;
+  const maxKwp = Math.min(maxByRoof, maxByConn, maxByBudget, CFG.tiers.p630-p0);
+  if(!isFinite(maxKwp) || maxKwp<1){ alert('לא ניתן לגזור גודל מערכת מהנתונים שהוזנו.'); return; }
+  const minKwp = Math.min(3, maxKwp);
+
+  // ---- שלב א-ג: מצא גודל סולארי מיטבי (ללא אגירה) ----
+  let bestPv=null;
+  for(let kwp=minKwp; kwp<=maxKwp+1e-9; kwp+=1){
+    const k=Math.min(kwp,maxKwp);
+    const tariff = calcTariff(p0, p0+k, false);
+    const result = buildCashflow(k, 0, tariff, 0, urbanEligible, effectiveYieldPerKwp);
+    const meaningfullyBetter = !bestPv || (result.irr!==null && (bestPv.result.irr===null || result.irr>bestPv.result.irr+0.005));
+    const tiedButMoreProfit = bestPv && result.irr!==null && bestPv.result.irr!==null && Math.abs(result.irr-bestPv.result.irr)<=0.005 && result.totalProfit>bestPv.result.totalProfit;
+    if(meaningfullyBetter || tiedButMoreProfit) bestPv={ kwp:k, tariff, result };
+    if(k>=maxKwp) break;
+  }
+
+  // ---- נתוני צריכה (לצורך אגירה) ----
+  let seasonStats=null, consConfidence='low';
+  if(consMode==='csv' && csvSeasonStats){ seasonStats=csvSeasonStats; consConfidence='high'; }
+  else if(consMode==='formImport' && formImportSeasonStats){ seasonStats=formImportSeasonStats; consConfidence='formImport'; }
+  else if(consMode==='detailed'){
+    const ds = detailedSeasonStats();
+    if(ds){ seasonStats=ds; consConfidence='detailed'; }
+  }
+  else if(consMode==='manual'){
+    const annual = parseFloat(document.getElementById('annualConsumption').value);
+    if(annual>0){ seasonStats=genericSeasonStats(annual, propType); consConfidence='mid'; }
+  }
+
+  // ---- שלב ד-ה: מצא גודל אגירה מיטבי (אם יש נתוני צריכה) ----
+  let bestBat=null, batTariff=null;
+  let shabbatMeta = null;
+  if(seasonStats){
+    batTariff = calcTariff(p0, p0+bestPv.kwp, true);
+    const minInjection = bestPv.kwp*CFG.battery.minInjectionPerKwp;
+    const directInjection = bestPv.kwp*CFG.battery.directInjectionPerKwp;
+    const gapKwhPerYear = Math.max(0, minInjection-directInjection);
+    let floorBatKwh = gapKwhPerYear>0 ? gapKwhPerYear/115 : 0; // מקדם המרה משוער מתוך המקור
+
+    // --- מנגנון גיבוי שבת/חג (אם סומן) ---
+    const shabbatBackupNeeded = document.getElementById('shabbatBackupNeeded').checked;
+    let winterDaysForArbitrage = CFG.tou.winter.days;
+    let shabbatBackupKwh = 0;
+    if(shabbatBackupNeeded){
+      const backupLoad = parseFloat(document.getElementById('shabbatBackupLoad').value) || 0;
+      const SHABBAT_HOURS = 25.5; // ממוצע שנתי משוער, משקיעת שישי ועד כ-40 דק' אחרי שקיעת שבת
+      shabbatBackupKwh = backupLoad * SHABBAT_HOURS;
+      // ימי חול בלבד תורמים לארביטראז' בחורף: 5/7 מהשבוע, פחות חגי חורף שאינם שישי/שבת
+      const winterHolidayWeekdays = [...HOLIDAYS].filter(h=>{
+        const parts=h.split('-'); const m=+parts[1];
+        const hDate=new Date(+parts[0],m-1,+parts[2]);
+        return (m===12||m===1||m===2) && hDate.getDay()!==5 && hDate.getDay()!==6;
+      }).length;
+      winterDaysForArbitrage = Math.max(0, Math.round(CFG.tou.winter.days*5/7) - winterHolidayWeekdays);
+      floorBatKwh = Math.max(floorBatKwh, shabbatBackupKwh);
+      shabbatMeta = { backupLoad, shabbatBackupKwh, winterDaysForArbitrage, winterHolidayWeekdays };
+    }
+
+    const typicalPeakDaily = Math.max(seasonStats.winter.trimmed, seasonStats.summer.trimmed, seasonStats.transition.trimmed);
+    const ceilBatKwh = Math.max(floorBatKwh*1.2, typicalPeakDaily*1.5, 10);
+
+    const perKwh = batteryValuePerKwh(batTariff, bestPv.kwp, shabbatBackupNeeded ? winterDaysForArbitrage : null);
+    const step = Math.max(1, Math.round((ceilBatKwh-floorBatKwh)/20));
+
+    for(let bkwh=Math.max(floorBatKwh,1); bkwh<=ceilBatKwh+1e-9; bkwh+=step){
+      const usable = bkwh*CFG.battery.dod*(1-CFG.battery.dischargeLoss);
+      // מגבלת תועלת: לא ניתן לממש יותר ערך מכפי שיש צריכה בפועל לכסות בכל עונה
+      const capW = Math.min(usable, seasonStats.winter.trimmed || usable);
+      const capS = Math.min(usable, seasonStats.summer.trimmed || usable);
+      const capTr = Math.min(usable, seasonStats.transition.trimmed || usable);
+      // ערך ליחידה (₪/קוו"ש מותקן/שנה) מוכפל ביחס הכיסוי בפועל, לכל עונה בנפרד
+      const ratioW = usable>0 ? capW/usable : 0;
+      const ratioS = usable>0 ? capS/usable : 0;
+      const ratioTr = usable>0 ? capTr/usable : 0;
+      const totalAnnualValue = perKwh.netW*bkwh*ratioW + perKwh.netS*bkwh*ratioS + perKwh.netTr*bkwh*ratioTr;
+
+      const result = buildCashflow(bestPv.kwp, bkwh, batTariff, totalAnnualValue, urbanEligible, effectiveYieldPerKwp);
+      const meaningfullyBetterBat = !bestBat || (result.irr!==null && (bestBat.result.irr===null || result.irr>bestBat.result.irr+0.005));
+      const tiedButMoreProfitBat = bestBat && result.irr!==null && bestBat.result.irr!==null && Math.abs(result.irr-bestBat.result.irr)<=0.005 && result.totalProfit>bestBat.result.totalProfit;
+      if(meaningfullyBetterBat || tiedButMoreProfitBat) bestBat={ kwh:bkwh, annualValue:totalAnnualValue, result };
+    }
+  }
+
+  lastRecommendation = {p0, bestPv, bestBat, batTariff, shabbatBackupNeeded: !!shabbatMeta, effectiveYieldPerKwp, urbanEligible};
+  renderResults({p0, urbanEligible, propType, consMode, consConfidence, seasonStats, bestPv, bestBat, batTariff, roofArea, connLimit, budget, shabbatMeta});
+}
+
+/* ==========================================================================
+   הצגת תוצאות + פאנל שקיפות
+   ========================================================================== */
+function fmtMoney(v){ return '₪'+Math.round(v).toLocaleString('en-US'); }
+function fmtPct(v){ return (v!==null && isFinite(v)) ? (v*100).toFixed(1)+'%' : 'לא רווחי בטווח 25 שנה'; }
+
+function renderResults(ctx){
+  const {bestPv, bestBat, consConfidence, consMode} = ctx;
+  document.getElementById('results').style.display='block';
+  document.getElementById('transferToQuoteSection').style.display='block';
+
+  // רמת ביטחון כוללת
+  let confHtml, confClass;
+  if(bestBat && consConfidence==='high'){ confHtml='רמת ביטחון: גבוהה — התבסס על נתוני צריכה שעתיים בפועל (CSV)'; confClass='conf-high'; }
+  else if(bestBat && consConfidence==='detailed'){ confHtml='רמת ביטחון: טובה — התבסס על קלט מפורט לפי עונה וסוג יום שהוזן ידנית'; confClass='conf-high'; }
+  else if(bestBat && consConfidence==='formImport'){ confHtml='רמת ביטחון: בינונית-טובה — התבסס על מצאי מכשירים מטופס איסוף נתונים (הערכה הנדסית, לא מדידה)'; confClass='conf-mid'; }
+  else if(bestBat && consConfidence==='mid'){ confHtml='רמת ביטחון: בינונית — התבסס על פרופיל צריכה טיפוסי (הערכה מסה"כ שנתי)'; confClass='conf-mid'; }
+  else if(!bestBat){ confHtml='רמת ביטחון: המלצת סולארי בלבד — אין נתוני צריכה להמלצת אגירה'; confClass='conf-low'; }
+  document.getElementById('confidenceBadge').innerHTML = `<span class="confidence ${confClass}">${confHtml}</span>`;
+
+  document.getElementById('urbanStatusNote').innerHTML = ctx.urbanEligible
+    ? `✅ כולל פרמיה אורבנית (${(CFG.urban.premium*100).toFixed(0)} אג׳/קוו"ש, ${CFG.urban.years} שנים ראשונות)`
+    : `⛔ ללא פרמיה אורבנית (הלקוח סומן כלא זכאי)`;
+
+  document.getElementById('pv_kwp').textContent = bestPv.kwp.toFixed(1)+' קוט"ט';
+  document.getElementById('pv_tariff').textContent = (bestPv.tariff*100).toFixed(2)+' אג׳/קוו"ש';
+  document.getElementById('pv_cost').textContent = fmtMoney(bestPv.result.capex);
+  document.getElementById('pv_rev').textContent = fmtMoney(bestPv.result.annualYear1);
+  document.getElementById('pv_irr').textContent = fmtPct(bestPv.result.irr);
+  document.getElementById('pv_irr_project').textContent = fmtPct(bestPv.result.irrProject);
+  const paybackPv = bestPv.result.equity>0 && bestPv.result.annualYear1>0 ? (bestPv.result.equity/bestPv.result.annualYear1).toFixed(1)+' שנים' : '—';
+  document.getElementById('pv_payback').textContent = paybackPv;
+
+  const batCard = document.querySelector('.rec-card.bat');
+  if(bestBat){
+    batCard.style.opacity=1;
+    document.getElementById('bat_kwh').textContent = bestBat.kwh.toFixed(0)+' קוו"ש';
+    document.getElementById('bat_cost').textContent = fmtMoney(bestBat.kwh*CFG.battery.capexPerKwh + CFG.battery.inverterCost);
+    document.getElementById('bat_saving').textContent = fmtMoney(bestBat.annualValue);
+    document.getElementById('bat_irr').textContent = fmtPct(bestBat.result.irr);
+    document.getElementById('bat_irr_project').textContent = fmtPct(bestBat.result.irrProject);
+    const bp = bestBat.annualValue>0 ? ((bestBat.kwh*CFG.battery.capexPerKwh+CFG.battery.inverterCost)/bestBat.annualValue).toFixed(1)+' שנים' : '—';
+    document.getElementById('bat_payback').textContent = bp;
+  } else {
+    batCard.style.opacity=.55;
+    document.getElementById('bat_kwh').textContent = 'לא רלוונטי';
+    ['bat_cost','bat_saving','bat_irr','bat_irr_project','bat_payback'].forEach(id=>document.getElementById(id).textContent='—');
+  }
+
+  renderTransparency(ctx);
+  document.getElementById('results').scrollIntoView({behavior:'smooth'});
+}
+
+function renderTransparency(ctx){
+  const {p0, bestPv, bestBat, batTariff, seasonStats, consMode, roofArea, connLimit, budget} = ctx;
+  let html='';
+
+  html += `<div class="step-block"><h4>שלב 1 — תעריף ייצור (סולארי בלבד)</h4>
+    <div class="kv">
+      הספק קיים (P0): <b>${p0} קוט"ט</b> <span class="badge-tag badge-client">נתון לקוח</span><br>
+      הספק שנבחר (P1): <b>${bestPv.kwp.toFixed(1)} קוט"ט</b> <span class="badge-tag badge-client">תוצאה מהאופטימיזציה</span><br>
+      מדרגות תעריף: <code>${(CFG.tiers.t15*100).toFixed(2)} / ${(CFG.tiers.t100_noBat*100).toFixed(2)} / ${(CFG.tiers.t300*100).toFixed(2)} / ${(CFG.tiers.t630*100).toFixed(2)}</code> אג׳ <span class="badge-tag badge-fixed">חוק קבוע</span><br>
+      תעריף משוקלל שהתקבל: <b>${(bestPv.tariff*100).toFixed(2)} אג׳/קוו"ש</b><br>
+      פרמיה אורבנית: <b>${ctx.urbanEligible ? `כן — ${(CFG.urban.premium*100).toFixed(0)} אג׳/קוו"ש בשנים 1–${CFG.urban.years}` : 'לא — הלקוח סומן כלא זכאי'}</b> <span class="badge-tag badge-client">נתון לקוח</span>
+    </div></div>`;
+
+  html += `<div class="step-block"><h4>שלב 2 — מגבלות גודל</h4>
+    <div class="kv">
+      שטח גג: ${roofArea? roofArea+' מ"ר → מקסימום '+(roofArea/CFG.panel.m2PerKwp).toFixed(1)+' קוט"ט' : 'לא הוזן'} <span class="badge-tag badge-client">נתון לקוח</span><br>
+      הספק חיבור: ${connLimit? connLimit+' קוט"ט' : 'לא הוזן'} <span class="badge-tag badge-client">נתון לקוח</span><br>
+      תקציב: ${budget? fmtMoney(budget) : 'ללא הגבלה'} <span class="badge-tag badge-client">נתון לקוח</span><br>
+      נבדקו גדלים מ-3 קוט"ט ועד המגבלה המחמירה מבין השלוש, בקפיצות של 1 קוט"ט, ולכל גודל חושבה תשואה (IRR) מלאה ל-25 שנה "מתחת למכסה המנוע".
+    </div></div>`;
+
+  html += `<div class="step-block"><h4>שלב 3 — בחירת גודל סולארי מיטבי</h4>
+    <div class="kv">
+      נבחר הגודל עם ה-IRR הגבוה ביותר מבין כל הגדלים שנבדקו: <b>${bestPv.kwp.toFixed(1)} קוט"ט</b>, IRR ${fmtPct(bestPv.result.irr)}.
+    </div></div>`;
+
+  if(bestBat){
+    const sourceLabel = consMode==='csv' ? 'קובץ CSV שעתי בפועל'
+                        : consMode==='formImport' ? 'מצאי מכשירים מטופס איסוף נתונים (הערכה הנדסית)'
+                        : consMode==='detailed' ? 'קלט מפורט לפי עונה וסוג יום (הוזן ידנית)'
+                        : 'פרופיל טיפוסי (הערכה מסה"כ שנתי)';
+    html += `<div class="step-block"><h4>שלב 8 — מקור נתוני הצריכה</h4>
+      <div class="kv">
+        מקור: <b>${sourceLabel}</b> <span class="badge-tag badge-client">נתון לקוח / הערכה</span><br>
+        צריכת פסגה טיפוסית ליום — חורף: ${seasonStats.winter.trimmed.toFixed(1)} קוו"ש, קיץ: ${seasonStats.summer.trimmed.toFixed(1)} קוו"ש, מעבר: ${seasonStats.transition.trimmed.toFixed(1)} קוו"ש.
+      </div></div>`;
+
+    if(consMode==='detailed' && seasonStats._raw){
+      const v = seasonStats._raw;
+      html += `<div class="step-block"><h4>פירוט חישוב מהקלט המפורט</h4>
+        <div class="kv">
+          <b>חורף</b> — כל שלושת סוגי הימים נחשבים פסגה (5 שעות, 17:00–21:00), משוקללים ביחס 5 ימי חול : 1 שישי/ערב חג : 1 שבת/חג:<br>
+          &nbsp;&nbsp;ימי חול: ${v.d_winter_weekday_peak||0} קוט"ש/שעה × 5 שעות = ${(v.d_winter_weekday_peak*5).toFixed(1)} קוו"ש<br>
+          &nbsp;&nbsp;שישי/ערב חג: ${v.d_winter_friday_peak||0} קוט"ש/שעה × 5 שעות = ${(v.d_winter_friday_peak*5).toFixed(1)} קוו"ש<br>
+          &nbsp;&nbsp;שבת/חג: ${v.d_winter_shabbat_peak||0} קוט"ש/שעה × 5 שעות = ${(v.d_winter_shabbat_peak*5).toFixed(1)} קוו"ש<br>
+          &nbsp;&nbsp;→ ממוצע משוקלל: <b>${seasonStats.winter.trimmed.toFixed(1)} קוו"ש/יום</b><br><br>
+          <b>קיץ</b> — רק ימי חול נחשבים פסגה (6 שעות, 17:00–23:00); שישי/ערב חג ושבת/חג הם שעות שפל בקיץ ולכן לא נכללים בחישוב הפסגה:<br>
+          &nbsp;&nbsp;ימי חול: ${v.d_summer_weekday_peak||0} קוט"ש/שעה × 6 שעות = <b>${seasonStats.summer.trimmed.toFixed(1)} קוו"ש/יום</b><br><br>
+          <b>מעבר</b> (הוערך, לא הוזן ישירות) — ממוצע קצב יום-החול של חורף וקיץ, על 5 שעות פסגה:<br>
+          &nbsp;&nbsp;(${v.d_winter_weekday_peak||0} + ${v.d_summer_weekday_peak||0}) / 2 × 5 שעות = <b>${seasonStats.transition.trimmed.toFixed(1)} קוו"ש/יום</b><br>
+          <span class="warn-inline">⚠ זו הערכה משוערת בלבד — אם יש אפשרות לקבל נתוני CSV בפועל, מומלץ להעדיף אותם לדיוק גבוה יותר בעונת המעבר.</span><br><br>
+          <i>שדות "9:00–17:00" שהוזנו נשמרים כמידע רקע להמחשת דפוס הצריכה הכולל, ואינם משפיעים כרגע ישירות על חישוב שווי האגירה (שמבוסס על שעות הפסגה בלבד).</i>
+        </div></div>`;
+    }
+
+    const pk = batteryValuePerKwh(batTariff, bestPv.kwp);
+    const tierLabel = bestPv.kwp<=300 ? 'עד 300 קוט"ט' : 'מעל 300 קוט"ט';
+    const transModeLabel = CFG.battery.transitionPeakMode==='source'
+      ? 'כפי שמופיע במקור בפועל (55 אג׳) — ראה הערה'
+      : 'לפי נוסחת הבלנד העקבית (זהה לחורף/קיץ)';
+    html += `<div class="step-block"><h4>שלב 10 — שווי לקוו"ש קיבולת אגירה (חוקי משחק, לא תלוי-לקוח)</h4>
+      <div class="kv">
+        ⚠ <b>חשוב:</b> תעריף הפסגה המשמש כאן <u>אינו</u> תעריף התעו"ז הרשמי (97.74/145.97/42.93 אג'), אלא טבלת "תעריף משלים" נפרדת, התלויה בגודל המערכת. זו נוסחת המקור המדויקת, לא פישוט.<br>
+        גודל המערכת שנבחר (${bestPv.kwp.toFixed(1)} קוט"ט) נמצא במדרגה: <b>${tierLabel}</b> <span class="badge-tag badge-fixed">חוק קבוע</span><br>
+        תעריפי פסגה אפקטיביים לאחר בלנד (${(CFG.battery.externalBlendPct*100).toFixed(0)}% שימוש עצמי חיצוני) — חורף: ${(pk.peakW*100).toFixed(2)} אג׳, קיץ: ${(pk.peakS*100).toFixed(2)} אג׳, מעבר: ${(pk.peakTr*100).toFixed(2)} אג׳ (${transModeLabel})<br>
+        תעריף ייחוס להזרמה עצמית (עם אגירה): <b>${(batTariff*100).toFixed(2)} אג׳</b><br>
+        חיסכון נטו לקוו"ש קיבולת/שנה — חורף: ${pk.netW.toFixed(2)} ₪, קיץ: ${pk.netS.toFixed(2)} ₪, מעבר: ${pk.netTr.toFixed(2)} ₪ <span class="badge-tag badge-fixed">חוק קבוע</span><br>
+        <i>עונת המעבר תלויה מאוד בבחירת המקור (55 אג' מהקובץ מול 37.21 אג' לפי נוסחה עקבית) — בשני המקרים התרומה שולית ביחס לחורף/קיץ, בעיקר בגלל הפסדי היעילות (13% טעינה+פריקה).</i> ניתן לשנות את מקור עונת המעבר בהגדרות (⚙️).
+      </div></div>`;
+
+    html += `<div class="step-block"><h4>שלב 11 — טווח גדלי אגירה שנבדקו</h4>
+      <div class="kv">
+        רצפה רגולטורית (הזרמה מינימלית פחות תרומה ישירה מהפאנלים): מוערכת מנוסחת ההסדרה <span class="badge-tag badge-fixed">חוק קבוע (מקדם המרה משוער)</span><br>
+        תקרה: פי 1.5 מהצריכה הטיפוסית היומית הגבוהה ביותר מבין העונות <span class="badge-tag badge-client">נגזר מנתוני הלקוח</span><br>
+        לכל גודל שנבדק, הערך השנתי הוגבל (capped) לפי כמות הצריכה בפועל שניתן לכסות — לא ניתן "לממש" יותר חיסכון מכפי שיש צריכה לכסות.<br>
+        עלות תפעול שנתית: <b>${CFG.panel.opexPerKwpWithBattery} ₪/קוט"ט</b> (לעומת ${CFG.panel.opexPerKwp} ₪/קוט"ט בסולארי בלבד) — כוללת שירות ותחזוקה מלאים למערכת האגירה. <span class="badge-tag badge-fixed">חוק קבוע</span>
+      </div></div>`;
+
+    if(ctx.shabbatMeta){
+      const sm = ctx.shabbatMeta;
+      html += `<div class="step-block"><h4>גיבוי שבת/חג — השפעה על הגודל והתשואה</h4>
+      <div class="kv">
+        צריכה משוערת בזמן שבת/חג: <b>${sm.backupLoad} קוט"ש/שעה</b> × 25.5 שעות (כניסת שבת עד כ-40 דק' אחרי צאת הכוכבים) = <b>${sm.shabbatBackupKwh.toFixed(0)} קוו"ש</b> נדרשים לגיבוי מלא <span class="badge-tag badge-client">נתון לקוח</span><br>
+        רצפת גודל הסוללה עודכנה כך שלא תפחת מהערך הזה (בנוסף לרצפה הרגולטורית).<br>
+        ימי ארביטראז' אפקטיביים בחורף: <b>${sm.winterDaysForArbitrage}</b> (במקום ${CFG.tou.winter.days}) — מניחים שרק ימי חול תורמים למחזור טעינה/פריקה יומי רגיל, כי בשישי-שבת הקיבולת "תפוסה" בגיבוי ולא זמינה לארביטראז'${sm.winterHolidayWeekdays>0 ? `, בניכוי ${sm.winterHolidayWeekdays} ימי חג בחורף שחלים באמצע השבוע` : ''}. <span class="badge-tag badge-fixed">קירוב סביר, לא סימולציה מדויקת של לוח טעינה</span>
+      </div></div>`;
+    }
+
+
+    html += `<div class="step-block"><h4>שלב 15-16 — שילוב בתזרים המלא ובחירת גודל סופי</h4>
+      <div class="kv">
+        לכל גודל אגירה שנבדק, נבנה תזרים 25 שנה משולב (סולארי+אגירה, כולל שחיקת ${(CFG.battery.degradationPerYear*100).toFixed(1)}%/שנה בערך האגירה), ונבחר הגודל עם ה-IRR המשולב הגבוה ביותר: <b>${bestBat.kwh.toFixed(0)} קוו"ש</b>, IRR ${fmtPct(bestBat.result.irr)}.
+      </div></div>`;
+  } else {
+    html += `<div class="step-block"><h4>אגירה — לא חושבה</h4>
+      <div class="kv">לא הוזנו נתוני צריכה (לא CSV, לא קלט מפורט ולא הערכה שנתית), ולכן לא ניתן לחשב המלצת אגירה אמינה. ניתן לחזור ולהזין נתוני צריכה כדי לקבל המלצה מלאה.</div></div>`;
+  }
+
+  document.getElementById('transparencyBody').innerHTML = html;
+}
+
+/* ==========================================================================
+   גשר למערכת הצעות המחיר (Index.html) — קריאת הקשר קיים בטעינה,
+   וייצוא תוצאות בחזרה באותו מבנה ש-pullDataFromCalculator() שם מצפה לו:
+   { withBat:{capacity,batKwh,totalProfit,irr}, inputs:{roofArea,useStorageShabbat,useStorageHoliday} }
+   ========================================================================== */
+function readUrlParams(){
+  const params = new URLSearchParams(window.location.search);
+  const clientId = params.get('clientId');
+  const roofAreaParam = params.get('roofArea');
+  if(clientId){
+    urlClientId = clientId;
+    document.getElementById('clientConnectionBanner').style.display='block';
+    document.getElementById('clientConnectionBanner').textContent = `🔗 מחובר ללקוח מזהה: ${clientId} — תוצאות שיועברו יגיעו אוטומטית לתיק הלקוח הזה במערכת ההצעות.`;
+  }
+  if(roofAreaParam && !isNaN(parseFloat(roofAreaParam))){
+    document.getElementById('roofArea').value = roofAreaParam;
+  }
+}
+
+function transferDataToQuote(){
+  if(!lastRecommendation || !lastRecommendation.bestPv){
+    document.getElementById('transferStatus').innerHTML = '<span class="warn-inline">יש להריץ "חשב המלצה" לפני העברת תוצאות.</span>';
+    return;
+  }
+  const {bestPv, bestBat, batTariff} = lastRecommendation;
+  // אם יש אגירה מומלצת — משתמשים בתוצאה המשולבת (סולארי+אגירה); אחרת בתוצאת הסולארי בלבד
+  const finalResult = bestBat ? bestBat.result : bestPv.result;
+  const irrPct = finalResult.irr!==null ? (finalResult.irr*100).toFixed(1) : '0';
+
+  const payload = {
+    withBat: {
+      capacity: bestPv.kwp,
+      batKwh: bestBat ? bestBat.kwh : 0,
+      totalProfit: finalResult.totalProfit,
+      irr: irrPct,
+      capex: finalResult.capex,
+      equity: finalResult.equity
+    },
+    inputs: {
+      roofArea: document.getElementById('roofArea').value || '',
+      // המחשבון הזה משתמש בדגל גיבוי-שבת/חג מאוחד אחד (לא שני דגלים נפרדים) — משוקף כאן בשניהם יחד
+      useStorageShabbat: lastRecommendation.shabbatBackupNeeded,
+      useStorageHoliday: lastRecommendation.shabbatBackupNeeded
+    },
+    // הנחות הבסיס בפועל — כדי שמחשבון 2 (עמוד ההדפסה) יוכל לחשב מחדש באופן עצמאי אך עקבי,
+    // ולא רק להציג את התוצאה הסופית כטקסט. אלה בדיוק הנתונים ש-updateCalculations() שם צריכה.
+    rawAssumptions: {
+      weightedTariff: bestBat ? batTariff : bestPv.tariff,     // ₪/קוו"ש, כולל מדרגות
+      yieldPerKwp: lastRecommendation.effectiveYieldPerKwp,     // אחרי אזימוט/הצללה
+      degradationPct: CFG.panel.degradation*100,
+      urbanEligible: lastRecommendation.urbanEligible,
+      urbanPremium: CFG.urban.premium,
+      urbanYears: CFG.urban.years,
+      opexPerKwp: bestBat ? CFG.panel.opexPerKwpWithBattery : CFG.panel.opexPerKwp,
+      batteryAnnualValue0: bestBat ? bestBat.annualValue : 0,   // ערך שנה 1, לפני שחיקה
+      batteryCapex: bestBat ? (bestBat.kwh*CFG.battery.capexPerKwh + CFG.battery.inverterCost) : 0,
+      batteryDegradationPct: CFG.battery.degradationPerYear*100,
+      loanPct: CFG.finance.loanPct*100,
+      loanRatePct: CFG.finance.loanRate*100,
+      loanYears: CFG.finance.loanYears,
+      discountRatePct: CFG.finance.discountRate*100
+    },
+    clientId: urlClientId || null,
+    source: 'rec-calculator-v2',
+    transferredAt: new Date().toISOString()
+  };
+
+  localStorage.setItem('transferredCalcData', JSON.stringify(payload));
+  document.getElementById('transferStatus').innerHTML = urlClientId
+    ? `<span class="ok-inline">✓ הועבר בהצלחה. חזור לכרטיסיית מערכת ההצעות (ללקוח ${urlClientId}) ולחץ שם על "משוך נתונים מהמחשבון".</span>`
+    : `<span class="ok-inline">✓ הועבר בהצלחה. חזור לכרטיסיית מערכת ההצעות ולחץ שם על "משוך נתונים מהמחשבון".</span>`;
+}
+
+readUrlParams();
+onConsModeChange();
+</script>
+</body>
+</html>
