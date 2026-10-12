@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>תכנית השלמה וחיבור — מערכת בראשית סולאר</title>
+<style>
+:root {
+  --bg: #0b0f19; --card: #131a26; --primary: #3b82f6; --accent: #f59e0b;
+  --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --info: #38bdf8;
+  --purple: #a855f7; --text: #f8fafc; --muted: #94a3b8; --border: #1e293b;
+  --mono: 'Consolas', 'Courier New', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.65; padding: 40px 20px 100px; }
+.container { max-width: 1280px; margin: 0 auto; }
+h1 { color: #fff; font-size: 2.3em; margin-bottom: 10px; text-align: center; letter-spacing: -0.02em; }
+h1 small { display: block; font-size: 0.4em; color: var(--muted); font-weight: 400; margin-top: 10px; }
+h2 { color: #fff; font-size: 1.6em; margin: 50px 0 16px; padding-bottom: 12px; border-bottom: 2px solid var(--primary); }
+h2.divider { border-top: 3px solid var(--accent); padding-top: 30px; }
+h3 { color: var(--accent); font-size: 1.2em; margin: 28px 0 10px; }
+h4 { color: #fff; font-size: 1.05em; margin: 16px 0 8px; }
+p { margin-bottom: 14px; text-align: justify; }
+.lead { font-size: 1.05em; color: var(--muted); margin-bottom: 30px; text-align: center; border-right: 4px solid var(--primary); padding-right: 15px; border-left:none;}
+section { background: var(--card); border-radius: 10px; padding: 28px 32px; margin-bottom: 30px; border: 1px solid var(--border); border-top: 4px solid var(--primary); box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+section.crit { border-top-color: var(--danger); }
+section.warn { border-top-color: var(--warning); }
+section.info { border-top-color: var(--info); }
+table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 0.86em; border: 1px solid var(--border); }
+th, td { border: 1px solid var(--border); padding: 10px 12px; text-align: right; vertical-align: top; }
+th { background: rgba(255,255,255,0.03); color: #fff; font-weight: 700; }
+tr:nth-child(even) { background: rgba(255,255,255,0.015); }
+code, .mono { font-family: var(--mono); font-size: 0.92em; background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px; color: #e2e8f0; }
+pre { font-family: var(--mono); font-size: 0.85em; background: #0d1420; border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 12px 0; color: #d1d9e6; direction: ltr; text-align: left; }
+ul, ol { padding-right: 22px; margin-bottom: 14px; }
+li { margin-bottom: 6px; }
+.badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.74em; font-weight: bold; margin-left: 6px; vertical-align: middle; white-space: nowrap; }
+.b-fix     { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.4); }
+.b-crit    { background: rgba(239,68,68,0.18); color: #f87171; border: 1px solid rgba(239,68,68,0.5); }
+.b-warn    { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4); }
+.b-info    { background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.4); }
+.b-decision{ background: rgba(168,85,247,0.18); color: #c4b5fd; border: 1px solid rgba(168,85,247,0.4); }
+.b-minor   { background: rgba(148,163,184,0.15); color: #cbd5e1; border: 1px solid rgba(148,163,184,0.35); }
+.toc { columns: 2; column-gap: 40px; }
+.toc a { color: var(--info); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+.toc li { margin-bottom: 8px; break-inside: avoid; }
+.file-map { display:grid; grid-template-columns: 1fr; gap:10px; margin: 16px 0; }
+.file-row { display:flex; gap:14px; align-items:baseline; padding:10px 14px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; flex-wrap: wrap;}
+.file-row .fname { font-family: var(--mono); font-size:0.82em; color:#fbbf24; flex: 0 0 auto; }
+.file-row .frole { color:#fff; font-weight:600; flex: 0 0 auto; }
+.file-row .fdesc { color: var(--muted); font-size:0.92em; }
+.callout { border-right: 4px solid var(--purple); background: rgba(168,85,247,0.06); padding: 14px 18px; border-radius: 6px; margin: 16px 0; }
+.callout.good { border-right-color: var(--success); background: rgba(34,197,94,0.06); }
+.callout.warn { border-right-color: var(--warning); background: rgba(245,158,11,0.06); }
+.stat-row { display:flex; gap:16px; flex-wrap:wrap; margin: 20px 0; }
+.stat { flex:1; min-width:150px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:16px; text-align:center; }
+.stat .num { font-size:1.8em; font-weight:800; color:#fff; }
+.stat .lbl { font-size:0.8em; color:var(--muted); margin-top:4px; }
+.task { display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-bottom:1px dashed var(--border); }
+.task:last-child{border-bottom:none;}
+.task .box { flex:0 0 auto; width:18px; height:18px; border:2px solid var(--muted); border-radius:4px; margin-top:3px; }
+footer { text-align:center; color:var(--muted); font-size:0.85em; margin-top:40px; }
+a.anchor-back { color:var(--info); font-size:0.8em; text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>תכנית השלמה וחיבור<small>מערכת בראשית סולאר — ניתוח מצב קיים ותכנית עבודה, על בסיס סקירה מלאה של 13 הקבצים שהועלו</small></h1>
+<p class="lead">עברתי על חמשת קבצי המערכת החיה, על code.js, ועל שמונת מסמכי האפיון והביקורת שנלוו אליהם — והצלבתי בין מה שהמסמכים אומרים לבין מה שבאמת כתוב בקוד. המסקנה המרכזית: המערכת הרבה יותר בשלה ממה שהמסמכים לבדם משדרים. חלק ניכר מהבאגים ה"קריטיים" שמתועדים כבר תוקנו בפועל. מה שנשאר הוא רשימה ממוקדת וברורה בהרבה.</p>
+
+<section id="toc">
+<h2 style="margin-top:0; border-top:none;">תוכן העניינים</h2>
+<ul class="toc">
+<li><a href="#sec1">1. תמצית מנהלים</a></li>
+<li><a href="#sec2">2. מיפוי מדויק — איזה קובץ הוא מה</a></li>
+<li><a href="#sec3">3. החדשות הטובות — מה שכבר עובד</a></li>
+<li><a href="#sec4">4. הפערים האמיתיים שנותרו</a></li>
+<li><a href="#sec5">5. תכנית עבודה לפי שלבים</a></li>
+<li><a href="#sec6">6. החלטות פתוחות שרק אתם יכולים להכריע</a></li>
+<li><a href="#sec7">7. סתירות בין המסמכים לבין הקוד בפועל</a></li>
+<li><a href="#sec8">8. נספח — מדריך ניווט מהיר למפתח</a></li>
+</ul>
+</section>
+
+<section id="sec1">
+<h2>1. תמצית מנהלים</h2>
+<p>המערכת בנויה על Google Apps Script + Google Sheets, וכוללת חמישה רכיבים: <b>Form.html</b> (טופס איסוף נתונים ללקוח), <b>Calculator.html</b> (מחשבון עומק ל-25 שנה), <b>Index.html</b> (CRM לאיש המכירות, כולל code.js בצד שרת), <b>PrintQuote.html</b> (מחולל הצעת המחיר), וכלי נלווה עצמאי — <b>עורך תבנית</b> — לתחזוקת התבנית של PrintQuote.</p>
+
+<div class="stat-row">
+<div class="stat"><div class="num">~16</div><div class="lbl">באגים/פערים "קריטיים" שמתועדים במסמכים השונים</div></div>
+<div class="stat"><div class="num">~10</div><div class="lbl">מתוכם — כבר מתוקנים בפועל בקוד שנבדק</div></div>
+<div class="stat"><div class="num">3</div><div class="lbl">פערים שבאמת קריטיים ונשארו פתוחים</div></div>
+<div class="stat"><div class="num">5</div><div class="lbl">החלטות עסקיות שרק אתם יכולים להכריע</div></div>
+</div>
+
+<p>שני דברים בולטים בבדיקה:</p>
+<p><b>ראשית</b> — מסמכי האפיון והביקורת שהעליתם הם תוצר מצטבר של כמה וכמה שיחות עבודה נפרדות (חלקן עם קלוד, חלקן עם ג'מיני), שנכתבו לאורך זמן. חלק מהממצאים בהם כבר טופלו בקוד בגרסה שהעליתם עכשיו, אבל המסמכים עצמם לא תמיד עודכנו בהתאם. הפרק השלישי למטה עובר במפורש על מה שכבר תקין, כדי שלא תשקיעו זמן בתיקון דברים שכבר תוקנו.</p>
+<p><b>שנית</b> — הפער האמיתי המרכזי שנשאר הוא לא "לוגיקה חסרה" אלא <b>חיבורים בין חלונות שנשארו על localStorage</b> במקום על שמירה ישירה לשרת, ועוד כמה נקודות ספציפיות מאוד (מודל מס דו-מסלולי, חיבור נתוני הטופס למחשבון, השלמת נתוני מחירון). זו עבודה ממוקדת בהיקף של שבועות ספורים, לא בנייה מחדש.</p>
+
+<div class="callout warn"><b>הערה חשובה על מה שלא ראיתי:</b> לא הועלה קובץ הגיליון (Google Sheets) עצמו — לא "מחירון" ולא "לקוחות ופרוייקטים". כל מה שכתוב כאן על מבנה הגיליון ותוכנו מבוסס על code.js ועל תיאורי מסמכי האפיון, לא על בדיקה ישירה של הנתונים החיים. מומלץ לאמת את סעיף 4.6 (מחירון) ישירות מול הגיליון.</div>
+</section>
+
+<section id="sec2">
+<h2>2. מיפוי מדויק — איזה קובץ הוא מה</h2>
+<p>שמות הקבצים שהועלו לא תמיד מגלים את תפקידם. הנה המיפוי המדויק שאומתי מול code.js ומול תוכן כל קובץ בפועל:</p>
+<div class="file-map">
+<div class="file-row"><span class="fname">code.js</span><span class="frole">Backend</span><span class="fdesc">— Google Apps Script; <code>doGet(e)</code> מנתב לפי <code>?page=</code> לארבעת הדפים למטה.</span></div>
+<div class="file-row"><span class="fname">מערכת_הצעות_מחיר_וניתוח_אנרגטי...(4).html</span><span class="frole">= Index.html</span><span class="fdesc">ברירת המחדל של doGet. מסך ה-CRM של איש המכירות.</span></div>
+<div class="file-row"><span class="fname">טופס_איסוף_נתוני_צריכת_חשמל...(3).html</span><span class="frole">= Form.html</span><span class="fdesc"><code>?page=form&amp;clientId=X</code>. טופס מילוי-עצמי ללקוח.</span></div>
+<div class="file-row"><span class="fname">מחשבון_כדאיות...CSV (27).html</span><span class="frole">= Calculator.html</span><span class="fdesc"><code>?page=calculator</code>. מחשבון העומק — דיספאץ' שעתי, מס, IRR/NPV ל-25 שנה.</span></div>
+<div class="file-row"><span class="fname">bereshit_solar_quote_final.html</span><span class="frole">= PrintQuote.html</span><span class="fdesc"><code>?page=print</code>. מחולל הצעת המחיר להדפסה/PDF — זה מה שהלקוח בפועל רואה וחותם עליו.</span></div>
+<div class="file-row"><span class="fname">עריכת_תבנית_-_הצעת_מחיר...(1).html</span><span class="frole">כלי נפרד</span><span class="fdesc">לא חלק מ-doGet כלל. "דלת מנהל" חבויה (<code>window.ADMIN_MODE</code>) שנפתחת בתוך עותק מוטמע (base64+iframe) של קובץ ה-PrintQuote. נועד לעריכת התבנית הבסיסית בלבד — לא לשימוש יומיומי.</span></div>
+</div>
+<p>שמונת מסמכי האפיון/הביקורת הנוספים הם תיעוד, לא קוד — חלקם משקפים היסטוריה שכבר נסגרה (ר' סעיף 7).</p>
+</section>
+
+<section id="sec3" class="info">
+<h2>3. החדשות הטובות — מה שכבר עובד</h2>
+<p>לפני הרשימה של מה שחסר — הרשימה של מה שכבר קיים ותקין בקוד, לעומת מה שהביקורות מזהירות מפניו. כדאי לוודא ידנית מול הגיליון החי, אבל ברמת הקוד עצמו הממצאים האלה נבדקו ואומתו:</p>
+
+<h3>במחשבון (Calculator.html)</h3>
+<ul>
+<li><span class="badge b-fix">תוקן</span> מדרגות תעריף ההזרמה (Staircase FIT) — 4 מדרגות, 0.48 / 0.3936 / 0.3437 / 0.2844 ₪, בלי הבאג ההיסטורי שיצר ערכים שליליים כש-P0&gt;15.</li>
+<li><span class="badge b-fix">תוקן</span> מע"מ — 18% (לא 17%), וכיוון החיוב הנכון: פרטי ×1.18, עסק ללא שינוי.</li>
+<li><span class="badge b-fix">תוקן</span> שיעור היוון ל-NPV — 3.5% (לא 5%).</li>
+<li><span class="badge b-fix">תוקן</span> מודל עלות סוללה — 510 ₪/קוט"ש + עלות ממיר קבועה, לא המודל השטוח הישן של 3,500 ₪/קוט"ש.</li>
+<li><span class="badge b-fix">תוקן</span> חישוב השקיעה/שבת — נבנה מחדש כ-<code>estimateSunsetHHMM</code> עם המרת יום יוליאני וטיפול נכון בשעון קיץ ישראלי; לא נמצא זכר לבאג ה"שעות שלמות" הישן של <code>getSunsetLocalDecimal</code>.</li>
+<li><span class="badge b-fix">תוקן</span> פרמיית אורבני — 17 שנה בעקביות בכל מקום שנבדק (מיישב את חוסר הוודאות בין 15/17 שנה שכמה מהמסמכים מציינים).</li>
+</ul>
+
+<h3>ב-CRM (Index.html) וב-code.js</h3>
+<ul>
+<li><span class="badge b-fix">תוקן</span> מנוע החישוב הכפול (<code>calcView</code>) — לא נמצא בקובץ כלל. Index.html מסתמך אך ורק על המחשבון החיצוני, כפי שהחוק הארכיטקטוני דורש.</li>
+<li><span class="badge b-fix">תוקן</span> באג <code>extras-rows</code> מול <code>addons-rows</code> — כל מופעי הקוד שנבדקו עקביים ומשתמשים ב-<code>addons-rows</code>.</li>
+<li><span class="badge b-fix">תוקן</span> בלבול עמודות 24/25 (הערות ניתוח / תמונות לקוח) — <code>oneTimeSetup_v2</code> ב-code.js קובע את הכותרות הנכונות, וההערות בקוד עקביות עם מה שנכתב בפועל.</li>
+<li><span class="badge b-fix">בנוי</span> שיפור 1 (כרטיסיות רכיבי מערכת) — <code>systemCards</code>, <code>activeCardIndex</code>, <code>switchCard</code>, סרגל טאבים — מיושם במלואו, כולל נפילה חכמה לנתונים ישנים ב-<code>getCustomerData</code>.</li>
+<li><span class="badge b-fix">בנוי</span> שיפור 2 (מנוע הצעת שילובים) — שדה <code>inverterPowerTarget</code>, כפתור "הצע שילובים", ועמודה 28 בגיליון — כולם מחוברים ותואמים בין code.js ל-Index.html.</li>
+<li><span class="badge b-fix">תוקן</span> פתיחת המחשבון מה-CRM — <code>openCalculatorWindow()</code> כבר מעביר <code>clientId</code> ו-<code>roofArea</code> כפרמטרי URL, בדיוק כפי שהארכיטקטורה הרצויה דורשת.</li>
+</ul>
+
+<h3>בטופס (Form.html)</h3>
+<ul>
+<li><span class="badge b-fix">מיושם</span> הצפנה היברידית אמיתית — RSA-OAEP (2048 סיביות, SHA-256) + AES-256-GCM. המפתח הפרטי אינו קיים בקובץ הלקוח בשום צורה — רק המפתח הציבורי מוטמע.</li>
+<li><span class="badge b-fix">מיושם</span> היררכיית הגבלות זמן בארבע רמות (כללי → מיקום → קטגוריה → מכשיר) עם חיתוך אמיתי (<code>globalRestriction</code> וברמות המקבילות).</li>
+<li><span class="badge b-fix">מיושם</span> הטופס כבר מייצא <b>סדרה שעתית מוכנה לשימוש</b> (<code>hourlySeries</code>, 8,760 שורות) בתוך <code>buildExportPayload()</code> — לא רק רשימת מכשירים גולמית. זו נקודה חשובה לסעיף 4 למטה.</li>
+</ul>
+
+<h3>במחולל ההצעה (PrintQuote.html)</h3>
+<ul>
+<li><span class="badge b-fix">מיושם</span> — זו התגלית הכי משמעותית בסקירה: הקובץ <b>כבר קורא</b> את <code>data.rawCalculatorData.rawAssumptions</code> (תעריף משוקלל, תפוקה, פחת, פרמיית אורבני, OPEX, תנאי הלוואה, שיעור היוון) ומזין אותם מחדש למנוע הפיננסי החי של הדף עצמו, כדי שיחשב IRR/NPV בעצמו בעקביות מלאה מול המחשבון — זה בדיוק הפער שכמעט כל מסמך אפיון/ביקורת שסקרתי מסמן כ"הפער החמור ביותר" או כ"עדיפות עליונה #1". הוא כבר סגור ברמת הקוד.</li>
+<li><span class="badge b-fix">תוקן</span> — כתובות התמונות ב-<code>DEFAULT_URLS</code> כבר מצביעות לקבצים אמיתיים ב-Google Drive, לא לכתובות example.com placeholder כפי שאחד המסמכים מזהיר.</li>
+</ul>
+<div class="callout good">שימו לב: כל הפריטים למעלה אומתו מול הקוד בפועל (חיפוש טקסטואלי + קריאת קטעי קוד רלוונטיים), לא רק מול תיאור המסמכים. עדיין מומלץ מבחן עשן ידני בדפדפן לפני שמסתמכים על כך שהכל "סגור" סופית.</div>
+</section>
+
+<section id="sec4" class="crit">
+<h2>4. הפערים האמיתיים שנותרו</h2>
+
+<h3>🔴 קריטי — לטפל ראשון</h3>
+
+<h4>4.1 גשר הנתונים בין חלונות עדיין שבור בשתי נקודות מתוך שלוש <span class="badge b-crit">קריטי</span></h4>
+<p>הארכיטקטורה הרצויה (שכל המסמכים מסכימים עליה) היא: לוותר על localStorage להעברת נתונים בין חלונות, ולעבור ל-URL params + <code>google.script.run.saveCustomerData</code>/<code>getCustomerData</code>. בפועל:</p>
+<table>
+<tr><th>כיוון</th><th>סטטוס</th><th>מה קורה בפועל</th></tr>
+<tr><td>Index ← פותח את → Calculator</td><td><span class="badge b-fix">תוקן</span></td><td><code>openCalculatorWindow()</code> מעביר <code>clientId</code>+<code>roofArea</code> ב-URL. תקין.</td></tr>
+<tr><td>Calculator → חוזר אל → Index</td><td><span class="badge b-crit">שבור</span></td><td>Calculator.html כותב רק ל-<code>localStorage.setItem('transferredCalcData', ...)</code>. לא נמצאה שום קריאת <code>google.script.run</code> בקובץ המחשבון כולו. Index קורא בחזרה דרך <code>pullDataFromCalculator()</code> — תלוי לחלוטין בכך שה-localStorage "יעבור" בין החלונות, מה שמדיניות Same-Origin עלולה לחסום בסביבת GAS.</td></tr>
+<tr><td>Index → פותח את → PrintQuote</td><td><span class="badge b-crit">שבור</span></td><td>עדיין אך ורק דרך <code>localStorage.setItem('pendingQuote', ...)</code> ואז <code>window.open(url+"?page=print")</code>. code.js לא מזריק שום <code>clientId</code> ל-PrintQuote (בניגוד ל-'form' שכן מקבל <code>tmpl.clientIdParam</code>) — כך שאין דרך חלופית לשלוף את הנתונים מהשרת אם ה-localStorage נכשל.</td></tr>
+</table>
+<p><b>המשמעות:</b> בדיוק כשה"חיווט" הפנימי הכי מתוחכם (קריאת <code>rawCalculatorData</code> ב-PrintQuote, סעיף 3) כבר קיים — הוא תלוי בצינור העברה שעלול פשוט לא להעביר כלום, באופן לא צפוי ותלוי-דפדפן. זו בדיוק ההגדרה של "באג רנדומלי קשה לאבחון".</p>
+<p><b>מה לעשות:</b> להוסיף ל-code.js פונקציה כמו <code>getCustomerData(clientId)</code> (כבר קיימת בפועל!) ולוודא ששני הכיוונים החסרים משתמשים בה: (א) Calculator שולח <code>google.script.run.saveCustomerData(payload)</code> במקום/בנוסף ל-localStorage לפני סגירה. (ב) PrintQuote מקבל <code>clientId</code> ב-URL (בדיוק כמו Form), וב-<code>window.onload</code> קורא <code>google.script.run.getCustomerData(clientId)</code> כגיבוי אם אין localStorage. אפשר להשאיר את ה-localStorage כ"מסלול מהיר" נוסף ולא למחוק אותו — רק להוסיף את המסלול האמין לצידו.</p>
+
+<h4>4.2 מודל המס הדו-מסלולי לאדם פרטי — עדיין לא מיושם <span class="badge b-crit">קריטי</span></h4>
+<p>בתוך <code>runFinancialModel</code> ב-Calculator.html:</p>
+<pre>if (taxable > CALC_CONSTANTS.privateTaxExemption) 
+    tax = (taxable - CALC_CONSTANTS.privateTaxExemption) * CALC_CONSTANTS.privateTaxRate;</pre>
+<p>זו עדיין נוסחה אחת בלבד (מסלול "פטור נשחק" בעדכון ל-27,900₪/0.10), בדיוק הדפוס שכל שלושת מסמכי הביקורת מסמנים כטעות: חסר לגמרי המסלול השני (10% שטוח מהשקל הראשון, עד תקרה של 120,000₪), וההשוואה בין השניים (המס האמיתי הוא <b>המינימום</b> מבין שני המסלולים). לפי דוח הביקורת המאוחד, הפער הכספי בין המודל הנוכחי לתוצאה הנכונה יכול להגיע לכ-62,500 ₪ ב-NPV לאורך 25 שנה עבור אותו לקוח — לא עניין קוסמטי.</p>
+<p><b>מה לעשות:</b> לחשב את שני המסלולים בכל שנה, ולקחת <code>Math.min(trackExemption, trackFlat)</code>. לפני זה — לאמת את שני הסכומים (27,900 / 120,000) מול רואה חשבון (ר' סעיף 6).</p>
+
+<h4>4.3 אין נתיב אמיתי מהטופס למחשבון <span class="badge b-crit">קריטי</span></h4>
+<p>זו נקודה עדינה יותר משהיא נשמעת בהתחלה, אז הפירוט:</p>
+<ul>
+<li>הטופס מצפין אמיתי (RSA+AES) — וזה <b>תקין ורצוי</b>, לא באג. המשמעות: שום כלי, כולל המחשבון, לא יכול לפענח את הקובץ בלי המפתח הפרטי — וזה בכוונה, כדי שהמפתח הפרטי לא יהיה חשוף בשום קובץ שהלקוח נוגע בו.</li>
+<li>המסמכים מתארים "כלי פענוח" נפרד המיועד לצוות בראשית סולאר בלבד — <b>קובץ כזה לא נמצא בין 13 הקבצים שהועלו.</b> אם הוא קיים במקום אחר, כדאי לוודא זאת; אם לא, הוא צריך להיבנות.</li>
+<li>יש כן שדה ייבוא ב-Calculator.html (<code>clientFileInput</code>, מקבל <code>.json</code>) שמצפה לקובץ <b>לא-מוצפן</b> — אבל הוא קורא ממנו רק את המפתח <code>client</code> (שם/כתובת/טלפון וכו') דרך <code>applyClientDetails()</code>. שם המפתח הזה דווקא <b>כן תואם</b> את מה שהטופס בפועל מייצא (<code>client: state.client</code>) — זו נקודה חיובית קטנה שכדאי לדעת. <b>אבל</b> הוא מתעלם לגמרי מ-<code>rawConsumers</code>, <code>hourlySeries</code>, <code>locationsSummary</code> ו-<code>categoriesSummary</code> — כלומר בדיוק מהנתון שהוא כל הסיפור (פרופיל הצריכה).</li>
+<li><b>חדשות טובות בתוך הפער:</b> הטופס כבר מחשב בעצמו <code>hourlySeries</code> — מערך מוכן של 8,760 שורות <code>{...,kwh}</code>, בדיוק באותה צורה שקובץ CSV מחברת החשמל היה נותן. המשמעות המעשית: המחשבון <b>לא צריך לשחזר</b> את כל מנוע ההיררכיה/לוח השנה העברי בעצמו — הוא רק צריך למפות את <code>hourlySeries</code> לתוך אותו מבנה נתונים פנימי שהוא כבר יודע לקבל מקובצי CSV. זו עבודת מיפוי שדות, לא בניית מנוע מחדש.</li>
+</ul>
+<p><b>מה לעשות:</b> להכריע קודם בהחלטה 1 (סעיף 6) לגבי מודל המשמורת על המפתח הפרטי, ואז להרחיב את <code>clientFileInput</code> כך שיזין גם את <code>hourlySeries</code> (ולא רק את <code>client</code>) לתוך נתיב הקלט הקיים של קובץ-צריכה במחשבון.</p>
+
+<h3>🟡 חשוב</h3>
+<table>
+<tr><th>#</th><th>פער</th><th>איפה</th><th>מה לעשות</th></tr>
+<tr><td>4.4</td><td>יחס שטח גג עדיין 7.5 מ"ר/קוו"ט, לא 5.5 המעודכן</td><td>Calculator.html — <code>roofAreaDisplay</code> וכל מקום שמכפיל ב-7.5</td><td>להחליט מול נתוני הפאנלים האמיתיים במחירון (ר' החלטה 3, סעיף 6) ולעדכן קבוע אחד</td></tr>
+<tr><td>4.5</td><td>מודל Zero Export עדיין לא דינמי — לא נמצא חישוב צריכה-עצמית חלופי כש-<code>zeroExport=true</code>; <code>revSolar</code> מתאפס לגמרי</td><td>Calculator.html — <code>runFinancialModel</code></td><td>לבדוק ידנית ב-UI חי אם קיימת תועלת כלכלית כלשהי מוצגת במצב Zero Export; אם לא — לבנות פונקציה שקושרת בין גודל הסוללה לאחוז הצריכה העצמית, כפי שכל שלושת המסמכים ממליצים</td></tr>
+<tr><td>4.6</td><td>מחירון — מבנה עמודות מוכן, תוכן חלקי</td><td>גיליון Google Sheets "מחירון" (לא נבדק ישירות)</td><td>למלא: 2 פריטי EFORE לא-מזוהים, 2-3 פריטי Absen חלקיים, הספק/שטח אמיתי ל-5 שורות פאנלים גנריות, ונתוני תמחור בכל השורות (לא הוזנו כלל לפי מסמך 03)</td></tr>
+<tr><td>4.7</td><td>תלות Chart.js ב-CDN ללא נפילה מקומית</td><td>Calculator.html + PrintQuote.html</td><td>להטמיע עותק מקומי של הספרייה, או מסך "אין גרפים" מכובד אם הטעינה נכשלת</td></tr>
+<tr><td>4.8</td><td>ייצוא PDF רק דרך <code>window.print()</code> + דיאלוג דפדפן</td><td>PrintQuote.html</td><td>אופציונלי: להטמיע jsPDF/html2pdf ללחיצת-כפתור-אחת, אם התהליך הידני הפך לצוואר בקבוק בפועל</td></tr>
+</table>
+
+<h3>⚪ משני</h3>
+<ul>
+<li><span class="badge b-minor">משני</span> רשימת חגים עבריים בלוח השנה מכסה 2020–2030 בלבד (קשיחה) — מנוע הלוח עצמו אלגוריתמי ותקין, אבל הטבלה עצמה תפוג. שווה תזכורת ליומן ל-2029-2030.</li>
+<li><span class="badge b-minor">משני</span> גרירת דפים בעורך התבנית עובדת רק בדסקטופ; מובייל/טאבלט מוגבלים לכפתורי ▲/▼ — תועד במפורש כמגבלה מקובלת, לא כבאג.</li>
+<li><span class="badge b-minor">משני</span> אין Undo/Redo הדרגתי בעורך התבנית — רק איפוס מלא לנקודת ההתחלה.</li>
+<li><span class="badge b-minor">משני</span> חלק ניכר מהבדיקות שמתועדות בוצעו ברמת קוד/לוגיקה (הדמיית DOM), לא צפייה חזותית מלאה בדפדפן חי — מומלץ סבב QA ידני לפני הרחבת שימוש, בעיקר לגרירה, חתימות דיגיטליות והתנהגות במובייל.</li>
+<li><span class="badge b-minor">משני</span> תיעוד JSDoc חסר ברוב הפונקציות בכל הקבצים.</li>
+<li><span class="badge b-minor">משני</span> ההערה בקוד ב-code.js "(ר' הערת מיגרציה בראש הקובץ)" מופיעה פעמיים ב-<code>saveCustomerData</code>, אך שום הערת מיגרציה כזו לא נמצאת בפועל בראש הקובץ שהועלה — או להוסיף אותה, או להסיר את ההפניה.</li>
+</ul>
+</section>
+
+<section id="sec5">
+<h2>5. תכנית עבודה לפי שלבים</h2>
+
+<h3>שלב א' — ליבה ארכיטקטונית (1–2 שבועות)</h3>
+<div class="task"><div class="box"></div><div>לסגור את שני כיווני ה-localStorage השבורים (סעיף 4.1): להוסיף <code>google.script.run.saveCustomerData</code> מ-Calculator.html, ו-<code>getCustomerData(clientId)</code> מ-PrintQuote.html (עם <code>clientId</code> מוזרק ב-URL כמו ב-Form).</div></div>
+<div class="task"><div class="box"></div><div>ליישם את מודל המס הדו-מסלולי (סעיף 4.2) — אחרי אימות הסכומים מול רו"ח (החלטה 2).</div></div>
+<div class="task"><div class="box"></div><div>להכריע בהחלטה 1 (סעיף 6) לגבי מודל המשמורת על המפתח הפרטי של ההצפנה, כתנאי מקדים לכל עבודה על 4.3.</div></div>
+
+<h3>שלב ב' — חיבורים והשלמת נתונים (2–4 שבועות)</h3>
+<div class="task"><div class="box"></div><div>לבנות את חיבור <code>hourlySeries</code> מהטופס לתוך נתיב קלט-הקובץ הקיים במחשבון (סעיף 4.3), בהתאם להחלטה 1.</div></div>
+<div class="task"><div class="box"></div><div>להשלים את נתוני המחירון: פנייה ל-EFORE ול-Absen לגבי הפריטים החסרים, הכרעה בהחלטה 4 (מגדל סוללות Fox), והזנת מחירים בכל השורות.</div></div>
+<div class="task"><div class="box"></div><div>לבנות את מודל ה-Zero Export הדינמי (סעיף 4.5), אחרי בדיקה ידנית של המצב הנוכחי.</div></div>
+<div class="task"><div class="box"></div><div>להכריע ולעדכן את יחס שטח הגג (סעיף 4.4 / החלטה 3).</div></div>
+
+<h3>שלב ג' — ליטוש (לפי צורך, לא חוסם)</h3>
+<div class="task"><div class="box"></div><div>נפילה מקומית ל-Chart.js או הודעת שגיאה מכובדת (4.7).</div></div>
+<div class="task"><div class="box"></div><div>ייצוא PDF בלחיצה אחת, אם התהליך הידני הנוכחי מפריע בפועל (4.8).</div></div>
+<div class="task"><div class="box"></div><div>הרחבת/החלפת טבלת החגים הקשיחה לפני 2029 (Hebcal API או הרחבת הטבלה).</div></div>
+<div class="task"><div class="box"></div><div>סבב QA ידני מלא בדפדפן חי על ארבעת הדפים — גרירה, חתימות, מובייל.</div></div>
+<div class="task"><div class="box"></div><div>מעבר JSDoc + ניקוי ההפניה התלויה למיגרציה ב-code.js.</div></div>
+</section>
+
+<section id="sec6" class="warn">
+<h2>6. החלטות פתוחות שרק אתם יכולים להכריע</h2>
+<p>אלה לא באגים — הן החלטות עסקיות/אבטחה שאין להן תשובה "נכונה" מבחינה טכנית בלבד:</p>
+
+<h4>החלטה 1 — מי מחזיק את המפתח הפרטי להצפנת הטופס? <span class="badge b-decision">החלטה</span></h4>
+<p><b>אפשרות א':</b> להטמיע את המפתח הפרטי בתוך המחשבון (או כלי פנימי קטן), כדי שהפענוח יקרה אוטומטית קצה-לקצה. פשוט יותר, אך מנמיך את רמת האבטחה שהטופס נבנה סביבה במפורש (המפתח כבר לא "רק אצל בעלי המערכת").<br>
+<b>אפשרות ב':</b> להשאיר את המפתח הפרטי מחוץ לכל קובץ פונה-ללקוח, ולבנות/לאתר כלי פענוח נפרד וייעודי לצוות בלבד (כפי שהמסמכים מתארים) שמוציא JSON גלוי, שמישהו מהצוות מעלה ידנית למחשבון. שומר על מודל האבטחה המקורי, אך מוסיף שלב אנושי.</p>
+
+<h4>החלטה 2 — סכומי המס: 27,900₪ ו-120,000₪ <span class="badge b-decision">החלטה</span></h4>
+<p>שני הסכומים מסומנים במפורש בכמה מהמסמכים כ"לא מאומתים מול רו"ח/פקיד שומה". מומלץ לאמת לפני שמיישמים את התיקון בסעיף 4.2 — יישום מדויק של מספרים שגויים גרוע יותר מהמצב הנוכחי.</p>
+
+<h4>החלטה 3 — יחס שטח גג: 5.5 או 7.5 מ"ר/קוו"ט <span class="badge b-decision">החלטה</span></h4>
+<p>התלוי בפועל הוא הציוד האמיתי במחירון. ברגע שעמודות "מידות" ו"הספק" בקטגוריית הפאנלים ימולאו בנתונים אמיתיים (סעיף 4.6), אפשר לגזור את היחס הנכון מהמוצרים בפועל במקום מקבוע גלובלי אחד.</p>
+
+<h4>החלטה 4 — "מגדל סוללות שלם" (קו CQ7 של Fox) <span class="badge b-decision">החלטה</span></h4>
+<p>האם מותר לחבר כמה "מגדלים" מוכנים-מראש יחד מול ממיר רב-כניסות (מה שידרוש להעלות את "מגבלת ההכפלה" מ-1 למספר גבוה יותר), או שכל שורה נשארת חבילה סגורה כפי שהיא מוגדרת היום? זו החלטת תמחור/עסק, לא סוגיה טכנית.</p>
+
+<h4>החלטה 5 — שם ממיר Fox ("P3" מול "H3") <span class="badge b-minor">כבר הוכרע</span></h4>
+<p>לא באמת פתוחה — כבר הוכרע לשמר "P3" כי זה השם שהחברה עצמה משתמשת בו. מצוין כאן רק כדי שמתכנת עתידי לא "יתקן" את זה שוב בלי לבדוק את ההיסטוריה.</p>
+</section>
+
+<section id="sec7">
+<h2>7. סתירות בין המסמכים לבין הקוד בפועל</h2>
+<p>מכיוון שהמסמכים נכתבו על פני כמה סבבי עבודה, נמצאו כמה מקומות שבהם מסמך אחד סותר מסמך אחר — ובדיקת הקוד בפועל פתרה את הסתירה. מצוין כאן כדי שלא תתבלבלו בין הגרסאות בעתיד:</p>
+<table>
+<tr><th>נושא</th><th>מה מסמך אחד אומר</th><th>מה מסמך אחר / הקוד בפועל אומר</th><th>מי צודק</th></tr>
+<tr><td>הצפנת הטופס</td><td>מסמכי האפיון-על הכלליים מתארים AES-GCM עם מפתח סימטרי קשיח בקוד (<code>BereshitSolarSecureKey...</code>), כמצב v3.0</td><td>מסמך האפיון הייעודי לטופס, והקוד עצמו: RSA-OAEP(2048)+AES-256-GCM היברידי, בלי מפתח פרטי חשוף</td><td><span class="badge b-fix">הקוד בפועל</span> — הצפנה סימטרית נפסלה במפורש כהחלטה, וזה מה שבאמת מיושם</td></tr>
+<tr><td>הגנות אנטי-העתקה בטופס</td><td>מסמך המערכת הכללית (סעיף 8.2) מתאר חסימת קליק-ימני/סימון-טקסט/הדפסה כתכונות קיימות</td><td>מסמך הטופס הייעודי: "נפסלו לגמרי"; הקוד בפועל: אין זכר להן</td><td><span class="badge b-fix">הקוד בפועל</span></td></tr>
+<tr><td>האם PrintQuote קורא תוצאות מחשבון</td><td>כמעט כל מסמך אפיון/ביקורת: "עדיין לא מחובר — מסתמך על טקסט חופשי", מסומן כעדיפות עליונה #1</td><td>הקוד בפועל: כבר קורא <code>rawCalculatorData.rawAssumptions</code> ומחשב מחדש</td><td><span class="badge b-fix">הקוד בפועל</span> — זהו כנראה הפער החשוב ביותר שכבר נסגר</td></tr>
+<tr><td>כתובות תמונות ברירת מחדל</td><td>מסמך המחולל מזהיר שהכתובות עדיין example.com placeholder</td><td>הקוד בפועל: כתובות Google Drive אמיתיות</td><td><span class="badge b-fix">הקוד בפועל</span></td></tr>
+</table>
+<p>המסקנה הכללית: כשיש סתירה בין מסמך "כללי" (שמתאר את המערכת כולה) לבין מסמך ממוקד ברכיב ספציפי, המסמך הממוקד היה בדרך כלל המדויק יותר — וגם קרוב יותר לתאריך העדכון האחרון. לכל ארבע הסתירות שנבדקו כאן, הקוד בפועל תמך בגרסה של המסמך הממוקד.</p>
+</section>
+
+<section id="sec8">
+<h2>8. נספח — מדריך ניווט מהיר למפתח</h2>
+<table>
+<tr><th>קובץ</th><th>חפשו לפי שם</th><th>למה זה רלוונטי</th></tr>
+<tr><td>code.js</td><td><code>doGet</code>, <code>saveCustomerData</code>, <code>getCustomerData</code>, <code>oneTimeSetup_v2</code></td><td>ניתוב, פורמט 28 העמודות, מיגרציית הגיליון</td></tr>
+<tr><td>Index.html</td><td><code>systemCards</code>, <code>runSuggestionEngine</code>, <code>openCalculatorWindow</code>, <code>pullDataFromCalculator</code>, <code>openPrintWindow</code>/<code>pendingQuote</code></td><td>הכרטיסיות, מנוע ההצעות, שתי נקודות ה-localStorage הפתוחות (סעיף 4.1)</td></tr>
+<tr><td>Calculator.html</td><td><code>runFinancialModel</code>, <code>estimateSunsetHHMM</code>, <code>calcStaircaseTariff</code>, <code>clientFileInput</code>, <code>CALC_CONSTANTS</code></td><td>מנוע המס (4.2), חיבור הטופס (4.3), כל הקבועים הפיננסיים</td></tr>
+<tr><td>PrintQuote.html (bereshit_solar_quote_final.html)</td><td><code>DEFAULT_URLS</code>, <code>pendingQuote</code>, <code>rawCalculatorData</code>, <code>ADMIN_MODE</code></td><td>קריאת נתוני המחשבון, הדלת החבויה לעורך התבנית</td></tr>
+<tr><td>Form.html</td><td><code>buildExportPayload</code>, <code>hourlySeries</code>, <code>RSA_PUBLIC_KEY_B64</code>, <code>globalRestriction</code></td><td>מבנה הייצוא המדויק שצריך למפות אל תוך המחשבון</td></tr>
+</table>
+</section>
+
+<footer>נכתב על סמך סקירה מלאה של כל 13 הקבצים שהועלו — 22 ביולי 2026.</footer>
+</div>
+</body>
+</html>

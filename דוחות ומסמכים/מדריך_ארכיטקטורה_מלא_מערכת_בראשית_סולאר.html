@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מדריך ארכיטקטורה מלא — מערכת בראשית סולאר</title>
+<style>
+:root {
+  --bg:#0b0f19; --card:#131a26; --primary:#3b82f6; --accent:#f59e0b;
+  --success:#10b981; --danger:#ef4444; --warning:#f59e0b; --info:#38bdf8;
+  --purple:#a855f7; --text:#f8fafc; --muted:#94a3b8; --border:#1e293b; --mono:'Consolas','Courier New',monospace;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); line-height:1.65; padding:40px 20px 100px; }
+.container { max-width:1320px; margin:0 auto; }
+h1 { color:#fff; font-size:2.2em; text-align:center; letter-spacing:-0.02em; }
+h1 small { display:block; font-size:0.4em; color:var(--muted); font-weight:400; margin-top:10px; }
+h2 { color:#fff; font-size:1.55em; margin:50px 0 16px; padding-bottom:12px; border-bottom:2px solid var(--primary); }
+h3 { color:var(--accent); font-size:1.15em; margin:26px 0 10px; }
+h4 { color:#fff; font-size:1em; margin:16px 0 8px; }
+p { margin-bottom:12px; text-align:justify; }
+.lead { font-size:1.03em; color:var(--muted); margin-bottom:30px; text-align:center; border-right:4px solid var(--primary); padding-right:15px; }
+section { background:var(--card); border-radius:10px; padding:28px 32px; margin-bottom:28px; border:1px solid var(--border); border-top:4px solid var(--primary); box-shadow:0 4px 20px rgba(0,0,0,0.15); }
+section.tool { border-top-color:var(--purple); }
+table { width:100%; border-collapse:collapse; margin:16px 0; font-size:0.84em; border:1px solid var(--border); }
+th, td { border:1px solid var(--border); padding:8px 11px; text-align:right; vertical-align:top; }
+th { background:rgba(255,255,255,0.03); color:#fff; font-weight:700; }
+tr:nth-child(even) { background:rgba(255,255,255,0.015); }
+code, .mono { font-family:var(--mono); font-size:0.9em; background:rgba(255,255,255,0.06); padding:1px 6px; border-radius:4px; color:#e2e8f0; }
+ul, ol { padding-right:22px; margin-bottom:12px; }
+li { margin-bottom:5px; }
+.badge { display:inline-block; padding:2px 7px; border-radius:4px; font-size:0.72em; font-weight:bold; margin-left:5px; vertical-align:middle; white-space:nowrap; }
+.b-fix   { background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.4); }
+.b-new   { background:rgba(168,85,247,0.18); color:#c4b5fd; border:1px solid rgba(168,85,247,0.4); }
+.b-warn  { background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.4); }
+.b-info  { background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.4); }
+.toc { columns:2; column-gap:40px; }
+.toc a { color:var(--info); text-decoration:none; }
+.toc li { margin-bottom:7px; break-inside:avoid; }
+.callout { border-right:4px solid var(--purple); background:rgba(168,85,247,0.06); padding:12px 16px; border-radius:6px; margin:14px 0; font-size:0.94em; }
+.callout.good { border-right-color:var(--success); background:rgba(34,197,94,0.06); }
+.callout.warn { border-right-color:var(--warning); background:rgba(245,158,11,0.06); }
+.fn-group { margin:10px 0 18px; }
+.fn-group h4 { color:var(--info); margin-bottom:6px; }
+.pill { display:inline-block; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:14px; padding:3px 11px; font-size:0.8em; margin:2px; }
+svg text { font-family:'Segoe UI',system-ui,sans-serif; }
+footer { text-align:center; color:var(--muted); font-size:0.85em; margin-top:40px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>מדריך ארכיטקטורה מלא<small>מערכת בראשית סולאר — כל הדפים, כל הפונקציות, וכל חיבור נתונים ביניהם</small></h1>
+<p class="lead">מסמך ייחוס טכני מלא, שנבנה מקריאה ישירה של הקוד (לא רק מהאפיונים) — כולל השינויים שבוצעו בסבב הפיתוח האחרון. מיועד כמפת-דרכים לכל מי שממשיך לפתח את המערכת.</p>
+
+<section>
+<h2 style="margin-top:0;border-top:none;">תוכן העניינים</h2>
+<ul class="toc">
+<li><a href="#sec0">0. תרשים-על של המערכת</a></li>
+<li><a href="#sec1">1. מודל הפריסה (Deployment)</a></li>
+<li><a href="#sec2">2. גיליונות Google Sheets</a></li>
+<li><a href="#sec3">3. code.js — הבקאנד</a></li>
+<li><a href="#sec4">4. Index.html — ה-CRM</a></li>
+<li><a href="#sec5">5. Form.html — טופס הלקוח</a></li>
+<li><a href="#sec6">6. Calculator.html — מחשבון העומק</a></li>
+<li><a href="#sec7">7. PrintQuote.html — מחולל ההצעה</a></li>
+<li><a href="#sec8">8. שני הכלים העצמאיים</a></li>
+<li><a href="#sec9">9. מפות זרימה מקצה-לקצה</a></li>
+<li><a href="#sec10">10. טבלת "מי קורא למי" — הפניה מהירה</a></li>
+<li><a href="#sec11">11. נספח — שינויים מהסבב האחרון</a></li>
+</ul>
+</section>
+
+<section id="sec0">
+<h2 style="margin-top:0;border-top:none;">0. תרשים-על של המערכת</h2>
+<svg viewBox="0 0 1220 560" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#0d1420;border-radius:8px;">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#38bdf8"/></marker>
+    <marker id="arrOld" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#94a3b8"/></marker>
+  </defs>
+  <!-- Backend -->
+  <rect x="500" y="20" width="220" height="60" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+  <text x="610" y="45" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">code.js</text>
+  <text x="610" y="64" text-anchor="middle" fill="#94a3b8" font-size="11">doGet + Sheets API</text>
+
+  <!-- Sheets -->
+  <rect x="500" y="110" width="220" height="55" rx="8" fill="#132a1e" stroke="#10b981" stroke-width="2"/>
+  <text x="610" y="132" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">Google Sheets</text>
+  <text x="610" y="150" text-anchor="middle" fill="#94a3b8" font-size="10">לקוחות ופרוייקטים · מחירון · הגדרות</text>
+  <line x1="610" y1="80" x2="610" y2="110" stroke="#10b981" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Index -->
+  <rect x="500" y="230" width="220" height="60" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+  <text x="610" y="255" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">Index.html (CRM)</text>
+  <text x="610" y="274" text-anchor="middle" fill="#94a3b8" font-size="11">?page= (ברירת מחדל)</text>
+
+  <!-- Form -->
+  <rect x="60" y="230" width="220" height="60" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+  <text x="170" y="255" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">Form.html</text>
+  <text x="170" y="274" text-anchor="middle" fill="#94a3b8" font-size="11">?page=form&amp;clientId=</text>
+
+  <!-- Calculator -->
+  <rect x="940" y="140" width="220" height="60" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+  <text x="1050" y="165" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">Calculator.html</text>
+  <text x="1050" y="184" text-anchor="middle" fill="#94a3b8" font-size="11">?page=calculator</text>
+
+  <!-- PrintQuote -->
+  <rect x="940" y="320" width="220" height="60" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+  <text x="1050" y="345" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">PrintQuote.html</text>
+  <text x="1050" y="364" text-anchor="middle" fill="#94a3b8" font-size="11">?page=print&amp;clientId=</text>
+
+  <!-- Template editor -->
+  <rect x="940" y="420" width="220" height="55" rx="8" fill="#241a2e" stroke="#a855f7" stroke-width="2"/>
+  <text x="1050" y="442" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">עורך תבנית (עצמאי)</text>
+  <text x="1050" y="460" text-anchor="middle" fill="#94a3b8" font-size="10">iframe + base64 של PrintQuote</text>
+  <line x1="1050" y1="380" x2="1050" y2="420" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+  <!-- Decryption tool -->
+  <rect x="60" y="420" width="220" height="55" rx="8" fill="#241a2e" stroke="#a855f7" stroke-width="2"/>
+  <text x="170" y="442" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">כלי פענוח (עצמאי)</text>
+  <text x="170" y="460" text-anchor="middle" fill="#94a3b8" font-size="10">מפתח פרטי RSA, offline</text>
+
+  <!-- Client / Staff -->
+  <rect x="60" y="330" width="220" height="50" rx="25" fill="#0d1420" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="170" y="360" text-anchor="middle" fill="#cbd5e1" font-size="12">👤 לקוח</text>
+
+  <!-- arrows: Index <-> backend -->
+  <line x1="610" y1="230" x2="610" y2="80" stroke="#3b82f6" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="625" y="160" fill="#64748b" font-size="10">saveCustomerData / getCustomerData</text>
+
+  <!-- Index <-> Calculator -->
+  <path d="M720,250 C 830,220 850,190 940,175" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="760" y="205" fill="#38bdf8" font-size="10">URL: clientId, roofArea</text>
+  <path d="M940,190 C 850,240 830,260 720,265" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrOld)"/>
+  <text x="770" y="300" fill="#94a3b8" font-size="10">localStorage + updateCalculatorResults</text>
+
+  <!-- Index <-> PrintQuote -->
+  <path d="M720,275 C 830,300 850,320 940,340" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="775" y="335" fill="#38bdf8" font-size="10">localStorage + URL clientId</text>
+
+  <!-- Form <-> Index (via client, not direct) -->
+  <line x1="170" y1="290" x2="170" y2="330" stroke="#3b82f6" stroke-width="2" marker-end="url(#arr)"/>
+  <path d="M280,255 C 380,255 400,255 500,255" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrOld)"/>
+  <text x="320" y="245" fill="#94a3b8" font-size="10">אין חיבור ישיר (רק getCustomerData לתצוגה)</text>
+
+  <!-- Form -> decryption tool -->
+  <line x1="170" y1="290" x2="170" y2="420" stroke="#a855f7" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="185" y="360" fill="#c4b5fd" font-size="10">JSON.enc (ידני)</text>
+
+  <!-- decryption tool -> Calculator -->
+  <path d="M280,447 C 600,470 850,300 940,190" fill="none" stroke="#a855f7" stroke-width="2" stroke-dasharray="2 3" marker-end="url(#arr)"/>
+  <text x="500" y="490" fill="#c4b5fd" font-size="10">JSON גלוי (העלאה ידנית: "קובץ צריכה")</text>
+
+  <text x="20" y="30" fill="#475569" font-size="10">כחול רציף = URL params · אפור מקווקו = localStorage · סגול = קובץ/העברה ידנית</text>
+</svg>
+</section>
+
+<section id="sec1">
+<h2>1. מודל הפריסה (Deployment)</h2>
+<p>כל המערכת (חוץ משני הכלים העצמאיים) רצה כ-<b>Google Apps Script Web App אחד</b>: פרויקט Apps Script יחיד שמכיל את <code>code.js</code> (בקוד Apps Script זה בפועל קובץ <code>Code.gs</code>) וארבעה קבצי HTML (<code>Index</code>, <code>Form</code>, <code>Calculator</code>, <code>PrintQuote</code>), ומחובר לגיליון Google Sheets אחד עם שלוש לשוניות. הניתוב כולו קורה בפונקציה אחת — <code>doGet(e)</code> — לפי פרמטר ה-URL <code>page</code>:</p>
+<table>
+<tr><th>URL</th><th>קובץ שמוגש</th><th>שיטת הגשה</th></tr>
+<tr><td><code>?page=form&amp;clientId=X</code></td><td>Form.html</td><td><code>createTemplateFromFile</code> + <code>tmpl.clientIdParam</code> (הזרקת שרת)</td></tr>
+<tr><td><code>?page=calculator</code></td><td>Calculator.html</td><td><code>createHtmlOutputFromFile</code> (ללא הזרקת שרת — clientId נקרא מה-URL בצד לקוח)</td></tr>
+<tr><td><code>?page=print&amp;clientId=X</code></td><td>PrintQuote.html</td><td><code>createTemplateFromFile</code> (ללא הזרקה בפועל — clientId נקרא מה-URL בצד לקוח, זהה לדפוס של Calculator)</td></tr>
+<tr><td>(ברירת מחדל, אין page)</td><td>Index.html</td><td><code>createHtmlOutputFromFile</code></td></tr>
+</table>
+<p>שני הקבצים הנוספים — <b>עורך התבנית</b> ו<b>כלי הפענוח</b> — <u>אינם</u> חלק מפריסת ה-Web App הזו כלל. הם קבצי HTML עצמאיים לחלוטין שנפתחים ישירות מהמחשב (לחיצה כפולה), בלי Apps Script ובלי אינטרנט.</p>
+</section>
+
+<section id="sec2">
+<h2>2. גיליונות Google Sheets</h2>
+<h3>2.1 "לקוחות ופרוייקטים" — 29 עמודות</h3>
+<table>
+<tr><th>#</th><th>כותרת בגיליון</th><th>מקור/יעד בקוד</th><th>הערה</th></tr>
+<tr><td>1</td><td><code>ID (מזהה)</code></td><td>clientId</td><td>מפתח החיפוש בכל הפונקציות</td></tr>
+<tr><td>2</td><td><code>שם הלקוח</code></td><td>clientName</td><td></td></tr>
+<tr><td>3</td><td><code>כתובת</code></td><td>clientAddress</td><td></td></tr>
+<tr><td>4</td><td><code>איש קשר</code></td><td>clientContact</td><td></td></tr>
+<tr><td>5</td><td><code>טלפון</code></td><td>clientPhone</td><td></td></tr>
+<tr><td>6</td><td><code>כותרת הפרויקט</code></td><td>projectTitle</td><td></td></tr>
+<tr><td>7</td><td><code>תאריך הצעה</code></td><td>quoteDate</td><td></td></tr>
+<tr><td>8</td><td><code>שטח גג</code></td><td>roofArea</td><td></td></tr>
+<tr><td>9</td><td><code>טופס 4</code></td><td>form4</td><td>ערך "Yes"/"No"</td></tr>
+<tr><td>10</td><td><code>מכסה מחח"י</code></td><td>gridQuota</td><td></td></tr>
+<tr><td>11</td><td><code>מקורות חשמל (JSON)</code></td><td>powerSources</td><td></td></tr>
+<tr><td>12</td><td><code>צרכנים (JSON)</code></td><td>consumers</td><td></td></tr>
+<tr><td>13</td><td><code>הספק פאנלים</code></td><td>panelPower</td><td></td></tr>
+<tr><td>14</td><td><code>קיבולת אגירה</code></td><td>storageCapacity</td><td></td></tr>
+<tr><td>15-19</td><td><code>מצברים / ממירים / פאנלים / התקנה / תוספות</code></td><td>batteries/inverters/panels/installation/extras</td><td><span class="badge b-warn">Legacy</span> כפילות של הכרטיסייה הפעילה בעמודה 26, לתאימות לאחור בלבד</td></tr>
+<tr><td>20</td><td><code>עלות מערכת</code></td><td>totalPrice</td><td></td></tr>
+<tr><td>21</td><td><code>חיסכון שנתי</code></td><td>annualSavings</td><td></td></tr>
+<tr><td>22</td><td><code>תשואה</code></td><td>roi</td><td></td></tr>
+<tr><td>23</td><td><code>רווח מצטבר</code></td><td>profit25</td><td></td></tr>
+<tr><td>24</td><td><code>הערות ניתוח</code></td><td>analysisNotes</td><td>כותרת תוקנה ב-<code>oneTimeSetup_v2</code></td></tr>
+<tr><td>25</td><td><code>תמונות לקוח (JSON)</code></td><td>clientImages</td><td>כותרת תוקנה ב-<code>oneTimeSetup_v2</code></td></tr>
+<tr><td>26</td><td><code>רכיבי מערכת (JSON)</code></td><td>systemCards</td><td>מערך כל הכרטיסיות (שיפור 1)</td></tr>
+<tr><td>27</td><td><code>כרטיסייה פעילה (אינדקס)</code></td><td>activeCardIndex</td><td></td></tr>
+<tr><td>28</td><td><code>עוצמת ממיר נדרשת</code></td><td>inverterPowerTarget</td><td>לסקשן הצעת השילובים (שיפור 2)</td></tr>
+<tr><td>29</td><td><code>נתוני חישוב גולמיים (JSON)</code></td><td>rawCalculatorData</td><td><span class="badge b-new">חדש</span> IRR/NPV/הנחות-יסוד, נוסף בסבב הזה — דורש הרצת <code>oneTimeSetup_v3</code></td></tr>
+</table>
+
+<h3>2.2 "מחירון"</h3>
+<p>עמודות בסיס: <span class="pill">דגם</span><span class="pill">קטגוריה</span><span class="pill">מחיר יחידה (₪)</span><span class="pill">תמונה (זיהוי דינמי לפי שם המכיל "תמונ"/"לוגו"/"image")</span>. עשר עמודות מפרט טכני נוספות (נוספות אוטומטית ע"י <code>oneTimeSetup_v2</code>, אך התוכן בהן צריך מילוי ידני):</p>
+<table>
+<tr><th>קטגוריה רלוונטית</th><th>עמודות</th></tr>
+<tr><td>פאנלים</td><td><span class="pill">מידות</span><span class="pill">הספק</span></td></tr>
+<tr><td>מצברים</td><td><span class="pill">קיבולת</span><span class="pill">מגבלת הכפלה</span><span class="pill">מגבלת שרשור</span><span class="pill">BMS כלול</span></td></tr>
+<tr><td>ממירים</td><td><span class="pill">עוצמה</span><span class="pill">היברידי</span><span class="pill">התאמה למערכת</span></td></tr>
+<tr><td>חוצה-קטגוריות</td><td><span class="pill">קבוצת התאמה</span> (קודי 10/11/20/21/30/31/99)</td></tr>
+</table>
+
+<h3>2.3 "הגדרות"</h3>
+<p>שתי רשימות ערכים: <code>מקורות חשמל</code> (ברירת מחדל: חברת החשמל / חשמל מתחדש / אחר) ו-<code>צרכנים</code> (ברירת מחדל: מזגן / תנור / כביסה / קומפרסור / אחר) — נקראות ע"י <code>getInitialData()</code> וממלאות תפריטים נפתחים ב-Index.html.</p>
+</section>
+
+<section id="sec3">
+<h2>3. code.js — הבקאנד</h2>
+<table>
+<tr><th>פונקציה</th><th>תפקיד</th></tr>
+<tr><td><code>doGet(e)</code></td><td>נקודת הכניסה היחידה. מנתב לפי <code>e.parameter.page</code>.</td></tr>
+<tr><td><code>getWebAppUrl()</code></td><td>מחזירה את כתובת ה-Web App הנוכחית, לשימוש בפתיחת חלונות חדשים (Calculator/PrintQuote).</td></tr>
+<tr><td><code>getInitialData()</code></td><td>המקור לכל הנתונים ש-Index.html טוען פעם אחת בעליית הדף: מחירון מלא (עם המרת תמונות), כל הלקוחות (<code>getDisplayValues</code> — ערכים גולמיים, לא מפוענחים), והגדרות.</td></tr>
+<tr><td><code>convertCellImageToBase64(val)</code></td><td>הופכת אובייקט CellImage של Sheets ל-Data URL base64 להצגה ב-HTML.</td></tr>
+<tr><td><code>getCustomerData(clientId)</code></td><td>שליפת לקוח בודד <b>עם</b> פענוח JSON מלא (כולל נפילה חכמה ל"כרטיסייה 1" ללקוחות ישנים שנוצרו לפני שיפור-הכרטיסיות). זו הפונקציה שנקראת מ-3 מקומות שונים: Form.html (מילוי-מראש), PrintQuote.html (גיבוי localStorage), Calculator.html (גיבוי משיכת תוצאות).</td></tr>
+<tr><td><code>saveCustomerData(payload)</code></td><td>שמירה/עדכון <b>מלא</b> של שורת לקוח (דריסה של 29 עמודות!). נקראת <u>רק</u> מ-Index.html.</td></tr>
+<tr><td><code>updateCalculatorResults(payload)</code> <span class="badge b-new">חדש</span></td><td>עדכון <b>חלקי ובטוח</b> (רק עמודות 20-23+29) — כדי ש-Calculator.html יוכל לשמור ישירות בלי לדרוס שדות אחרים.</td></tr>
+<tr><td><code>getTariffFromCompany()</code></td><td>מחזירה תעריף חברת חשמל קבוע (stub — לא קריאת API אמיתית כרגע).</td></tr>
+<tr><td><code>oneTimeSetup_v2()</code> / <code>oneTimeSetup_v3()</code> <span class="badge b-new">v3 חדש</span></td><td>פונקציות הרצה-חד-פעמית להוספת כותרות עמודות. יש להריץ ידנית מעורך ה-Apps Script (לא מהאתר).</td></tr>
+</table>
+</section>
+
+<section id="sec4">
+<h2>4. Index.html — ה-CRM</h2>
+<p>המסך הראשי שבו איש המכירות בונה הצעת מחיר: פרטי לקוח, מקורות חשמל וצרכנים, כרטיסיות רכיבי מערכת (פאנלים/מצברים/ממירים/התקנה/תוספות לכל כרטיסייה), מנוע הצעת שילובים, וכפתורי פתיחת המחשבון וההדפסה.</p>
+<h3>4.1 משתני מצב מרכזיים</h3>
+<table>
+<tr><th>משתנה</th><th>תפקיד</th></tr>
+<tr><td><code>globalCatalog</code></td><td>המחירון המלא, נטען פעם אחת מ-<code>getInitialData()</code></td></tr>
+<tr><td><code>globalCustomers</code></td><td>כל הלקוחות (ערכים גולמיים לא-מפוענחים!) — משמש לחיפוש/בחירה מקומיים בלי קריאת שרת נוספת</td></tr>
+<tr><td><code>currentClientImages</code></td><td>תמונות הלקוח הנוכחי</td></tr>
+<tr><td><code>systemCards</code> / <code>activeCardIndex</code></td><td>מערך הכרטיסיות ואיזו פעילה כרגע (שיפור 1)</td></tr>
+<tr><td><code>calculatorDataPulled</code></td><td>דגל שמונע מ-<code>calculateAll()</code> (הערכה גסה) לדרוס תוצאות מדויקות שכבר נמשכו מהמחשבון</td></tr>
+<tr><td><code>lastCalculatorRawData</code></td><td>המארז המלא (IRR/NPV/הנחות-יסוד) מהמחשבון האחרון שנמשך — עובר גם לשמירה בשרת (עמודה 29) וגם ל-PrintQuote</td></tr>
+</table>
+<h3>4.2 קבוצות פונקציות</h3>
+<div class="fn-group"><h4>לקוח וחיפוש</h4><span class="pill">resetToNewCustomer</span><span class="pill">isClientSaved</span><span class="pill">handleSearch</span><span class="pill">selectCustomer</span><span class="pill">copyFormLink</span><span class="pill">openConsumerForm</span></div>
+<div class="fn-group"><h4>מקורות חשמל / צרכנים</h4><span class="pill">addNewPowerSourceRow</span><span class="pill">addNewConsumerRow</span><span class="pill">updateSourceDropdowns</span><span class="pill">setPowerSourceRow</span><span class="pill">setConsumerRow</span><span class="pill">importConsumersFromTXT</span><span class="pill">createMultiSelect</span></div>
+<div class="fn-group"><h4>כרטיסיות רכיבי מערכת (שיפור 1)</h4><span class="pill">blankCard</span><span class="pill">syncActiveCardFromDOM</span><span class="pill">renderActiveCardRows</span><span class="pill">calcCardTotal</span><span class="pill">renderTabBar</span><span class="pill">switchCard</span><span class="pill">addCard</span><span class="pill">removeCard</span><span class="pill">renameCard</span><span class="pill">resetSystemCards</span><span class="pill">addNewRow</span><span class="pill">getSectionData</span><span class="pill">setDynamicRow</span></div>
+<div class="fn-group"><h4>מנוע הצעת שילובים (שיפור 2)</h4><span class="pill">syncTwin</span><span class="pill">syncAllSuggestTwins</span><span class="pill">parseCleanPrice</span><span class="pill">parseGroups</span><span class="pill">groupsOverlap</span><span class="pill">suggestPanelOptions</span><span class="pill">suggestBatteryOptions</span><span class="pill">buildInverterSets</span><span class="pill">runSuggestionEngine</span><span class="pill">showSuggestionModal</span><span class="pill">closeSuggestionModal</span><span class="pill">useCombo</span></div>
+<div class="fn-group"><h4>חישוב גס + שמירה</h4><span class="pill">calculateAll</span><span class="pill">saveDataToSheet</span></div>
+<div class="fn-group"><h4>תמונות</h4><span class="pill">uploadClientImage</span><span class="pill">refreshImageDropdowns</span></div>
+<div class="fn-group"><h4>חלונות חיצוניים <span class="badge b-fix">עודכן בסבב זה</span></h4><span class="pill">openPrintWindow</span><span class="pill">openCalculatorWindow</span><span class="pill">pullDataFromCalculator</span><span class="pill">applyCalculatorData</span></div>
+<h3>4.3 חיבורים יוצאים</h3>
+<ul>
+<li><b>→ code.js:</b> <code>getInitialData</code> (עלייה), <code>saveCustomerData</code> (שמירה מלאה), <code>getCustomerData</code> (גיבוי משיכת-מחשבון), <code>getWebAppUrl</code> (לפני פתיחת חלון)</li>
+<li><b>→ Calculator.html:</b> פתיחה עם <code>?page=calculator&amp;clientId=X&amp;roofArea=Y</code></li>
+<li><b>→ PrintQuote.html:</b> פתיחה עם <code>?page=print&amp;clientId=X</code> + <code>localStorage['pendingQuote']</code> + דחיפת <code>updateCalculatorResults</code> ברקע</li>
+</ul>
+</section>
+
+<section id="sec5">
+<h2>5. Form.html — טופס הלקוח</h2>
+<p>טופס מילוי-עצמי (בדרך כלל ע"י הלקוח, לפעמים ע"י טכנאי בשטח) לאיסוף פרופיל צריכת חשמל מפורט: מיקומים ← קטגוריות ← מכשירים, עם הגבלות זמן היררכיות בארבע רמות.</p>
+<h3>5.1 מודל הנתונים — היררכיה בת 4 רמות</h3>
+<p><code>GLOBAL_RESTRICTION</code> (כלל המשק) ← מיקום (<code>newLocation</code>) ← קטגוריה (בתוך מיקום) ← מכשיר (<code>newDevice</code>, <code>newRestriction</code>) — כל רמה יכולה לצמצם (לא להרחיב) את שעות הפעילות שירשה מהרמה שמעליה. תשע קטגוריות מוגדרות מראש (<code>CATEGORIES</code>): <span class="pill">תאורה</span><span class="pill">מיזוג</span><span class="pill">בישול</span><span class="pill">כביסה/ייבוש</span><span class="pill">חימום מים</span><span class="pill">משרד/מחשבים</span><span class="pill">קירור/מקררים</span><span class="pill">מנועים/משאבות</span><span class="pill">אחר</span>, כל אחת עם רשימת דגמים מוכנים (presets) עם הספק (Watt) קבוע.</p>
+<h3>5.2 קבוצות פונקציות</h3>
+<div class="fn-group"><h4>לוח שנה עברי ואסטרונומיה (למניעת שכפול-קוד: implementацию דומה גם ב-Calculator.html — ר' סעיף 6)</h4><span class="pill">dayOfYearUTC</span><span class="pill">israelDST</span><span class="pill">sunsetHourLocal</span><span class="pill">shabbatWindowForWeek</span><span class="pill">dateInMonthDayRange</span><span class="pill">isDateInPeriod</span><span class="pill">isJewishShabbatHourActive</span></div>
+<div class="fn-group"><h4>מנוע הגבלות (4 רמות)</h4><span class="pill">levelHoursForDay</span><span class="pill">activeHoursForDeviceOnDay</span><span class="pill">isRestrictionNarrowed</span><span class="pill">restrictionButtonsHtml</span><span class="pill">handleRestrictionAction</span><span class="pill">getRestrictionTarget</span><span class="pill">afterRestrictionSave</span></div>
+<div class="fn-group"><h4>עריכה ותצוגה (מיקומים/קטגוריות/מכשירים)</h4><span class="pill">renderLocations</span><span class="pill">renderLocationHtml</span><span class="pill">renderCategoryHtml</span><span class="pill">renderDeviceHtml</span><span class="pill">toggleLoc</span><span class="pill">toggleCat</span><span class="pill">getLocation</span><span class="pill">getDevice</span></div>
+<div class="fn-group"><h4>מודלים (ימים/שעות/תקופות)</h4><span class="pill">openDaysModal</span><span class="pill">openHoursModal</span><span class="pill">openPeriodModal</span><span class="pill">monthOptionsHeb</span><span class="pill">renderPeriodExtra</span><span class="pill">openCatalogModal</span></div>
+<div class="fn-group"><h4>חישוב צריכה וסיכומים</h4><span class="pill">calcDeviceAnnualKwh</span><span class="pill">generateHourlySeries</span><span class="pill">daySummary</span><span class="pill">hourSummary</span><span class="pill">periodSummary</span><span class="pill">recalcAllBadges</span></div>
+<div class="fn-group"><h4>פרטי לקוח וחיוב</h4><span class="pill">fillClientFieldsFromState</span><span class="pill">renderClientTypePills</span><span class="pill">renderMonthlyRows</span><span class="pill">fillBillingFieldsFromState</span></div>
+<div class="fn-group"><h4>חיבור לבקאנד <span class="badge b-fix">תוקן בסבב זה</span></h4><span class="pill">tryLoadClientFromAppsScript</span><span class="pill">fetchCustomerData</span></div>
+<div class="fn-group"><h4>ייצוא, הצפנה, שמירה מקומית</h4><span class="pill">buildExportPayload</span><span class="pill">validateBeforeExport</span><span class="pill">scheduleAutosave</span><span class="pill">tryRestoreFromStorage</span><span class="pill">b64ToBuf</span><span class="pill">bufToB64</span></div>
+
+<h3>5.3 ההצפנה — RSA-OAEP + AES-256-GCM היברידי</h3>
+<table>
+<tr><th>שלב</th><th>פרט</th></tr>
+<tr><td>מפתח RSA</td><td>2048 סיביות, SHA-256, פורמט SPKI (הציבורי בלבד מוטבע כ-<code>RSA_PUBLIC_KEY_B64</code>)</td></tr>
+<tr><td>מפתח AES</td><td>256 סיביות, נוצר אקראית לכל שליחה, "עוטף" (מוצפן) ע"י RSA-OAEP עם המפתח הציבורי</td></tr>
+<tr><td>IV</td><td>12 בתים אקראיים לכל שליחה</td></tr>
+<tr><td>קובץ סופי</td><td><code>{fileType:'bereshit-solar-encrypted-v1', iv, encryptedKey, ciphertext}</code> — כולם base64</td></tr>
+<tr><td>שם קובץ</td><td><code>נתוני_צריכה_&lt;שם&gt;_&lt;תאריך&gt;.json.enc</code> (סיומת כפולה!)</td></tr>
+</table>
+<p>אין שום מפתח פרטי בקובץ זה — פענוח אפשרי רק דרך <b>כלי הפענוח העצמאי</b> (סעיף 8.2).</p>
+
+<h3>5.4 פורמט הייצוא (התוכן הגלוי, לפני ההצפנה)</h3>
+<p><code>buildExportPayload()</code> מפיקה: <code>{fileType:'bereshit-solar-consumption-data-v1', version:'1.1', client:{name,phone,address,filledBy,contract,clientType,propertyType,meterType,notes}, billing, globalRestriction, locationsSummary, categoriesSummary:[{locationName,categoryName,deviceCount,annualKwh}], rawConsumers, hourlySeries:[{date,hour,kwh}] (8,760 שורות), annualTotal}</code>.</p>
+
+<h3>5.5 איך נפתח</h3>
+<p><code>?page=form&amp;clientId=X</code> — code.js מזריק <code>tmpl.clientIdParam</code> בצד שרת. אם קיים, <code>tryLoadClientFromAppsScript</code> קוראת ל-<code>fetchCustomerData(id)</code>, שקוראת ל-<code>google.script.run.getCustomerData(id)</code> ומעתיקה שם/טלפון/כתובת (<span class="badge b-fix">תוקן בסבב זה</span> — קודם ציפתה למפתחות אנגליים שלא היו קיימים בתשובה, כך שההעתקה מעולם לא עבדה בפועל).</p>
+</section>
+
+<section id="sec6">
+<h2>6. Calculator.html — מחשבון העומק</h2>
+<p>המחשבון הפיננסי-הנדסי המרכזי: מדרגות תעריף, סימולציית דיספאץ' שעתית לאורך שנה, מודל מס דו-מסלולי, ותזרים/IRR/NPV ל-25 שנה. בנוי כאוסף פונקציות שטוח (לא מבנה מחלקות פורמלי כפי שחלק מהמסמכים ההיסטוריים תיארו כתכנון-על).</p>
+<h3>6.1 קבוצות פונקציות</h3>
+<div class="fn-group"><h4>פיננסי כללי</h4><span class="pill">pmt</span><span class="pill">npvCalc</span><span class="pill">npvAt</span><span class="pill">irrCalc</span></div>
+<div class="fn-group"><h4>לוח שנה עברי, אסטרונומיה, שקיעה (implementация נפרדת מ-Form.html)</h4><span class="pill">hc_isLeap</span><span class="pill">hc_numMonths</span><span class="pill">hc_elapsed</span><span class="pill">hc_delay</span><span class="pill">hc_newYear</span><span class="pill">hc_daysInYear</span><span class="pill">hc_g2j</span><span class="pill">hc_j2h</span><span class="pill">toHebrewDate</span><span class="pill">getZmanInfo</span><span class="pill">hc_noaa</span><span class="pill">hc_sunEvent</span><span class="pill">hc_israelDst</span><span class="pill">estimateSunsetHHMM</span><span class="pill">isKnownHoliday</span> <span class="badge b-warn">טבלת חגים קשיחה 2020-2030</span></div>
+<div class="fn-group"><h4>תעריפים</h4><span class="pill">calcStaircaseTariff</span><span class="pill">openSettingsModal</span><span class="pill">saveTariffSettings</span><span class="pill">classifyHour</span><span class="pill">isPeakHour</span></div>
+<div class="fn-group"><h4>קליטת נתוני צריכה (4 שיטות קלט)</h4><span class="pill">synthesizeFromAnnualTotal</span><span class="pill">synthesizeFromMatrix</span><span class="pill">parseMultimeterRows</span><span class="pill">handleParsedRows</span><span class="pill">ingestDataPoint</span><span class="pill">handleImportedEstimateFile</span> <span class="badge b-fix">תוקן בסבב זה — תמיכה בפורמט האמיתי של הטופס</span><span class="pill">detectGenericColumns</span><span class="pill">onConsumptionModeChange</span></div>
+<div class="fn-group"><h4>סטטיסטיקה</h4><span class="pill">calculateMedian</span><span class="pill">calculateTrimmedMean</span><span class="pill">calculateTopPercentAvg</span><span class="pill">calculateBottomPercentAvg</span><span class="pill">getStats</span></div>
+<div class="fn-group"><h4>ייצור (פאנלים) והצעה</h4><span class="pill">onProductionModeChange</span><span class="pill">syncExistingProductionToP0</span><span class="pill">updateRoofAreaDisplay</span> <span class="badge b-warn">7.5 מ"ר/קוו"ט — טרם עודכן ל-5.5</span><span class="pill">applySuggestedBattery</span><span class="pill">applySuggestedInverterPower</span><span class="pill">findOptimalSystemSize</span><span class="pill">renderRecommendationResults</span><span class="pill">applyRecommendationToManualFields</span></div>
+<div class="fn-group"><h4>סימולציית דיספאץ' שעתית</h4><span class="pill">runBatteryDispatchSimulation</span><span class="pill">renderHourlySimResults</span><span class="pill">renderMonthlyBarChart</span><span class="pill">renderDayChart</span><span class="pill">applySimResultsToCalculator</span><span class="pill">calcBatteryArbitrageRevenue</span></div>
+<div class="fn-group"><h4>מודל פיננסי 25 שנה</h4><span class="pill">runFinancialModel</span> <span class="badge b-fix">תוקן בסבב זה — מס דו-מסלולי</span><span class="pill">displayCalcResults</span><span class="pill">renderCashflowChart</span><span class="pill">buildFinalReport</span><span class="pill">renderFinalReport</span><span class="pill">exportReportToExcel</span></div>
+<div class="fn-group"><h4>גישור לחלון ה-CRM <span class="badge b-fix">עודכן בסבב זה</span></h4><span class="pill">readUrlParamsForQuoteBridge</span><span class="pill">transferDataToQuote</span></div>
+<h3>6.2 קבועים מרכזיים (<code>CALC_CONSTANTS</code>)</h3>
+<p>מדרגות FIT (0.48/0.3936/0.3437/0.2844), מע"מ 18%, שיעור היוון 3.5%, פרמיית אורבני 6% ל-17 שנה, <code>privateTaxExemption:27900</code>, <code>privateTaxRate:0.10</code>, <code>privateTaxFlatCap:120000</code> <span class="badge b-new">נוסף בסבב זה</span>, החלפות ציוד (ממיר שנה 14, סוללה שנה 15).</p>
+<h3>6.3 איך נפתח ואיך שומר</h3>
+<p>נפתח מ-Index.html עם <code>?page=calculator&amp;clientId=X&amp;roofArea=Y</code>. בסיום, <code>transferDataToQuote()</code> כותבת ל-<code>localStorage['transferredCalcData']</code> <b>וגם</b> (אם יש clientId) קוראת ל-<code>google.script.run.updateCalculatorResults</code> <span class="badge b-new">מסלול חדש</span> — ערוץ עצמאי שלא תלוי בהעברת ה-localStorage בין החלונות.</p>
+</section>
+
+<section id="sec7">
+<h2>7. PrintQuote.html — מחולל ההצעה</h2>
+<p>העמוד שהופך לבסוף להצעת המחיר המודפסת/PDF שהלקוח רואה וחותם עליה. בנוי כתבנית עם 10 רכיבי-עמוד מודולריים שאפשר להפעיל/לכבות: <span class="pill">intro</span><span class="pill">why</span><span class="pill">spec</span><span class="pill">components</span><span class="pill">finance</span><span class="pill">payment</span><span class="pill">warranty</span><span class="pill">exclusions</span><span class="pill">notes</span><span class="pill">summary</span>.</p>
+<h3>7.1 שני מקורות הנתונים <span class="badge b-new">מסלול שני נוסף בסבב זה</span></h3>
+<table>
+<tr><th>מקור</th><th>מתי פעיל</th><th>איך</th></tr>
+<tr><td>localStorage['pendingQuote']</td><td>ברירת מחדל, מהיר</td><td>Index.html כותב לפני פתיחת החלון; נכשל אם ה-Same-Origin Policy חוסם בין subdomains שונים</td></tr>
+<tr><td>שליפת שרת (<code>getCustomerData</code>)</td><td>גיבוי, רק אם ה-localStorage ריק</td><td><code>mapServerCustomerToQuoteData()</code> ממירה את מפתחות הגיליון העבריים לאותה צורה בדיוק ש-<code>applyQuoteData()</code> כבר יודעת לעבד — קורא <code>clientId</code> מה-URL</td></tr>
+</table>
+<h3>7.2 קבוצות פונקציות</h3>
+<div class="fn-group"><h4>טעינת נתונים <span class="badge b-fix">מבנה חדש בסבב זה</span></h4><span class="pill">finalizeQuoteInit</span><span class="pill">applyQuoteData</span><span class="pill">mapServerCustomerToQuoteData</span></div>
+<div class="fn-group"><h4>מנוע פיננסי פנימי (מחשב מחדש מהנחות-היסוד, לא מציג טקסט חופשי)</h4><span class="pill">npv</span><span class="pill">irr</span><span class="pill">updateCalculations</span><span class="pill">onCostManualInput</span><span class="pill">renderInteractiveCharts</span></div>
+<div class="fn-group"><h4>עורך תבנית משובץ (ADMIN_MODE)</h4><span class="pill">initAdminMode</span><span class="pill">injectAdminRowControls</span><span class="pill">initPageAdminControls</span><span class="pill">initPageDragDropContainer</span><span class="pill">movePageInSidebar</span><span class="pill">addCustomPage</span><span class="pill">injectAdminPanel</span><span class="pill">exportTemplate</span><span class="pill">resetSampleData</span></div>
+<div class="fn-group"><h4>עריכת שדות דינמיים (טבלאות/רשימות בתוך ההצעה)</h4><span class="pill">initDynamicEditors</span><span class="pill">attachRowEditor</span><span class="pill">createField</span><span class="pill">addComponentRow</span><span class="pill">addPlanRow</span><span class="pill">addWarrantyRow</span><span class="pill">addExclusionRow</span><span class="pill">addPaymentRow</span><span class="pill">recomputePaymentCumulative</span></div>
+<div class="fn-group"><h4>תמונות וחתימה דיגיטלית</h4><span class="pill">updateImageSrc</span><span class="pill">uploadImage</span><span class="pill">injectLogo</span><span class="pill">initSignaturePad</span><span class="pill">clearSignature</span></div>
+<div class="fn-group"><h4>תצוגה/עימוד</h4><span class="pill">syncAllPreviewFields</span><span class="pill">toggleSec</span><span class="pill">setCheckboxState</span><span class="pill">applySystemType</span><span class="pill">setFinanceMode</span></div>
+</section>
+
+<section id="sec8" class="tool">
+<h2>8. שני הכלים העצמאיים</h2>
+<h3>8.1 עורך תבנית (עריכת_תבנית...html)</h3>
+<p>לא חלק מ-<code>doGet</code>. "דלת מנהל" (<code>window.ADMIN_MODE</code>) שנפתחת בתוך עותק מוטמע (base64) של PrintQuote.html בתוך <code>iframe#quote-frame</code>, עם פאנל ניהול לגרירת עמודים, עריכת תמונות ברירת מחדל, וייצוא תבנית מעודכנת. מיועד לעדכון בסיס העיצוב בלבד, לא לשימוש יומיומי.</p>
+<h3>8.2 כלי פענוח <span class="badge b-new">נבנה בסבב זה</span></h3>
+<p>קובץ HTML עצמאי לחלוטין (לא חלק מ-Web App, לא CDN, לא Google Apps Script) — נפתח ישירות מהמחשב. מטרתו: לפענח קבצי <code>.json.enc</code> שמגיעים מ-Form.html, באמצעות מפתח פרטי RSA שקיים <u>רק</u> בזיכרון הדפדפן ברגע השימוש. פלט: JSON גלוי בפורמט <code>bereshit-solar-consumption-data-v1</code> — מוכן להעלאה ישירה ל-Calculator.html דרך <code>handleImportedEstimateFile</code>.</p>
+</section>
+
+<section id="sec9">
+<h2>9. מפות זרימה מקצה-לקצה</h2>
+
+<h3>9.1 יצירת הצעת מחיר חדשה (מקצה לקצה)</h3>
+<ol>
+<li>איש מכירות פותח את Index.html, ממלא פרטי לקוח ומקורות/צרכנים, לוחץ <b>שמור</b> → <code>saveDataToSheet()</code> → <code>google.script.run.saveCustomerData</code> → שורה חדשה/מעודכנת בגיליון.</li>
+<li>בונה כרטיסיית רכיבי מערכת (פאנלים/מצברים/ממירים) — ידנית או דרך <b>הצע שילובים</b> (<code>runSuggestionEngine</code>).</li>
+<li>לוחץ <b>פתח מחשבון</b> → <code>openCalculatorWindow()</code> → חלון חדש עם <code>?page=calculator&amp;clientId=X&amp;roofArea=Y</code>.</li>
+<li>במחשבון: מזין/מייבא נתוני צריכה, מריץ סימולציית דיספאץ' ומודל פיננסי, לוחץ <b>העבר תוצאות</b> → <code>transferDataToQuote()</code> → localStorage <b>+</b> <code>updateCalculatorResults</code> לשרת.</li>
+<li>חוזר ל-Index.html, לוחץ <b>משוך נתונים מהמחשבון</b> → <code>pullDataFromCalculator()</code> (localStorage, ובגיבוי — שרת) → <code>applyCalculatorData()</code>.</li>
+<li>לוחץ <b>הדפס הצעה</b> → <code>openPrintWindow()</code> → localStorage['pendingQuote'] + <code>updateCalculatorResults</code> לשרת + חלון חדש עם <code>?page=print&amp;clientId=X</code>.</li>
+<li>PrintQuote.html טוען (localStorage, ובגיבוי — שרת דרך <code>mapServerCustomerToQuoteData</code>), מזין הנחות-יסוד למנוע הפנימי, ומציג הצעה מוכנה להדפסה/PDF.</li>
+</ol>
+
+<h3>9.2 טופס לקוח ← פענוח ← מחשבון</h3>
+<ol>
+<li>הלקוח פותח <code>?page=form&amp;clientId=X</code> (קישור שאיש המכירות מעתיק מ-Index.html דרך <code>copyFormLink</code>) — הטופס מנסה למלא-מראש שם/טלפון/כתובת דרך <code>fetchCustomerData</code>.</li>
+<li>הלקוח ממלא מיקומים/קטגוריות/מכשירים, הטופס שומר אוטומטית מקומית (<code>scheduleAutosave</code>).</li>
+<li>בסיום, <code>buildExportPayload()</code> מכינה JSON גלוי, ואז הצפנה (RSA+AES) ← הורדת קובץ <code>...json.enc</code>.</li>
+<li>הלקוח שולח את הקובץ לבראשית סולאר (מייל/וואטסאפ וכו' — מחוץ למערכת).</li>
+<li>איש הצוות פותח את <b>כלי הפענוח</b> (מקומית), טוען מפתח פרטי, מעלה את הקובץ, מפענח, ומוריד JSON גלוי.</li>
+<li>ב-Calculator.html, מעלה את ה-JSON הגלוי דרך שדה "קובץ צריכה" → <code>handleImportedEstimateFile</code> קולטת את <code>hourlySeries</code> ישירות (ללא צורך לשחזר את מנוע ההיררכיה).</li>
+</ol>
+
+<h3>9.3 חיבורים ל-getCustomerData — כל הצרכנים</h3>
+<p>שלושה קבצים שונים קוראים לפונקציה הזו, לצרכים שונים:</p>
+<table>
+<tr><th>קורא</th><th>מתי</th><th>מה נלקח מהתוצאה</th></tr>
+<tr><td>Form.html (<code>fetchCustomerData</code>)</td><td>בעליית הדף, אם הועבר clientId</td><td>שם, טלפון, כתובת בלבד (למילוי מראש)</td></tr>
+<tr><td>Calculator.html (<code>pullDataFromCalculator</code>→fallback)</td><td>אם localStorage ריק</td><td>עמודה 29 (<code>rawCalculatorData</code>)</td></tr>
+<tr><td>PrintQuote.html (<code>mapServerCustomerToQuoteData</code>)</td><td>אם localStorage ריק</td><td>כמעט כל השדות — ממופים לצורת <code>pendingQuote</code></td></tr>
+</table>
+</section>
+
+<section id="sec10">
+<h2>10. טבלת "מי קורא למי" — הפניה מהירה</h2>
+<table>
+<tr><th>מ-</th><th>אל-</th><th>מנגנון</th><th>סטטוס</th></tr>
+<tr><td>Index.html</td><td>code.js</td><td><code>getInitialData</code>, <code>saveCustomerData</code>, <code>getCustomerData</code>, <code>getWebAppUrl</code></td><td><span class="badge b-fix">תקין</span></td></tr>
+<tr><td>Index.html</td><td>Calculator.html</td><td>URL: <code>clientId</code>, <code>roofArea</code></td><td><span class="badge b-fix">תקין</span></td></tr>
+<tr><td>Calculator.html</td><td>Index.html</td><td>localStorage['transferredCalcData'] <b>+</b> <code>updateCalculatorResults</code>→שרת→<code>getCustomerData</code></td><td><span class="badge b-fix">שני מסלולים כעת</span></td></tr>
+<tr><td>Index.html</td><td>PrintQuote.html</td><td>localStorage['pendingQuote'] <b>+</b> URL <code>clientId</code>→<code>getCustomerData</code></td><td><span class="badge b-fix">שני מסלולים כעת</span></td></tr>
+<tr><td>Form.html</td><td>code.js</td><td><code>getCustomerData</code> (קריאה בלבד, למילוי-מראש)</td><td><span class="badge b-fix">תוקן בסבב זה</span></td></tr>
+<tr><td>Form.html</td><td>כלי פענוח</td><td>קובץ <code>.json.enc</code>, ידני</td><td>לפי עיצוב</td></tr>
+<tr><td>כלי פענוח</td><td>Calculator.html</td><td>קובץ JSON גלוי, ידני</td><td><span class="badge b-fix">תוקן בסבב זה</span></td></tr>
+<tr><td>עורך תבנית</td><td>PrintQuote.html</td><td>iframe + base64 (אין תקשורת חיה)</td><td>לפי עיצוב</td></tr>
+</table>
+</section>
+
+<section id="sec11">
+<h2>11. נספח — שינויים מהסבב האחרון</h2>
+<p>לצורך המשכיות: כל תג <span class="badge b-fix">תוקן/עודכן</span> ו-<span class="badge b-new">חדש</span> במסמך זה מתייחס לשינויים שבוצעו באותו סבב עבודה שבו נכתב מסמך זה — עמודה 29 בגיליון, <code>updateCalculatorResults</code>, מודל המס הדו-מסלולי, תיקון <code>handleImportedEstimateFile</code>, תיקון באג <code>selectCustomer</code> (כרטיסיות לא נטענו), שני מסלולי הגיבוי ב-PrintQuote/Calculator, כלי הפענוח, ותיקון <code>fetchCustomerData</code> ב-Form.html. פריטים המסומנים <span class="badge b-warn">עדיין פתוח</span> (טבלת חגים 2020-2030, יחס שטח גג 7.5) טרם טופלו וממתינים להחלטה/עדיפות.</p>
+</section>
+
+<footer>מדריך זה נבנה מקריאה ישירה של קוד המערכת (לא רק ממסמכי אפיון) — 22 ביולי 2026.</footer>
+</div>
+</body>
+</html>

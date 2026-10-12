@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>תכנית פיצול המחשבון ל-3 שלבים — בראשית סולאר</title>
+<style>
+:root {
+  --bg:#0b0f19; --card:#131a26; --primary:#3b82f6; --accent:#f59e0b;
+  --success:#10b981; --danger:#ef4444; --warning:#f59e0b; --info:#38bdf8;
+  --purple:#a855f7; --text:#f8fafc; --muted:#94a3b8; --border:#1e293b; --mono:'Consolas','Courier New',monospace;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); line-height:1.65; padding:40px 20px 100px; }
+.container { max-width:1320px; margin:0 auto; }
+h1 { color:#fff; font-size:2.2em; text-align:center; letter-spacing:-0.02em; }
+h1 small { display:block; font-size:0.4em; color:var(--muted); font-weight:400; margin-top:10px; }
+h2 { color:#fff; font-size:1.55em; margin:50px 0 16px; padding-bottom:12px; border-bottom:2px solid var(--primary); }
+h3 { color:var(--accent); font-size:1.15em; margin:26px 0 10px; }
+h4 { color:#fff; font-size:1em; margin:16px 0 8px; }
+p { margin-bottom:12px; text-align:justify; }
+.lead { font-size:1.03em; color:var(--muted); margin-bottom:30px; text-align:center; border-right:4px solid var(--primary); padding-right:15px; }
+section { background:var(--card); border-radius:10px; padding:28px 32px; margin-bottom:28px; border:1px solid var(--border); border-top:4px solid var(--primary); box-shadow:0 4px 20px rgba(0,0,0,.15); }
+section.stage1 { border-top-color:#38bdf8; }
+section.stage2 { border-top-color:#a855f7; }
+section.stage3 { border-top-color:#10b981; }
+table { width:100%; border-collapse:collapse; margin:16px 0; font-size:.85em; border:1px solid var(--border); }
+th, td { border:1px solid var(--border); padding:9px 12px; text-align:right; vertical-align:top; }
+th { background:rgba(255,255,255,.03); color:#fff; font-weight:700; }
+tr:nth-child(even) { background:rgba(255,255,255,.015); }
+code, .mono { font-family:var(--mono); font-size:.9em; background:rgba(255,255,255,.06); padding:1px 6px; border-radius:4px; color:#e2e8f0; }
+ul, ol { padding-right:22px; margin-bottom:12px; }
+li { margin-bottom:5px; }
+.badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.72em; font-weight:bold; margin-left:5px; vertical-align:middle; white-space:nowrap; }
+.b-s1 { background:rgba(56,189,248,.15); color:#38bdf8; border:1px solid rgba(56,189,248,.4); }
+.b-s2 { background:rgba(168,85,247,.18); color:#c4b5fd; border:1px solid rgba(168,85,247,.4); }
+.b-s3 { background:rgba(34,197,94,.15); color:#4ade80; border:1px solid rgba(34,197,94,.4); }
+.b-new { background:rgba(245,158,11,.15); color:#fbbf24; border:1px solid rgba(245,158,11,.4); }
+.b-q   { background:rgba(239,68,68,.15); color:#f87171; border:1px solid rgba(239,68,68,.4); }
+.toc { columns:2; column-gap:40px; }
+.toc a { color:var(--info); text-decoration:none; }
+.toc li { margin-bottom:7px; break-inside:avoid; }
+.callout { border-right:4px solid var(--purple); background:rgba(168,85,247,.06); padding:12px 16px; border-radius:6px; margin:14px 0; font-size:.94em; }
+.callout.q { border-right-color:var(--danger); background:rgba(239,68,68,.06); }
+.callout.good { border-right-color:var(--success); background:rgba(34,197,94,.06); }
+.flow-box { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:18px 0; }
+.flow-node { background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:10px; padding:12px 18px; font-weight:700; font-size:.92em; text-align:center; }
+.flow-arrow { color:var(--muted); font-size:1.3em; }
+footer { text-align:center; color:var(--muted); font-size:.85em; margin-top:40px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>תכנית פיצול המחשבון לשלושה קבצים<small>מ-Calculator.html אחד (2,897 שורות) לשלושה שלבים מחוברים — מבוסס על מיפוי מלא של הקוד הקיים</small></h1>
+<p class="lead">לפני שכתבתי שורת קוד אחת — מיפיתי כל סקשן, כל פונקציה וכל שדה בקובץ הקיים כדי לדעת בדיוק מה עובר לאן. המסקנה: הפיצול נופל כמעט בטבעיות על גבי המבנה הקיים, עם כמה נקודות שדורשות החלטה שלכם לפני שמתחילים (מסומנות בבירור למטה).</p>
+
+<section>
+<h2 style="margin-top:0;border-top:none;">תוכן העניינים</h2>
+<ul class="toc">
+<li><a href="#sec0">0. עקרון-העל: "שלב 1 = הכל מהעבר"</a></li>
+<li><a href="#sec1">1. מיפוי מדויק: מה עובר לאן</a></li>
+<li><a href="#sec2">2. ארכיטקטורת הניתוב בין שלושת הקבצים</a></li>
+<li><a href="#sec3">3. סכימת נתונים חדשה (עמודות + JSON)</a></li>
+<li><a href="#sec4">4. מנוע איחוד מקורות צריכה (Multi-Source Fusion)</a></li>
+<li><a href="#sec5">5. שני הסליידרים החדשים</a></li>
+<li><a href="#sec6">6. הפרדת נתוני חח"י משאר סוגי הנתונים</a></li>
+<li><a href="#sec7">7. כפתורי "המשך" בדף הלקוח (Index.html)</a></li>
+<li><a href="#sec8">8. החלטות פתוחות שנדרשות לפני מימוש</a></li>
+<li><a href="#sec9">9. סדר עבודה מוצע</a></li>
+</ul>
+</section>
+
+<section id="sec0">
+<h2 style="margin-top:0;border-top:none;">0. עקרון-העל: "שלב 1 = הכל מהעבר"</h2>
+<p>כפי שהגדרתם: <b>שלב 1 מכיל אך ורק נתונים שכבר קיימים/קרו</b> — צריכה בפועל, ייצור בפועל (אם יש מערכת קיימת), והרגלי צריכה בשבתות שכבר התרחשו. <b>שלב 2 הוא הרגע שבו המערכת מתחילה "להסתכל קדימה"</b> — כמה לבנות, לאן זה מוביל. <b>שלב 3 הוא התרגום לשקלים</b>. חלוקה זו פותרת בעיה אמיתית בקובץ הנוכחי: היום "נתוני ייצור" (בסעיף 1) ו"נתוני גג ותשתית" (בסעיף 2) משתמשים באותה נוסחת ייצור (הספק × זווית × הצללה) פעם לתיאור מערכת <u>קיימת</u> (מהעבר) ופעם לתכנון מערכת <u>חדשה</u> (לעתיד) — בלי הפרדה ברורה. הפיצול לשלבים מכריח את ההפרדה הזו להיות מפורשת.</p>
+<div class="flow-box">
+<div class="flow-node" style="border-color:#38bdf8;">שלב 1<br><small>ניתוח והעשרת צריכה+ייצור (מהעבר)</small></div>
+<div class="flow-arrow">◀</div>
+<div class="flow-node" style="border-color:#a855f7;">שלב 2<br><small>המלצת גודל מערכת (קדימה)</small></div>
+<div class="flow-arrow">◀</div>
+<div class="flow-node" style="border-color:#10b981;">שלב 3<br><small>פיננסי + הצעת מחיר</small></div>
+</div>
+</section>
+
+<section id="sec1" class="stage1">
+<h2>1. מיפוי מדויק: מה עובר לאן</h2>
+<p>הטבלה הבאה ממפה כל סקשן/שדה <b>קיים בקוד בפועל</b> (עם שם המשתנה/הפונקציה האמיתי) ליעדו החדש:</p>
+<table>
+<tr><th>תוכן קיים היום</th><th>איפה בקובץ הנוכחי</th><th>יעד</th><th>הערה</th></tr>
+<tr><td>פרטי לקוח + 3 שיטות קלט צריכה (קובץ/מטריצה/שנתי+סוג נכס) + דוחות שעתי/יומי/פסגה</td><td>סעיף "1. ניתוח נתוני צריכה", שורות 128-330</td><td><span class="badge b-s1">שלב 1</span></td><td>הליבה של שלב 1 — ר' סעיף 4 למטה לגבי שילוב בין השיטות</td></tr>
+<tr><td>נתוני ייצור <u>קיים</u> (productionModeSelect, existingProductionKw)</td><td>שורות 232-249</td><td><span class="badge b-s1">שלב 1</span></td><td>מתאר מערכת שכבר קיימת = "מהעבר"</td></tr>
+<tr><td>"מצב עבר (עיבוד ה-CSV)" — <code>ignoreMissingShabbat</code></td><td>שורה 495-498 (בתוך סעיף 3 הישן)</td><td><span class="badge b-s1">שלב 1</span></td><td>זה בדיוק "סקשן מצב עבר בשבתות" שביקשתם להעביר</td></tr>
+<tr><td>"צריכה משוערת לשבת" — <code>estShabbatLoad</code></td><td>שורה 518-520</td><td><span class="badge b-s1">שלב 1</span></td><td>יוחלף/יורחב ע"י הסליידר החדש — ר' סעיף 5</td></tr>
+<tr><td>המלצת גודל מערכת (הקופסה הסגולה) + <code>findOptimalSystemSize</code>/<code>renderRecommendationResults</code></td><td>שורה 348-391</td><td><span class="badge b-s2">שלב 2</span></td><td>הליבה של שלב 2</td></tr>
+<tr><td>הספק מבוקש/כיוון/הצללה לגג <u>המערכת המוצעת</u> (<code>calc_targetKw</code>, <code>azimuth</code>, <code>shading</code>)</td><td>שורה 392-411</td><td><span class="badge b-s2">שלב 2</span></td><td>זו הערכת ייצור <u>עתידית</u> למערכת שעוד לא קיימת — שונה מהותית מ"נתוני ייצור קיים" שבשלב 1, גם אם אותה נוסחה בבסיס</td></tr>
+<tr><td>P0, Zero Export, פרמיה אורבנית, תקופת ניתוח, כפתור סימולציית אגירה שעתית</td><td>שורה 412-445</td><td><span class="badge b-s2">שלב 2</span></td><td></td></tr>
+<tr><td>"תכנון לעתיד (תכנון האגירה)" — <code>useStorageShabbat</code>, <code>useStorageHoliday</code>, <code>actualBatteryKwh</code>+"הצע גודל", <code>inverterPowerKw</code>+"חשב לפי 0.2C"</td><td>שורה 500-515 (בתוך סעיף 3 הישן)</td><td><span class="badge b-s2">שלב 2</span></td><td>זה תכנון <u>עתידי</u> של האגירה — נשאר בשלב 2, לא עובר לשלב 1</td></tr>
+<tr><td><code>generatorCost</code></td><td>שורה 521-522</td><td><span class="badge b-s2">שלב 2</span> <span class="badge b-q">לאשר</span></td><td>ר' החלטה פתוחה #1 בסעיף 8</td></tr>
+<tr><td>נתונים פיננסיים ומיסוי + מודל 25 שנה + דוח סופי + ייצוא Excel</td><td>סעיפים 4-5, שורה 526-620</td><td><span class="badge b-s3">שלב 3</span></td><td>ללא שינוי מהותי</td></tr>
+<tr><td><code>transferDataToQuote</code> / חיבור ל-CRM</td><td>סוף הקובץ</td><td><span class="badge b-s3">שלב 3</span></td><td>נשאר המנגנון הסופי היחיד שמזין את Index.html/עמודי 11-12</td></tr>
+</table>
+</section>
+
+<section id="sec2">
+<h2>2. ארכיטקטורת הניתוב בין שלושת הקבצים</h2>
+<p>שלושה קבצי HTML חדשים ב-Apps Script (במקום Calculator.html אחד), עם שמות תפקידיים:</p>
+<table>
+<tr><th>קובץ חדש</th><th>route מוצע ב-code.js</th><th>מחליף</th></tr>
+<tr><td>ConsumptionAnalysis.html</td><td><code>?page=consumption&amp;clientId=X</code></td><td>Calculator.html (חלק 1)</td></tr>
+<tr><td>SystemSizing.html</td><td><code>?page=sizing&amp;clientId=X</code></td><td>Calculator.html (חלק 2)</td></tr>
+<tr><td>FinancialModel.html</td><td><code>?page=finance&amp;clientId=X</code></td><td>Calculator.html (חלק 3)</td></tr>
+</table>
+<p>בכל אחד מהשלושה, בדיוק כמו ב-Calculator.html היום: <code>clientId</code> נקרא מה-URL בצד לקוח (לא צריך הזרקת שרת ב-doGet). מעבר בין שלבים:</p>
+<div class="flow-box">
+<div class="flow-node">כפתור "המשך לשלב הבא"<br><small>בתוך כל קובץ, בתחתית</small></div>
+<div class="flow-arrow">→</div>
+<div class="flow-node">שומר לשרת (עמודה ייעודית)<br><small>+ localStorage כמסלול מהיר</small></div>
+<div class="flow-arrow">→</div>
+<div class="flow-node">פותח את הקובץ הבא<br><small>עם אותו clientId ב-URL</small></div>
+</div>
+<p>הקובץ הבא, בטעינה, מנסה קודם <code>localStorage</code> (מהיר, אותו טאב) ואם ריק — נופל ל-<code>google.script.run.getCustomerData(clientId)</code> ושולף את העמודה הרלוונטית (בדיוק התבנית שכבר קיימת היום ל-PrintQuote/Calculator, ר' המדריך הארכיטקטוני הקודם).</p>
+</section>
+
+<section id="sec3">
+<h2>3. סכימת נתונים חדשה</h2>
+<p>שתי עמודות חדשות בגיליון "לקוחות ופרוייקטים" (30-31), בנוסף לעמודה 29 שכבר קיימת (<code>rawCalculatorData</code>, תוצר שלב 3):</p>
+<table>
+<tr><th>#</th><th>כותרת מוצעת</th><th>תוצר של</th><th>תוכן עיקרי</th></tr>
+<tr><td>30</td><td>נתוני צריכה מועשרים (JSON)</td><td>שלב 1</td><td><code>{dataSources:[{type:'iec_csv'|'json_form'|'annual_property'|'manual_matrix', confidence, annualKwh}], mergedHourlySeries, tariffBreakdown:{winter,summer,transition}×{peak,offpeak}, dailySummary, monthlySummary, shabbatProfile:{pastAvgKwh, upliftPct, source}, existingProductionKwh}</code></td></tr>
+<tr><td>31</td><td>המלצת גודל מערכת (JSON)</td><td>שלב 2</td><td><code>{recommendedPanelsKw, recommendedBatteryKwh, futureGrowthPct, dispatchSimSummary, explanationText, generatedAt}</code></td></tr>
+</table>
+<p>כמו ב-<code>oneTimeSetup_v3</code> הקיימת, תידרש <code>oneTimeSetup_v4()</code> חדשה שמוסיפה רק את הכותרות (30-31), ופונקציית עדכון-חלקי-ובטוח נוספת ב-code.js (<code>saveConsumptionAnalysis</code>, <code>saveSizingRecommendation</code>) — באותה תבנית בדיוק כמו <code>updateCalculatorResults</code> שכבר קיימת: כותבת רק לעמודה הרלוונטית, לא דורסת שורה שלמה.</p>
+</section>
+
+<section id="sec4" class="stage1">
+<h2>4. מנוע איחוד מקורות צריכה (Multi-Source Fusion)</h2>
+<p>זה השינוי המשמעותי ביותר בשלב 1: היום שלוש שיטות הקלט (<code>consumptionModeSelect</code>: קובץ/מטריצה/שנתי+סוג-נכס) הן <b>בלעדיות</b> — בוחרים אחת. אתם מבקשים לאפשר <b>כמה מהן יחד</b> ולשלב אותן לתוצאה מדויקת יותר.</p>
+<h3>4.1 עיצוב מוצע: כרטיסייה לכל מקור, לא בורר יחיד</h3>
+<p>במקום select נעלם, שלוש כרטיסיות (tabs) עצמאיות שכל אחת יכולה להיות "פעילה" בנפרד: <span class="pill">📄 קובץ (חח"י / JSON)</span> <span class="pill">🧮 מטריצה ידנית</span> <span class="pill">🔢 שנתי/חודשי + סוג נכס</span>. כל מקור שממולא מקבל תג "פעיל ✓". שדה "חודשי" חדש מתווסף לכרטיסיית ה"שנתי" (12 תאים אופציונליים, כשמלאים — הם עוקפים את הפיזור העונתי הגנרי לפי סוג-הנכס לגבי אותם חודשים ספציפיים).</p>
+<h3>4.2 אלגוריתם האיחוד המוצע</h3>
+<ol>
+<li><b>אם קיים קובץ חח"י (CSV/Excel אמיתי):</b> הוא ה"אמת" — קובע את הצורה השעתית המדויקת ואת הסכום השנתי. שאר המקורות (אם קיימים) משמשים רק לאימות/אזהרה (למשל: "הסכום השנתי שהזנת ידנית שונה ב-18% מסכום קובץ חח"י — ייתכן שהצריכה גדלה/קטנה מאז").</li>
+<li><b>אם אין קובץ חח"י, אבל יש JSON (מהטופס):</b> ה-JSON נותן צורה שעתית אמיתית ברמת מכשיר (לא הערכה גנרית) — הוא הופך ל"בסיס הצורה" (shape).</li>
+<li><b>אם יש גם מטריצה ידנית וגם שנתי+סוג-נכס (בלי חח"י ובלי JSON):</b> ממזגים לפי משקל-ביטחון: <span class="mono">shape = 0.6×shape(מטריצה) + 0.4×shape(סוג-נכס)</span> — המטריצה מקבלת משקל גבוה יותר כי היא הזנה ישירה של האדם על הצריכה שלו, לעומת התפלגות גנרית לפי סוג-נכס.</li>
+<li><b>הסכום השנתי הסופי (magnitude):</b> מקור-העדיפות הוא (בסדר יורד): חח"י מדוד → סכום ידני מפורש (אם הוזן) → נגזר מה-JSON/מטריצה עצמם.</li>
+<li>לכל שדה בפלט הסופי (עמודה 30) נשמר גם <code>confidence</code> (גבוה/בינוני/נמוך) לפי כמות המקורות שהסכימו, כדי שלב 2/3 (ומי שקורא את הדוח) יֵדעו כמה לסמוך על המספר.</li>
+</ol>
+<div class="callout q"><b>דורש אישור:</b> המשקלים (0.6/0.4) והיררכיית העדיפות למעלה הם הצעה סבירה, לא נוסחה שהתבססה על נתונים אמיתיים — כדאי לאשר אותם מול כמה תיקים אמיתיים לפני שהם נכנסים לקוד.</div>
+</section>
+
+<section id="sec5" class="stage1">
+<h2>5. שני הסליידרים החדשים</h2>
+<h3>5.1 סליידר תוספת צריכה בשבת (שלב 1)</h3>
+<p>מחליף/משלים את <code>estShabbatLoad</code> הקיים. שתי דרכי הזנה זמינות זו-לצד-זו: (א) מספר מוחלט (כפי שקיים היום), או (ב) סליידר "צריכת שבת גבוהה ב-___% מיום חול ממוצע" (טווח סביר: 0%-150%). כאשר נבחר (ב): <span class="mono">estShabbatLoad = avgWeekdayDailyKwh × (1 + slider/100)</span>, כאשר <code>avgWeekdayDailyKwh</code> מחושב אוטומטית מתוך הנתונים המועשרים שכבר נותחו באותו שלב 1.</p>
+<h3>5.2 סליידר גדילת צריכה עתידית (שלב 2)</h3>
+<p>טווח מוצע: 0%-10% לשנה. משפיע על סימולציית האגירה השעתית ועל ההמלצה עצמה — ככל שגדילת הצריכה גבוהה יותר, גודל האגירה/הפאנלים המומלץ גדל בהתאם (כדי לא "לתכנן קטן מדי" למערכת שתשרת גם צריכה עתידית גדולה יותר). הערך (<code>futureGrowthPct</code>) נשמר בעמודה 31 ומועבר גם לשלב 3, שם הוא יכול (אופציונלי, ר' החלטה #3) להשפיע גם על תחזית ה-25 שנה עצמה, לא רק על גודל המערכת.</p>
+</section>
+
+<section id="sec6" class="stage1">
+<h2>6. הפרדת נתוני חח"י משאר סוגי הנתונים</h2>
+<p>ברמת הקוד, ההפרדה כבר קיימת חלקית היום: <code>handleParsedRows</code> (CSV/Excel) מול <code>handleImportedEstimateFile</code> (JSON) הם כבר שני נתיבי-קוד נפרדים לפי סיומת קובץ. מה שחסר: <b>תיוג מפורש שנשמר</b> — היום שתי הצורות "מתמזגות" לאותו מבנה פנימי (<code>hourlyAggregation</code>) בלי לזכור מאיזה מקור הן הגיעו. התיקון: לתייג כל קלט עם <code>dataSources[].type</code> (ר' סכימת עמודה 30 בסעיף 3) - זה גם הבסיס הטכני שמאפשר את מנוע האיחוד בסעיף 4 (כדי לדעת איזה משקל/עדיפות לתת לכל מקור, המערכת חייבת קודם לדעת מאיזה סוג הוא).</p>
+</section>
+
+<section id="sec7">
+<h2>7. כפתורי "המשך" בדף הלקוח (Index.html)</h2>
+<p>היום יש כפתור אחד "פתח מחשבון". הוא יוחלף בלוגיקה שבודקת אילו עמודות (29/30/31) כבר מלאות עבור הלקוח הנוכח, ומציגה את הכפתור המתאים:</p>
+<table>
+<tr><th>מצב (לפי עמודות שמלאות)</th><th>כפתור מוצג</th><th>פותח</th></tr>
+<tr><td>אין עמודה 30</td><td>"התחל ניתוח צריכה"</td><td><code>?page=consumption&amp;clientId=X</code></td></tr>
+<tr><td>30 מלאה, 31 ריקה</td><td>"המשך להמלצת גודל מערכת" (+ "ערוך ניתוח צריכה" משני)</td><td><code>?page=sizing&amp;clientId=X</code></td></tr>
+<tr><td>31 מלאה, 29 ריקה/ישנה</td><td>"המשך למודל פיננסי" (+ "ערוך המלצת גודל" משני)</td><td><code>?page=finance&amp;clientId=X</code></td></tr>
+<tr><td>כל השלושה מלאות</td><td>"פתח מודל פיננסי" + "התחל ניתוח מחדש" (משני, לרענון)</td><td>לפי בחירה</td></tr>
+</table>
+<p>הלוגיקה הזו נכתבת ב-<code>selectCustomer</code>/<code>saveDataToSheet</code> הקיימות ב-Index.html (שכבר קוראות/כותבות את שאר העמודות) — לא נדרש מנגנון חדש, רק תנאים נוספים על עמודות 30/31.</p>
+</section>
+
+<section id="sec8">
+<h2>8. החלטות פתוחות שנדרשות לפני מימוש</h2>
+<h4>החלטה 1 — מיקום <code>generatorCost</code> <span class="badge b-q">לאשר</span></h4>
+<p>הצעתי שלב 2 (כי הוא תומך בהחלטת גודל-הסוללה מול חלופת גנרטור), אבל אפשר לטעון גם לשלב 3 (כי זה בסופו של דבר קלט פיננסי). זה שדה בודד — קל להעביר בכל שלב שתבחרו.</p>
+<h4>החלטה 2 — משקלי מנוע האיחוד (סעיף 4.2) <span class="badge b-q">לאשר</span></h4>
+<p>המשקלים 0.6/0.4 והיררכיית העדיפות הם הצעה הנדסית סבירה, לא כלל שנבדק. מומלץ לבחון מול 2-3 תיקי לקוחות אמיתיים עם יותר ממקור נתונים אחד.</p>
+<h4>החלטה 3 — האם גדילת הצריכה העתידית (5.2) משפיעה גם על שלב 3 <span class="badge b-q">לאשר</span></h4>
+<p>הצעתי לתת לזה השפעה אופציונלית גם על תחזית ה-25 שנה (לא רק על גודל המערכת בשלב 2) — אבל זה מגדיל מורכבות במודל הפיננסי הקיים. אם לא נדרש כרגע, אפשר להשאיר את ההשפעה רק על שלב 2 ולדחות את זה לשלב מאוחר יותר.</p>
+<h4>החלטה 4 — יחס שטח-גג (7.5→5.5) <span class="badge b-warn">מהתכנית הקודמת, עדיין פתוח</span></h4>
+<p>מוזכר שוב כי שלב 2 (שם נמצא <code>calc_targetKw</code>/<code>roofAreaDisplay</code>) הוא בדיוק המקום שבו זה ייכנס לתוקף.</p>
+</section>
+
+<section id="sec9">
+<h2>9. סדר עבודה מוצע</h2>
+<ol>
+<li><b>תשתית משותפת:</b> עמודות 30-31 + <code>oneTimeSetup_v4</code> + <code>saveConsumptionAnalysis</code>/<code>saveSizingRecommendation</code> ב-code.js.</li>
+<li><b>שלב 1 (ConsumptionAnalysis.html):</b> פיצול הקוד הקיים + מנוע האיחוד (סעיף 4) + סליידר שבת (5.1) + תיוג מקורות (6). זה החלק המורכב ביותר.</li>
+<li><b>שלב 2 (SystemSizing.html):</b> פיצול הקוד הקיים + סליידר גדילה (5.2). קורא את פלט שלב 1 (עמודה 30) בטעינה.</li>
+<li><b>שלב 3 (FinancialModel.html):</b> כמעט זהה לחלק הפיננסי הקיים היום, רק קורא clientId+עמודה 31 בטעינה במקום את כל הקלטים הידניים.</li>
+<li><b>Index.html:</b> כפתורי ה"המשך" המותנים (סעיף 7).</li>
+<li>בדיקת קצה-לקצה: לקוח חדש → שלב 1 → שלב 2 → שלב 3 → הצעת מחיר, ובנפרד: פתיחה חוזרת של לקוח קיים באמצע התהליך (למשל אחרי שלב 1 בלבד) כדי לוודא שכפתורי ה"המשך" מזהים נכון איפה עצרנו.</li>
+</ol>
+</section>
+
+<footer>תכנית זו מבוססת על מיפוי שורה-אחר-שורה של Calculator.html הקיים (2,897 שורות) — לא הערכה כללית.</footer>
+</div>
+</body>
+</html>
