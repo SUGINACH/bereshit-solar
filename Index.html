@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת הצעות מחיר וניתוח אנרגטי - בראשית סולאר</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&family=Assistant:wght@400;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+          --navy:#12283F; --navy-2:#1A3A5F; --navy-3:#2454A0;
+          --orange:#F39C12; --orange-2:#D9820A;
+          --green:#1E8449; --green-bg:#E9F7EF;
+          --red:#C0392B; --red-bg:#FBEAE8;
+          --amber-bg:#FDF3DE;
+          --sky:#2C7DA0; --sky-bg:#E3F2F8;
+          --paper:#F0F3F8; --card:#FFFFFF;
+          --ink:#1B2430; --ink-soft:#5B6472; --ink-faint:#8993A3;
+          --line:#DFE4EC; --line-strong:#C7CFDB;
+          --radius:16px; --radius-sm:10px;
+          --font:'Heebo','Assistant',sans-serif;
+          --font-mono:'JetBrains Mono',monospace;
+          --shadow-sm:0 1px 3px rgba(18,40,63,.08);
+          --shadow-md:0 10px 30px rgba(18,40,63,.16);
+          /* תאימות לאחור לשמות המשתנים הישנים ששימשו את שאר הכלל */
+          --primary: var(--navy-2); --secondary: var(--orange); --success: var(--green); --bg: var(--paper); --white: var(--card); --border: var(--line);
+        }
+        * { box-sizing: border-box; }
+        body { font-family: var(--font); background-color: var(--paper); margin: 0; padding: 20px; color: var(--ink); }
+        .container { max-width: 1100px; margin: auto; }
+
+        /* ===== כותרת עליונה — "לוח הבקרה" ===== */
+        .top-bar {
+          display: flex; align-items: center; gap: 20px; color: #fff; margin-bottom: 28px;
+          padding: 18px 26px; border-radius: var(--radius);
+          background: radial-gradient(700px 260px at 12% -30%, rgba(243,156,18,.25), transparent 60%),
+                      linear-gradient(150deg, var(--navy) 0%, var(--navy-2) 55%, #0d5a8c 150%);
+          box-shadow: var(--shadow-md);
+        }
+        .top-bar::before { content:"☀️ בראשית סולאר"; font-weight:800; font-size:14.5px; white-space:nowrap; opacity:.92; }
+        .btn-plus { background: var(--orange); color: white; border: none; width: 46px; height: 46px; border-radius: 50%; font-size: 26px; cursor: pointer; box-shadow: 0 4px 10px rgba(243,156,18,.4); transition: .15s; flex: 0 0 auto; }
+        .btn-plus:hover { background: var(--orange-2); transform: translateY(-1px); }
+        .search-container { flex-grow: 1; position: relative; }
+        .search-container input { width: 100%; padding: 12px 16px; border-radius: 999px; border: none; font-family: inherit; font-size: 14px; }
+        .search-container input:focus { outline: 2px solid rgba(255,255,255,.5); }
+        .search-results { position: absolute; top: 110%; right: 0; left: 0; background: var(--card); color: var(--ink); border-radius: var(--radius-sm); box-shadow: var(--shadow-md); z-index: 1000; display: none; overflow: hidden; }
+        .search-item { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--line); font-size: 14px; }
+        .search-item:last-child { border-bottom: none; }
+        .search-item:hover { background: var(--paper); }
+
+        /* ===== כרטיסי תוכן ===== */
+        .card { background: var(--card); border-radius: var(--radius); padding: 24px 28px; margin-bottom: 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--line); }
+        h2 { border-bottom: 3px solid var(--orange); padding-bottom: 8px; color: var(--navy); font-size: 1.35em; font-weight: 800; }
+        h3 { background: var(--paper); padding: 11px 14px; border-radius: var(--radius-sm); border-right: 4px solid var(--navy-2); margin-top: 26px; font-size: 1.05em; color: var(--navy); font-weight: 700; }
+
+        /* ===== שדות טופס ===== */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .field { display: flex; flex-direction: column; }
+        label { font-size: 0.82em; font-weight: 700; margin-bottom: 5px; color: var(--ink-soft); }
+        input, select, textarea { padding: 10px 12px; border: 1.5px solid var(--line-strong); border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; transition: .15s; background: #fff; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--navy-3); box-shadow: 0 0 0 3px rgba(36,84,160,.12); }
+
+        /* ===== שורות ציוד דינמיות ===== */
+        .item-row { display: grid; gap: 10px; align-items: center; padding: 11px 4px; border-bottom: 1px solid var(--line); }
+        .item-row:hover { background: rgba(240,243,248,.5); }
+        .btn-add { background: #fff; border: 1.5px dashed var(--green); color: var(--green); padding: 9px 16px; border-radius: 999px; cursor: pointer; font-weight: 700; margin-top: 10px; font-size: 13.5px; transition: .15s; }
+        .btn-add:hover { background: var(--green-bg); }
+
+        /* ===== מתג הפעלה/כיבוי ===== */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--line-strong); transition: .3s; border-radius: 34px; }
+        .switch .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+        .switch input:checked + .slider { background-color: var(--green); }
+        .switch input:checked + .slider:before { transform: translateX(20px); }
+
+        /* ===== בחירה מרובה ===== */
+        .multi-select-container { position: relative; font-size: 12px; }
+        .multi-select-box { border: 1.5px solid var(--line-strong); border-radius: var(--radius-sm); background: white; padding: 6px; max-height: 80px; overflow-y: auto; }
+        .multi-select-box label { display: block; font-weight: 400; cursor: pointer; padding: 3px 4px; border-radius: 6px; }
+        .multi-select-box label:hover { background: var(--paper); }
+        .pricing-fields { display: flex; gap: 5px; }
+
+        /* ===== כרטיס סה"כ — הרגע המרכזי ===== */
+        .total-card {
+          text-align: center; padding: 34px; border-radius: var(--radius); margin-top: 40px; color: #fff;
+          background: radial-gradient(600px 240px at 85% -40%, rgba(243,156,18,.28), transparent 60%),
+                      linear-gradient(150deg, var(--navy) 0%, var(--navy-2) 70%);
+          box-shadow: var(--shadow-md);
+        }
+        .grand-total { font-family: var(--font-mono); font-size: 2.6em; font-weight: 700; color: var(--orange); margin: 10px 0; letter-spacing: -0.01em; }
+
+        #loader { position: fixed; inset: 0; background: rgba(240,243,248,0.97); display: flex; align-items: center; justify-content: center; z-index: 3000; flex-direction: column; gap: 15px; font-size: 17px; font-weight: 600; color: var(--navy); transition: opacity 0.2s; }
+        #loader.hidden { opacity: 0; pointer-events: none; }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--line); border-top: 4px solid var(--orange); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-msg { color: var(--red); background: var(--red-bg); padding: 15px 20px; border-radius: var(--radius-sm); margin: 10px auto; max-width: 500px; text-align: center; line-height: 1.6; }
+        .error-msg button { margin-top: 10px; background: var(--navy-2); color: white; border: none; padding: 8px 18px; border-radius: 999px; cursor: pointer; font-weight: 700; }
+        #appRoot.hidden { display: none; }
+
+        /* ==== כרטיסיות רכיבי מערכת (שיפור 1) ==== */
+        .card-tabs-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 15px 0 5px; padding-bottom: 8px; border-bottom: 2px solid var(--line); }
+        .card-tab { display: flex; align-items: center; gap: 8px; background: var(--paper); color: var(--navy-2); padding: 9px 15px; border-radius: 10px 10px 0 0; cursor: pointer; font-weight: 700; font-size: 13.5px; border: 2px solid transparent; border-bottom: none; transition: background 0.15s; }
+        .card-tab:hover { background: #e3e9f0; }
+        .card-tab.active { background: var(--card); border-color: var(--line); box-shadow: 0 -2px 6px rgba(0,0,0,0.05); }
+        .card-tab-name { outline: none; }
+        .card-tab-price { font-family: var(--font-mono); font-weight: 700; color: var(--green); font-size: 0.88em; white-space: nowrap; }
+        .card-tab-close { color: var(--red); font-weight: bold; padding: 0 4px; border-radius: 4px; }
+        .card-tab-close:hover { background: var(--red-bg); }
+        .card-tab-add { background: var(--green); color: white; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; cursor: pointer; line-height: 1; }
+        .card-tab-add:hover { opacity: 0.9; }
+
+        /* ==== סקשן הצעת שילובים (שיפור 2) ==== */
+        .suggest-bar { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+        .suggest-bar .field label { font-size: 0.85em; color: var(--ink-soft); }
+        .suggest-btn { background: var(--orange); color: white; border: none; padding: 14px 28px; border-radius: 999px; font-weight: 700; cursor: pointer; font-size: 1em; white-space: nowrap; box-shadow: 0 4px 10px rgba(243,156,18,.35); transition: .15s; }
+        .suggest-btn:hover { background: var(--orange-2); transform: translateY(-1px); }
+        .suggest-hint { font-size: 0.82em; color: var(--ink-faint); margin-top: 4px; }
+
+        /* ==== חלונות קופצים ==== */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(18,40,63,0.55); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(2px); }
+        .modal-box { background: var(--card); border-radius: var(--radius); max-width: 850px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 26px 30px; box-shadow: var(--shadow-md); }
+        .modal-box h2 { margin-top: 0; color: var(--navy); }
+        .modal-close-x { position: sticky; top: 0; float: left; background: none; border: none; font-size: 1.5em; cursor: pointer; color: var(--ink-faint); }
+        .combo-row { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 15px 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap; transition: .15s; }
+        .combo-row:hover { border-color: var(--navy-3); }
+        .combo-row .combo-desc { flex: 1; min-width: 220px; }
+        .combo-row .combo-desc b { color: var(--navy); }
+        .combo-row .combo-meta { font-size: 0.85em; color: var(--ink-soft); margin-top: 4px; line-height: 1.5; }
+        .combo-row .combo-price { font-family: var(--font-mono); font-weight: 700; color: var(--green); font-size: 1.1em; white-space: nowrap; }
+        .combo-use-btn { background: var(--navy-2); color: white; border: none; padding: 10px 18px; border-radius: 999px; cursor: pointer; font-weight: 700; white-space: nowrap; }
+        .combo-use-btn:hover { background: var(--navy); }
+        .combo-empty { color: var(--ink-faint); text-align: center; padding: 30px; }
+    </style>
+
+</head>
+<body>
+
+<div id="loader">
+    <div class="spinner"></div>
+    <div id="loaderText">טוען נתוני מחירון ולקוחות...</div>
+</div>
+
+<div class="container hidden" id="appRoot">
+
+    
+    <div id="mainView">
+        <div class="top-bar">
+            <button class="btn-plus" onclick="resetToNewCustomer()">+</button>
+            <div class="search-container">
+                <input type="text" id="custSearch" placeholder="חיפוש לקוח קיים (שם)..." oninput="handleSearch(this.value)">
+                <div id="results" class="search-results"></div>
+            </div>
+            <div>בראשית סולאר</div>
+        </div>
+        
+        <form id="mainForm" onsubmit="return false;">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap:10px;">
+                    <h2>מידע לקוח</h2>
+                    <div>
+                        <button type="button" class="btn-add" onclick="copyFormLink()" style="background: #8e44ad; color: white; border-color: #8e44ad; margin-left:10px;">
+                            🔗 העתק לינק לטופס נתונים ללקוח זה
+                        </button>
+                        <button type="button" class="btn-add" onclick="openConsumerForm()" style="background: #8e44ad; color: white; border-color: #8e44ad; margin-left:10px;">
+                            📝 פתח טופס נתונים בחלון חדש
+                        </button>
+                        <span id="stageButtonsContainer" style="display:inline-flex; gap:8px; flex-wrap:wrap;"></span>
+                    </div>
+                </div>
+                <p id="stageStatusLine" style="font-size:0.82em; color:var(--ink-faint); margin-top:6px;"></p>
+                
+                <div class="form-grid">
+                    <div class="field"><label>ID</label><input type="text" id="clientId" readonly></div>
+                    <div class="field"><label>שם הלקוח</label><input type="text" id="clientName"></div>
+                    <div class="field"><label>איש קשר</label><input type="text" id="clientContact"></div>
+                    <div class="field"><label>כתובת</label><input type="text" id="clientAddress"></div>
+                    <div class="field"><label>טלפון</label><input type="text" id="clientPhone"></div>
+                </div>
+
+                <div class="field" style="margin-top: 15px;">
+                    <label>הערות ותוצאות ניתוח כדאיות</label>
+                    <textarea id="analysisNotes" rows="4" placeholder="כאן יופיעו תוצאות המחשבון הסולארי לאחר ביצוע הניתוח..."></textarea>
+                </div>
+
+                <h2>מידע פרויקט</h2>
+                <div class="form-grid">
+                    <div class="field"><label>כותרת הפרויקט</label><input type="text" id="projectTitle" value="מערכת פוטו-וולטאית לייצור חשמל"></div>
+                    <div class="field"><label>תאריך</label><input type="date" id="quoteDate"></div>
+                    <div class="field"><label>שטח גג (מ"ר)</label><input type="number" id="roofArea" oninput="syncTwin('roofArea','roofAreaTwin'); calculateAll();"></div>
+                    <div class="field"><label>הספק פאנלים (kW)</label><input type="number" id="panelPower" step="0.1" oninput="syncTwin('panelPower','panelPowerTwin'); calculateAll();"></div>
+                    <div class="field">
+                        <label>טופס 4</label>
+                        <label class="switch"><input type="checkbox" id="form4Toggle"><span class="slider"></span></label>
+                    </div>
+                    <div class="field">
+                        <label>מכסה מחח"י</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <label class="switch">
+                                <input type="checkbox" id="quotaToggle" onchange="document.getElementById('gridQuota').style.display = this.checked ? 'block' : 'none'">
+                                <span class="slider"></span>
+                            </label>
+                            <input type="number" id="gridQuota" style="display:none;" placeholder="הזן כמות (kW)">
+                        </div>
+                    </div>
+                </div>
+
+                <h3>1. מקור חשמל נוכחי</h3>
+                <div id="power-source-rows"></div>
+                <button type="button" class="btn-add" onclick="addNewPowerSourceRow()">+ הוסף מקור חשמל</button>
+
+                <h3>2. צרכנים</h3>
+                <div class="suggest-hint">לאיסוף צרכנים מפורט מהלקוח עצמו, עדיף להשתמש בטופס הייעודי (הכפתורים למעלה) על פני מילוי ידני כאן.</div>
+                <div id="consumer-rows"></div>
+                <button class="btn-add" onclick="document.getElementById('consumerFileInput').click()">ייבא מקובץ</button>
+                <input type="file" id="consumerFileInput" accept=".txt" style="display:none;" onchange="importConsumersFromTXT(event); return false;">
+                <button type="button" class="btn-add" onclick="addNewConsumerRow()">+ הוסף צרכן</button>
+            </div>
+
+            <div class="card" style="border-right: 5px solid var(--secondary);">
+                <h2>💡 הצעת שילוב רכיבים אוטומטית</h2>
+                <div class="suggest-bar">
+                    <div class="field">
+                        <label>קיבולת אגירה נדרשת (קוט"ש)</label>
+                        <input type="number" id="storageCapacityTwin" min="0" step="0.1" oninput="syncTwin('storageCapacityTwin','storageCapacity')">
+                    </div>
+                    <div class="field">
+                        <label>הספק סולארי נדרש (kW)</label>
+                        <input type="number" id="panelPowerTwin" min="0" step="0.1" oninput="syncTwin('panelPowerTwin','panelPower'); calculateAll();">
+                    </div>
+                    <div class="field">
+                        <label>שטח גג זמין (מ"ר)</label>
+                        <input type="number" id="roofAreaTwin" min="0" step="0.1" oninput="syncTwin('roofAreaTwin','roofArea')">
+                    </div>
+                    <div class="field">
+                        <label>עוצמת ממיר נדרשת (kW)</label>
+                        <input type="number" id="inverterPowerTarget" min="0" step="0.1">
+                    </div>
+                    <button type="button" class="suggest-btn" onclick="runSuggestionEngine()">💡 הצע שילובים</button>
+                </div>
+                <div class="suggest-hint">
+                    שדות "הספק סולארי" ו"שטח גג" מקושרים לשדות המקבילים ב"מידע פרויקט" למעלה — אין צורך למלא פעמיים.
+                    שדה שטח הגג משמש רק כמסנן היתכנות פיזית לבחירת דגם הפאנל (לא כדי לתעדף פאנלים גדולים כשיש גג גדול והספק נמוך).
+                    אפשר למלא רק חלק מהשדות — כל שדה ריק פשוט לא ייכלל בהצעה.
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>סקשן 2 - רכיבי המערכת</h2>
+                <div id="cardTabsBar" class="card-tabs-bar"></div>
+                <div id="battery-rows-cont"><h3>מצברים</h3><div id="battery-rows"></div><button type="button" class="btn-add" onclick="addNewRow('battery-rows', 'מצברים')">+ הוסף מצבר</button></div>
+                <div id="inverter-rows-cont"><h3>ממירים</h3><div id="inverter-rows"></div><button type="button" class="btn-add" onclick="addNewRow('inverter-rows', 'ממירים')">+ הוסף ממיר</button></div>
+                <div id="panel-rows-cont"><h3>פאנלים</h3><div id="panel-rows"></div><button type="button" class="btn-add" onclick="addNewRow('panel-rows', 'פאנלים')">+ הוסף פאנל</button></div>
+                <div id="install-rows-cont"><h3>התקנה</h3><div id="install-rows"></div><button type="button" class="btn-add" onclick="addNewRow('install-rows', 'התקנה')">+ הוסף התקנה</button></div>
+                <div id="addons-rows-cont"><h3>תוספות</h3><div id="addons-rows"></div><button type="button" class="btn-add" onclick="addNewRow('addons-rows', 'תוספות')">+ הוסף תוספת</button></div>
+            </div>
+
+            <!-- סקשן תמונות ומדיה למסמך - מבוסס שיטס וטעינה דינמית -->
+            <div class="card" style="border-right: 5px solid var(--primary);">
+                <h2>תמונות ומדיה למסמך הצעת המחיר</h2>
+                <div class="form-grid">
+                    <div class="field">
+                        <label>העלאת תמונה לפרויקט זה (נשמר בשיטס ב-JSON לקוח)</label>
+                        <input type="file" accept="image/*" onchange="uploadClientImage(this)">
+                    </div>
+                    <div class="field">
+                        <label>בחירת תמונת שער (Cover)</label>
+                        <select id="selQuoteCover" onchange="calculateAll()"><option value="">-- בחר תמונת שער --</option></select>
+                    </div>
+                    <div class="field">
+                        <label>בחירת תמונת גג/פרויקט</label>
+                        <select id="selQuoteProject" onchange="calculateAll()"><option value="">-- בחר תמונת פרויקט --</option></select>
+                    </div>
+                    <div class="field">
+                        <label>בחירת סיכום פיננסי (עמוד 10)</label>
+                        <select id="selQuoteFinSummary" onchange="calculateAll()"><option value="">-- בחר סיכום פיננסי --</option></select>
+                    </div>
+                    <div class="field">
+                        <label>בחירת טבלת תזרים (עמוד 10)</label>
+                        <select id="selQuoteFinTable" onchange="calculateAll()"><option value="">-- בחר טבלת תזרים --</option></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="border-right: 5px solid var(--success);">
+                <h2>סיכום כלכלי</h2>
+                <div class="form-grid">
+                    <div class="field"><label>קיבולת אגירה (קוט"ש)</label><input type="number" id="storageCapacity" step="0.1" oninput="syncTwin('storageCapacity','storageCapacityTwin')"></div>
+                    <div class="field"><label>חיסכון שנתי מוערך</label><input type="text" id="annualSavings" readonly></div>
+                    <div class="field"><label>תשואה (%)</label><input type="text" id="roiPercentage" readonly></div>
+                    <div class="field"><label>רווח ל-25 שנה</label><input type="text" id="profit25Years" readonly style="font-weight:bold; color:green;"></div>
+                </div>
+            </div>
+
+            <div class="total-card">
+                <div>סה"כ הצעה סופית (₪)</div>
+                <div class="grand-total" id="finalPrice">0</div>
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                    <button type="button" onclick="saveDataToSheet(true)" style="background:#3498db; color:white; padding:15px 30px; border-radius:8px; cursor:pointer; border:none; font-weight:bold; font-size: 1.1em;">👤 צור לקוח (חדש)</button>
+                    <button type="button" onclick="saveDataToSheet(false)" style="background:var(--success); color:white; padding:15px 30px; border-radius:8px; cursor:pointer; border:none; font-weight:bold; font-size: 1.1em;">💾 שמור באקסל (עדכון)</button>
+                    <button type="button" onclick="openPrintWindow()" style="background:var(--secondary); color:white; padding:15px 30px; border-radius:8px; cursor:pointer; border:none; font-weight:bold; font-size: 1.1em;">📄 הדפס הצעה</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let globalCatalog = [];
+    let globalCustomers = [];
+    let currentClientImages = []; // מאגר תמונות של הלקוח הספציפי
+    let defaultLogoBase64 = "";  // המשתנה שיכיל את הלוגו הדינמי המיובא מהשיטס
+    let calculatorDataPulled = false; // true אחרי pullDataFromCalculator() — מונע מ-calculateAll() לדרוס תוצאות מדויקות בהערכה גסה
+    let lastCalculatorRawData = null; // הנתונים המלאים מהמחשבון, להעברה לעמוד ההדפסה
+    const DAYS = ['א','ב','ג','ד','ה','ו','ש'];
+    const HOURS = Array.from({length: 24}, (_, i) => i + ':00');
+
+    let loadTimeout;
+
+    window.onload = () => {
+        loadTimeout = setTimeout(() => showFatalError('⏱️ זמן הטעינה חרג מהצפוי. ייתכן שיש בעיית רשת או שהשרת לא מגיב. נסו לרענן את הדף.'), 15000);
+
+        google.script.run
+            .withFailureHandler(err => showFatalError('❌ שגיאה בטעינת הנתונים מהשרת: ' + err.message))
+            .withSuccessHandler(data => {
+                try {
+                    clearTimeout(loadTimeout);
+                    if (!data || !data.catalog || !data.customers) throw new Error("הנתונים שהוחזרו מהשרת חסרים או לא תקינים.");
+
+                    globalCatalog = data.catalog;
+                    globalCustomers = data.customers;
+
+                    // איתור אוטומטי של תמונת לוגו הרשמית תחת קטגוריית "תמונות" בשם "לוגו"
+                    const logoItem = globalCatalog.find(item => item['קטגוריה'] === 'תמונות' && item['דגם'] === 'לוגו');
+                    if (logoItem && logoItem.image) {
+                        defaultLogoBase64 = logoItem.image;
+                    }
+
+                    refreshImageDropdowns();
+                    resetToNewCustomer();
+
+                    document.getElementById('loader').classList.add('hidden');
+                    document.getElementById('appRoot').classList.remove('hidden');
+                } catch (e) {
+                    showFatalError('❌ שגיאה בעיבוד הנתונים: ' + e.message);
+                }
+            }).getInitialData();
+    };
+
+    // שגיאה בטעינה הראשונית — לפני שהאפליקציה עלתה בכלל, מציגים מסך שגיאה מלא במקום טופס ריק/שבור
+    function showFatalError(msg) {
+        clearTimeout(loadTimeout);
+        document.getElementById('loader').innerHTML =
+            `<div class="error-msg">${msg}<br><button onclick="location.reload()">רענן דף</button></div>`;
+        document.getElementById('loader').classList.remove('hidden');
+    }
+
+    // שגיאה בקריאת שרת אחרי שהאפליקציה כבר עלתה (שמירה/הדפסה/וכו') — לא תוקעים את המשתמש בשקט
+    function showServerError(err) {
+        alert('❌ שגיאת שרת: ' + (err && err.message ? err.message : err) + '\n\nהפעולה לא הושלמה. נסו שוב, ואם זה חוזר — רעננו את הדף.');
+    }
+
+    function resetToNewCustomer() {
+        document.getElementById('mainForm').reset();
+        document.getElementById('clientId').value = "BS-" + Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('gridQuota').style.display = 'none';
+        currentClientImages = [];
+        calculatorDataPulled = false;
+        lastCalculatorRawData = null;
+
+        ['power-source-rows', 'consumer-rows'].forEach(id => {
+            document.getElementById(id).innerHTML = '';
+        });
+        resetSystemCards();
+        refreshImageDropdowns();
+        calculateAll();
+        renderStageButtons(null); // לקוח חדש - אין עדיין נתוני שלבים
+    }
+
+    // ========================================================================
+    // חדש: כפתורי "המשך" מותנים - בודקים אילו עמודות שלבים (30/31/29) כבר
+    // מלאות עבור הלקוח הנוכח, ומציגים רק את הפעולה הרלוונטית הבאה.
+    // ========================================================================
+    function openStage(page) {
+        const clientId = document.getElementById('clientId').value;
+        google.script.run.withFailureHandler(showServerError).withSuccessHandler(function (url) {
+            window.open(url + '?page=' + page + '&clientId=' + encodeURIComponent(clientId), '_blank');
+        }).getWebAppUrl();
+    }
+    function openStageConsumption() { openStage('consumption'); }
+    function openStageSizing() { openStage('sizing'); }
+    function openStageFinance() { openStage('finance'); }
+
+    function renderStageButtons(customerRecord) {
+        const container = document.getElementById('stageButtonsContainer');
+        const statusLine = document.getElementById('stageStatusLine');
+        if (!container) return;
+
+        // הערה: customerRecord מגיע מ-globalCustomers (getDisplayValues בצד שרת) - ערכי מחרוזת גולמיים,
+        // מספיק כדי לבדוק "יש תוכן / אין תוכן" (לא צריך JSON.parse בשביל זה).
+        const hasStage1 = !!(customerRecord && customerRecord['נתוני צריכה מועשרים (JSON)']);
+        const hasStage2 = !!(customerRecord && customerRecord['המלצת גודל מערכת (JSON)']);
+        const hasStage3 = !!(customerRecord && customerRecord['נתוני חישוב גולמיים (JSON)']);
+
+        let html, status;
+        if (!hasStage1) {
+            html = `<button type="button" class="btn-add" onclick="openStageConsumption()" style="background:#38bdf8;color:white;border-color:#38bdf8;">🔍 התחל ניתוח צריכה (שלב 1)</button>`;
+            status = 'טרם בוצע ניתוח צריכה עבור לקוח זה.';
+        } else if (!hasStage2) {
+            html = `<button type="button" class="btn-add" onclick="openStageSizing()" style="background:#a855f7;color:white;border-color:#a855f7;">➡️ המשך להמלצת גודל מערכת (שלב 2)</button>
+                    <button type="button" class="btn-add" onclick="openStageConsumption()" style="background:#fff;color:#38bdf8;border:1.5px dashed #38bdf8;">✏️ ערוך ניתוח צריכה</button>`;
+            status = 'ניתוח צריכה (שלב 1) הושלם. טרם הוגדרה המלצת גודל מערכת.';
+        } else if (!hasStage3) {
+            html = `<button type="button" class="btn-add" onclick="openStageFinance()" style="background:#10b981;color:white;border-color:#10b981;">➡️ המשך למודל פיננסי (שלב 3)</button>
+                    <button type="button" class="btn-add" onclick="openStageSizing()" style="background:#fff;color:#a855f7;border:1.5px dashed #a855f7;">✏️ ערוך המלצת גודל</button>`;
+            status = 'המלצת גודל מערכת (שלב 2) הושלמה. טרם הופק מודל פיננסי.';
+        } else {
+            html = `<button type="button" class="btn-add" onclick="openStageFinance()" style="background:#10b981;color:white;border-color:#10b981;">📈 פתח מודל פיננסי (שלב 3)</button>
+                    <button type="button" class="btn-add" onclick="openStageConsumption()" style="background:#fff;color:#7f8c8d;border:1.5px dashed #ccc;">🔄 התחל ניתוח מחדש</button>`;
+            status = '✓ כל שלושת השלבים (ניתוח צריכה, המלצת גודל, מודל פיננסי) הושלמו עבור לקוח זה.';
+        }
+        container.innerHTML = html;
+        if (statusLine) statusLine.textContent = status;
+    }
+
+    // בדיקה האם ה-ID הנוכחי שייך ללקוח ששמור בפועל בשיטס (ולא רק ל-ID שהוקצה אוטומטית בטרם שמירה)
+    function isClientSaved(clientId) {
+        return globalCustomers.some(cust => String(cust['ID (מזהה)']).trim() === String(clientId).trim());
+    }
+
+    // הוספת הלינק לטופס
+    function copyFormLink() {
+        const clientId = document.getElementById('clientId').value;
+        if(!clientId || !isClientSaved(clientId)) {
+            alert("שים לב: מומלץ לשמור את הלקוח קודם כדי להבטיח שהנתונים בשיטס מעודכנים.");
+        }
+        
+        google.script.run.withFailureHandler(showServerError).withSuccessHandler(url => {
+            const fullUrl = url + "?page=form&clientId=" + encodeURIComponent(clientId);
+            const tempInput = document.createElement("input");
+            tempInput.value = fullUrl;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            alert("הקישור הועתק בהצלחה:\n" + fullUrl);
+        }).getWebAppUrl();
+    }
+
+    // פתיחת טופס איסוף הנתונים הייעודי ישירות בחלון חדש (לצד ההעתקה בלבד למעלה)
+    function openConsumerForm() {
+        const clientId = document.getElementById('clientId').value;
+        if(!clientId || !isClientSaved(clientId)) {
+            alert("שים לב: מומלץ לשמור את הלקוח קודם כדי שהטופס יתחבר לרשומה הנכונה.");
+        }
+        google.script.run.withFailureHandler(showServerError).withSuccessHandler(url => {
+            window.open(url + "?page=form&clientId=" + encodeURIComponent(clientId), "_blank");
+        }).getWebAppUrl();
+    }
+
+    function createMultiSelect(options, type) {
+        let html = `<div class="multi-select-container"><div class="multi-select-box">`;
+        options.forEach(opt => {
+            html += `<label><input type="checkbox" class="ms-${type}" value="${opt}" onchange="calculateAll()"> ${opt}</label>`;
+        });
+        return html + `</div></div>`;
+    }
+
+    function addNewPowerSourceRow() {
+        const id = 'pwr-' + Date.now();
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.id = id;
+        row.style.gridTemplateColumns = "1.2fr 1fr 1fr 1fr 1.5fr 0.3fr";
+        row.innerHTML = `
+            <select class="pwr-type" onchange="updateSourceDropdowns(); calculateAll();">
+                <option>חברת החשמל</option><option>גנרטור</option><option>סולארי</option><option>מצבר</option>
+            </select>
+            ${createMultiSelect(DAYS, 'days')}
+            ${createMultiSelect(HOURS, 'hours')}
+            <select onchange="togglePriceMode(this, '${id}')">
+                <option value="fix">קבוע</option><option value="tou">תעו"ז</option>
+            </select>
+            <div id="price-cont-${id}" class="pricing-fields">
+                <input type="number" placeholder="מחיר" class="p-val">
+            </div>
+            <button type="button" onclick="this.parentElement.remove(); updateSourceDropdowns(); calculateAll();">✕</button>
+        `;
+        document.getElementById('power-source-rows').appendChild(row);
+        updateSourceDropdowns();
+    }
+
+    function togglePriceMode(sel, id) {
+        const cont = document.getElementById('price-cont-' + id);
+        cont.innerHTML = sel.value === 'tou' ? 
+            `<input type="number" placeholder="פסגה" class="p-val-peak" style="width:45%"><input type="number" placeholder="שפל" class="p-val-off" style="width:45%">` :
+            `<input type="number" placeholder="מחיר" class="p-val" style="width:100%">`;
+    }
+
+    function addNewConsumerRow() {
+        const id = 'cons-' + Date.now();
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.id = id;
+        row.style.gridTemplateColumns = "1fr 0.6fr 0.6fr 1fr 1fr 1fr 0.3fr";
+        row.innerHTML = `
+            <select><option>תאורה</option><option>מיזוג</option><option>מקרר</option><option>מחמם מים</option><option>שרתים</option></select>
+            <input type="number" placeholder="קוטש">
+            <input type="number" placeholder="כמות">
+            ${createMultiSelect(DAYS, 'days')}
+            ${createMultiSelect(HOURS, 'hours')}
+            <select class="source-link"><option value="all">כללי</option></select>
+            <button type="button" onclick="this.parentElement.remove(); calculateAll();">✕</button>
+        `;
+        document.getElementById('consumer-rows').appendChild(row);
+        updateSourceDropdowns();
+    }
+
+    function updateSourceDropdowns() {
+        const sources = Array.from(document.querySelectorAll('.pwr-type')).map(s => s.value);
+        document.querySelectorAll('.source-link').forEach(sel => {
+            const val = sel.value;
+            sel.innerHTML = '<option value="all">כללי</option>' + sources.map(s => `<option value="${s}">${s}</option>`).join('');
+            sel.value = val;
+        });
+    }
+
+    function addNewRow(contId, cat) {
+        const id = 'row-' + Date.now();
+        const row = document.createElement('div');
+        row.className = 'item-row';
+        row.id = id;
+        row.style.gridTemplateColumns = "2fr 1fr 1fr 1fr 0.3fr";
+        const options = globalCatalog.filter(i => i['קטגוריה'] === cat).map(i => `<option value="${i['דגם']}">${i['דגם']}</option>`).join('');
+        row.innerHTML = `
+            <select onchange="calculateAll()" class="model-select"><option value="">בחר פריט...</option>${options}</select>
+            <input type="number" value="1" min="1" oninput="calculateAll()" class="qty">
+            <div class="u-price">0 ₪</div>
+            <div class="t-price" style="font-weight:bold">0 ₪</div>
+            <button type="button" onclick="this.parentElement.remove(); calculateAll();">✕</button>
+        `;
+        document.getElementById(contId).appendChild(row);
+    }
+
+    function importConsumersFromTXT(event) {
+        event.preventDefault(); event.stopPropagation();
+        const fileInput = event.target;
+        const file = fileInput.files[0];
+        if (!file || !file.name) { fileInput.value = ''; return; }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const text = e.target.result.trim();
+                if (!text) { alert('הקובץ ריק.'); fileInput.value = ''; return; }
+                const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+                const container = document.getElementById('consumer-rows');
+                lines.forEach((line, idx) => {
+                    const parts = line.split(',').map(p => p.trim());
+                    if (parts.length < 5) return; 
+                    const [typeVal, consumption, count, daysStr, hoursStr] = parts;
+                    const id = 'cons-' + Date.now() + '-' + idx;
+                    const row = document.createElement('div');
+                    row.className = 'item-row';
+                    row.id = id;
+                    row.style.gridTemplateColumns = "1fr 0.6fr 0.6fr 1fr 1fr 1fr 0.3fr";
+
+                    const daysArr = daysStr ? daysStr.split(',').map(d => d.trim()) : DAYS;
+                    const daysHtml = DAYS.map(d => {
+                        const isChecked = daysArr.includes(d) ? 'checked' : '';
+                        return `<label><input type="checkbox" class="ms-days" value="${d}" ${isChecked} onchange="calculateAll()"> ${d}</label>`;
+                    }).join('');
+
+                    const hoursToCheck = new Set();
+                    if (hoursStr) {
+                        hoursStr.split(',').forEach(h => {
+                            h = h.trim();
+                            if (h.includes('-')) {
+                                const [start, end] = h.split('-').map(Number);
+                                for (let i = start; i <= end; i++) hoursToCheck.add(i + ':00');
+                            } else { hoursToCheck.add(Number(h) + ':00'); }
+                        });
+                    } else { HOURS.forEach(h => hoursToCheck.add(h)); }
+                    
+                    const hoursHtml = HOURS.map(h => {
+                        const isChecked = hoursToCheck.has(h) ? 'checked' : '';
+                        return `<label><input type="checkbox" class="ms-hours" value="${h}" ${isChecked} onchange="calculateAll()"> ${h}</label>`;
+                    }).join('');
+
+                    row.innerHTML = `
+                        <select><option>תאורה</option><option>מיזוג</option><option>מקרר</option><option>מחמם מים</option><option>שרתים</option><option value="${typeVal}">${typeVal}</option></select>
+                        <input type="number" placeholder="קוטש" value="${consumption}">
+                        <input type="number" placeholder="כמות" value="${count}">
+                        <div class="multi-select-container"><div class="multi-select-box">${daysHtml}</div></div>
+                        <div class="multi-select-container"><div class="multi-select-box">${hoursHtml}</div></div>
+                        <select class="source-link"><option value="all">כללי</option></select>
+                        <button type="button" onclick="this.parentElement.remove(); calculateAll();">✕</button>
+                    `;
+                    container.appendChild(row);
+                });
+                setTimeout(() => { updateSourceDropdowns(); calculateAll(); alert(`✅ ייבאו בהצלחה ${lines.length} צרכנים`); }, 150);
+            } catch (err) { alert('❌ שגיאה: ' + err.message); }
+            finally { fileInput.value = ''; }
+        };
+        reader.readAsText(file, 'UTF-8');
+    }
+
+    // ==== שיפור 1: מודל הנתונים של כרטיסיות "רכיבי מערכת" ====
+    let systemCards = [];      // [{name, batteries:[], inverters:[], panels:[], installation:[], addons:[]}, ...]
+    let activeCardIndex = 0;
+
+    // קריאת תוכן תת-אזור (5 התת-אזורים של סקשן 2, וגם משמש לתוספות/התקנה) ל-[{model, qty}]
+    function getSectionData(id) {
+        return Array.from(document.querySelectorAll(`#${id} .item-row`)).map(r => ({
+            model: r.querySelector('.model-select')?.value || r.querySelector('select')?.value || "",
+            qty: r.querySelector('.qty')?.value || r.querySelector('input[type="number"]')?.value || "1"
+        }));
+    }
+
+    function blankCard(name) {
+        return { name: name, batteries: [], inverters: [], panels: [], installation: [], addons: [] };
+    }
+
+    const CARD_SECTIONS = [
+        { key: 'batteries',    contId: 'battery-rows',  cat: 'מצברים' },
+        { key: 'inverters',    contId: 'inverter-rows', cat: 'ממירים' },
+        { key: 'panels',       contId: 'panel-rows',    cat: 'פאנלים' },
+        { key: 'installation', contId: 'install-rows',  cat: 'התקנה' },
+        { key: 'addons',       contId: 'addons-rows',   cat: 'תוספות' },
+    ];
+
+    // שמירת המצב הנוכחי של 5 התת-אזורים בתוך אובייקט הכרטיסייה הפעילה (לפני מעבר/שמירה)
+    function syncActiveCardFromDOM() {
+        if (!systemCards[activeCardIndex]) return;
+        const card = systemCards[activeCardIndex];
+        CARD_SECTIONS.forEach(s => { card[s.key] = getSectionData(s.contId); });
+    }
+
+    // ציור מחדש של 5 התת-אזורים מתוך תוכן הכרטיסייה הפעילה (אחרי מעבר/טעינת לקוח)
+    function renderActiveCardRows() {
+        const card = systemCards[activeCardIndex] || blankCard('רכיבי מערכת 1');
+        CARD_SECTIONS.forEach(s => {
+            document.getElementById(s.contId).innerHTML = '';
+            (card[s.key] || []).forEach(it => {
+                addNewRow(s.contId, s.cat);
+                setDynamicRow(document.getElementById(s.contId).lastElementChild, it);
+            });
+        });
+    }
+
+    // מחיר כולל של כרטיסייה נתונה (מהנתונים השמורים בה, לא מה-DOM — כדי לא לחייב רינדור של כל הכרטיסיות)
+    function calcCardTotal(card) {
+        let total = 0;
+        CARD_SECTIONS.forEach(s => {
+            (card[s.key] || []).forEach(it => {
+                if (!it.model) return;
+                const catalogItem = globalCatalog.find(i => i['דגם'] === it.model && i['קטגוריה'] === s.cat);
+                const price = catalogItem ? (parseFloat(String(catalogItem['מחיר יחידה (₪)']).replace(/[^0-9.-]+/g, "")) || 0) : 0;
+                total += price * (parseInt(it.qty) || 0);
+            });
+        });
+        return total;
+    }
+
+    function renderTabBar() {
+        const bar = document.getElementById('cardTabsBar');
+        bar.innerHTML = systemCards.map((card, idx) => {
+            const price = calcCardTotal(card).toLocaleString() + ' ₪';
+            const activeCls = idx === activeCardIndex ? ' active' : '';
+            return `
+                <div class="card-tab${activeCls}" onclick="switchCard(${idx})">
+                    <span class="card-tab-name" ondblclick="event.stopPropagation(); renameCard(${idx})" title="לחיצה כפולה לשינוי שם">${card.name}</span>
+                    <span class="card-tab-price">(${price})</span>
+                    <span class="card-tab-close" onclick="event.stopPropagation(); removeCard(${idx})" title="הסר כרטיסייה">✕</span>
+                </div>`;
+        }).join('') + `<button type="button" class="card-tab-add" onclick="addCard()" title="הוסף כרטיסיית רכיבים">+</button>`;
+    }
+
+    function switchCard(index) {
+        if (index === activeCardIndex || !systemCards[index]) { renderTabBar(); return; }
+        syncActiveCardFromDOM();
+        activeCardIndex = index;
+        renderActiveCardRows();
+        renderTabBar();
+        calculateAll();
+    }
+
+    function addCard(prefilledCard) {
+        syncActiveCardFromDOM();
+        const card = prefilledCard || blankCard('רכיבי מערכת ' + (systemCards.length + 1));
+        systemCards.push(card);
+        activeCardIndex = systemCards.length - 1;
+        renderActiveCardRows();
+        renderTabBar();
+        calculateAll();
+        return activeCardIndex;
+    }
+
+    function removeCard(index) {
+        if (systemCards.length <= 1) { alert('חייבת להישאר לפחות כרטיסיית רכיבים אחת.'); return; }
+        if (!confirm(`להסיר את "${systemCards[index].name}"?`)) return;
+        systemCards.splice(index, 1);
+        if (activeCardIndex >= systemCards.length) activeCardIndex = systemCards.length - 1;
+        else if (index < activeCardIndex) activeCardIndex--;
+        renderActiveCardRows();
+        renderTabBar();
+        calculateAll();
+    }
+
+    function renameCard(index) {
+        const newName = prompt('שם הכרטיסייה:', systemCards[index].name);
+        if (newName && newName.trim()) {
+            systemCards[index].name = newName.trim();
+            renderTabBar();
+        }
+    }
+
+    function resetSystemCards() {
+        systemCards = [blankCard('רכיבי מערכת 1')];
+        activeCardIndex = 0;
+        renderActiveCardRows();
+        renderTabBar();
+    }
+
+    // ==== שיפור 2: סקשן קלט + מנוע הצעת שילובים אוטומטי ====
+
+    // שני שדות "תאומים" (למשל roofArea ↔ roofAreaTwin) מייצגים אותו ערך בשני מקומות בממשק (החלטה מתועדת בתקציר)
+    function syncTwin(sourceId, targetId) {
+        document.getElementById(targetId).value = document.getElementById(sourceId).value;
+    }
+    function syncAllSuggestTwins() {
+        syncTwin('roofArea', 'roofAreaTwin');
+        syncTwin('panelPower', 'panelPowerTwin');
+        syncTwin('storageCapacity', 'storageCapacityTwin');
+    }
+
+    function parseCleanPrice(v) { return parseFloat(String(v == null ? "" : v).replace(/[^0-9.-]+/g, "")) || 0; }
+
+    // "קבוצת התאמה": "1,4,5" -> [1,4,5]. שדה ריק = אין הגבלת קבוצה (מתאים לכל דבר).
+    function parseGroups(v) {
+        if (v === undefined || v === null || String(v).trim() === '') return [];
+        return String(v).split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+    }
+    function groupsOverlap(a, b) {
+        if (!a.length || !b.length) return true; // אחד הצדדים לא מצהיר על קבוצות -> לא חוסמים
+        return a.some(g => b.includes(g));
+    }
+
+    // --- פאנלים: מגבלה כפולה (הספק+שטח גג) שנועדה לפסול דגמים לא ריאליים, לא לתעדף דגמים גדולים ---
+    function suggestPanelOptions(targetPowerKW, roofAreaM2) {
+        if (!targetPowerKW && !roofAreaM2) return [];
+        const panels = globalCatalog.filter(i => i['קטגוריה'] === 'פאנלים');
+        const results = [];
+        panels.forEach(p => {
+            const unitPower = parseFloat(p['הספק']) || 0;
+            const unitSize = parseFloat(p['מידות']) || 0;
+            if (!unitPower || !unitSize) return; // אין למודל הזה נתוני הספק/מידות -> לא ניתן לכלול בהצעה
+
+            let units;
+            if (targetPowerKW) {
+                units = Math.ceil(targetPowerKW / unitPower);
+                if (roofAreaM2 && (units * unitSize) > roofAreaM2) return; // לא נכנס בגג -> נפסל (לא "מקטינים כמות")
+            } else {
+                units = Math.floor(roofAreaM2 / unitSize); // רק שטח ידוע -> ממקסמים מה שנכנס
+                if (units <= 0) return;
+            }
+            results.push({
+                model: p['דגם'], units,
+                deliveredKw: units * unitPower,
+                requiredArea: units * unitSize,
+                price: parseCleanPrice(p['מחיר יחידה (₪)']) * units,
+                groups: parseGroups(p['קבוצת התאמה']),
+                catalogItem: p
+            });
+        });
+        return results;
+    }
+
+    // --- מצברים: מגבלת הכפלה (כמה יחידות ניתן לצבור בכלל) + מגבלת שרשור (כמה יחידות ממיר אחד מגיש) + BMS ---
+    function suggestBatteryOptions(targetKwh) {
+        if (!targetKwh) return [];
+        const batteries = globalCatalog.filter(i => i['קטגוריה'] === 'מצברים');
+        const results = [];
+        batteries.forEach(b => {
+            const cap = parseFloat(b['קיבולת']) || 0;
+            if (!cap) return;
+            const mulLimit = parseInt(b['מגבלת הכפלה']) || 1;
+            const chainLimit = parseInt(b['מגבלת שרשור']) || 1;
+            const unitsNeeded = Math.ceil(targetKwh / cap);
+            if (unitsNeeded > mulLimit) return; // אי אפשר לצבור מספיק יחידות מהדגם הזה בכלל -> נפסל
+
+            const groups = parseGroups(b['קבוצת התאמה']);
+            const hasBMS = String(b['BMS כלול']).trim() === 'כן';
+            let bmsItem = null, bmsPrice = 0, bmsMissing = false;
+            if (!hasBMS) {
+                bmsItem = globalCatalog.find(i => i['קטגוריה'] === 'תוספות' && groupsOverlap(parseGroups(i['קבוצת התאמה']), groups));
+                if (bmsItem) bmsPrice = parseCleanPrice(bmsItem['מחיר יחידה (₪)']);
+                else bmsMissing = true; // לא נמצא BMS תואם בקטלוג - עדיין מוצג, אך מסומן כחסר
+            }
+
+            results.push({
+                model: b['דגם'], units: unitsNeeded,
+                deliveredKwh: unitsNeeded * cap,
+                invertersByChain: Math.ceil(unitsNeeded / chainLimit),
+                price: parseCleanPrice(b['מחיר יחידה (₪)']) * unitsNeeded + bmsPrice,
+                hasBMS, bmsItem, bmsMissing, groups, catalogItem: b
+            });
+        });
+        return results;
+    }
+
+    // --- ממירים: תלוי אם צריך אגירה/סולארי/שניהם; אם שניהם — ממיר היברידי אחד, או זוג ממirים ייעודיים ---
+    function buildInverterSets(batOpt, panOpt, inverterTargetKW) {
+        const inverters = globalCatalog.filter(i => i['קטגוריה'] === 'ממירים');
+        const mkSel = (inv, units, mode) => ({
+            model: inv['דגם'], units, mode,
+            price: parseCleanPrice(inv['מחיר יחידה (₪)']) * units, catalogItem: inv
+        });
+        const sets = [];
+
+        const compatibleWithBattery = inv => !batOpt || !batOpt.groups.length ||
+            groupsOverlap(parseGroups(inv['קבוצת התאמה']), batOpt.groups);
+
+        if (batOpt && panOpt) {
+            // אופציה א': ממיר היברידי בודד שמשרת את שתי המערכות יחד
+            inverters.filter(inv => String(inv['היברידי']).trim() === 'כן').forEach(inv => {
+                const role = (inv['התאמה למערכת'] || '').trim();
+                if (role !== 'הכל') return;
+                if (!compatibleWithBattery(inv)) return;
+                const unitPower = parseFloat(inv['עוצמה']) || 0;
+                if (!unitPower) return;
+                const unitsForStorage = Math.max(batOpt.invertersByChain, inverterTargetKW ? Math.ceil(inverterTargetKW / unitPower) : 0);
+                const unitsForSolar = Math.ceil(panOpt.deliveredKw / unitPower);
+                // כלל פשוט לשלב הראשון: מספיק יחידות לכסות את שני היעדים בנפרד (לא סכום) — ראו הערה בתשובה על עידון עתידי
+                sets.push([mkSel(inv, Math.max(unitsForStorage, unitsForSolar, 1), 'היברידי (אגירה+סולארי יחד)')]);
+            });
+            // אופציה ב': זוג ממirים ייעודיים נפרדים (אחד לאגירה, אחד לסולארי)
+            const storageOnly = inverters.filter(inv => {
+                const role = (inv['התאמה למערכת'] || '').trim();
+                return (role === 'אגירה' || role === 'הכל') && parseFloat(inv['עוצמה']) && compatibleWithBattery(inv);
+            });
+            const solarOnly = inverters.filter(inv => {
+                const role = (inv['התאמה למערכת'] || '').trim();
+                return (role === 'סולארי' || role === 'הכל') && parseFloat(inv['עוצמה']);
+            });
+            storageOnly.forEach(sInv => {
+                const sPower = parseFloat(sInv['עוצמה']);
+                const sUnits = Math.max(batOpt.invertersByChain, inverterTargetKW ? Math.ceil(inverterTargetKW / sPower) : 0, 1);
+                solarOnly.forEach(pInv => {
+                    if (pInv === sInv) return; // זה כבר מכוסה ע"י אופציית ההיברידי למעלה
+                    const pPower = parseFloat(pInv['עוצמה']);
+                    const pUnits = Math.ceil(panOpt.deliveredKw / pPower);
+                    sets.push([mkSel(sInv, sUnits, 'ממיר אגירה ייעודי'), mkSel(pInv, pUnits, 'ממיר סולארי ייעודי')]);
+                });
+            });
+        } else if (batOpt) {
+            inverters.filter(inv => {
+                const role = (inv['התאמה למערכת'] || '').trim();
+                return (role === 'אגירה' || role === 'הכל') && parseFloat(inv['עוצמה']) && compatibleWithBattery(inv);
+            }).forEach(inv => {
+                const unitPower = parseFloat(inv['עוצמה']);
+                const units = Math.max(batOpt.invertersByChain, inverterTargetKW ? Math.ceil(inverterTargetKW / unitPower) : 0, 1);
+                sets.push([mkSel(inv, units, 'ממיר אגירה')]);
+            });
+        } else if (panOpt) {
+            inverters.filter(inv => {
+                const role = (inv['התאמה למערכת'] || '').trim();
+                return (role === 'סולארי' || role === 'הכל') && parseFloat(inv['עוצמה']);
+            }).forEach(inv => {
+                const unitPower = parseFloat(inv['עוצמה']);
+                sets.push([mkSel(inv, Math.ceil(panOpt.deliveredKw / unitPower), 'ממיר סולארי')]);
+            });
+        }
+        return sets;
+    }
+
+    function runSuggestionEngine() {
+        const storageTarget = parseFloat(document.getElementById('storageCapacity').value) || 0;
+        const solarTarget = parseFloat(document.getElementById('panelPower').value) || 0;
+        const roofArea = parseFloat(document.getElementById('roofArea').value) || 0;
+        const inverterTarget = parseFloat(document.getElementById('inverterPowerTarget').value) || 0;
+
+        const needsStorage = storageTarget > 0;
+        const needsSolar = solarTarget > 0 || roofArea > 0;
+
+        if (!needsStorage && !needsSolar) {
+            alert('יש להזין לפחות יעד אגירה, הספק סולארי, או שטח גג כדי לקבל הצעות שילוב.');
+            return;
+        }
+
+        const batteryOptions = needsStorage ? suggestBatteryOptions(storageTarget) : [null];
+        const panelOptions = needsSolar ? suggestPanelOptions(solarTarget, roofArea) : [null];
+
+        if (needsStorage && !batteryOptions.length) { showSuggestionModal([], 'לא נמצא אף דגם מצבר שיכול לספק את יעד האגירה המבוקש (חורג ממגבלת ההכפלה של כל הדגמים בקטלוג).'); return; }
+        if (needsSolar && !panelOptions.length) { showSuggestionModal([], 'לא נמצא אף דגם פאנל שמתאים גם להספק המבוקש וגם לשטח הגג הנתון.'); return; }
+
+        const combos = [];
+        batteryOptions.forEach(bOpt => {
+            panelOptions.forEach(pOpt => {
+                const invSets = buildInverterSets(bOpt, pOpt, inverterTarget);
+                invSets.forEach(invSet => {
+                    let price = (bOpt ? bOpt.price : 0) + (pOpt ? pOpt.price : 0) + invSet.reduce((s, i) => s + i.price, 0);
+                    let fitScore = 0;
+                    if (bOpt) fitScore += (bOpt.deliveredKwh - storageTarget) / storageTarget;
+                    if (pOpt && solarTarget) fitScore += (pOpt.deliveredKw - solarTarget) / solarTarget;
+                    const descParts = [];
+                    if (bOpt) descParts.push(`${bOpt.units}×${bOpt.model}`);
+                    if (pOpt) descParts.push(`${pOpt.units}×${pOpt.model}`);
+                    invSet.forEach(i => descParts.push(`${i.units}×${i.model}`));
+                    combos.push({ battery: bOpt, panel: pOpt, inverters: invSet, price, fitScore, desc: descParts.join(' + ') });
+                });
+            });
+        });
+
+        if (!combos.length) {
+            showSuggestionModal([], 'נמצאו דגמי מצברים/פאנלים מתאימים, אך לא נמצא אף ממיר תואם (בדקו את עמודות "התאמה למערכת" ו"קבוצת התאמה" במחירון).');
+            return;
+        }
+
+        combos.sort((a, b) => a.fitScore - b.fitScore || a.price - b.price);
+        showSuggestionModal(combos.slice(0, 8));
+    }
+
+    let lastComboList = [];
+
+    function showSuggestionModal(combos, emptyMsg) {
+        lastComboList = combos;
+        const rowsHtml = combos.length ? combos.map((c, idx) => {
+            const metaParts = [];
+            if (c.battery) metaParts.push(`אגירה: ${c.battery.deliveredKwh.toFixed(1)} קוט"ש${c.battery.bmsMissing ? ' ⚠️ חסר BMS תואם בקטלוג' : ''}`);
+            if (c.panel) metaParts.push(`סולארי: ${c.panel.deliveredKw.toFixed(1)} kW · שטח נדרש: ${c.panel.requiredArea.toFixed(1)} מ"ר`);
+            if (c.inverters.length) metaParts.push('ממיר: ' + c.inverters.map(i => `${i.mode} (${i.units} יח')`).join(', '));
+            return `
+                <div class="combo-row">
+                    <div class="combo-desc">
+                        <b>${c.desc}</b>
+                        <div class="combo-meta">${metaParts.join(' · ')}</div>
+                    </div>
+                    <div class="combo-price">${Math.round(c.price).toLocaleString()} ₪</div>
+                    <button type="button" class="combo-use-btn" onclick="useCombo(${idx})">✔ השתמש בשילוב זה</button>
+                </div>`;
+        }).join('') : `<div class="combo-empty">${emptyMsg || 'לא נמצאו שילובים מתאימים.'}</div>`;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.id = 'suggestModalOverlay';
+        overlay.onclick = (e) => { if (e.target === overlay) closeSuggestionModal(); };
+        overlay.innerHTML = `
+            <div class="modal-box">
+                <button type="button" class="modal-close-x" onclick="closeSuggestionModal()">✕</button>
+                <h2>שילובים מוצעים</h2>
+                <div>${rowsHtml}</div>
+            </div>`;
+        document.body.appendChild(overlay);
+    }
+
+    function closeSuggestionModal() {
+        const overlay = document.getElementById('suggestModalOverlay');
+        if (overlay) overlay.remove();
+    }
+
+    // "השתמש בשילוב זה" -> יוצר כרטיסייה חדשה (שיפור 1) ממולאת מראש, ועובר אליה מיד
+    function useCombo(idx) {
+        const c = lastComboList[idx];
+        if (!c) return;
+        const card = blankCard(`רכיבי מערכת ${systemCards.length + 1} (הצעה)`);
+        if (c.battery) card.batteries.push({ model: c.battery.model, qty: String(c.battery.units) });
+        if (c.panel) card.panels.push({ model: c.panel.model, qty: String(c.panel.units) });
+        c.inverters.forEach(i => card.inverters.push({ model: i.model, qty: String(i.units) }));
+        if (c.battery && c.battery.bmsMissing === false && c.battery.bmsItem) {
+            card.addons.push({ model: c.battery.bmsItem['דגם'], qty: '1' });
+        }
+        addCard(card);
+        closeSuggestionModal();
+    }
+
+    function calculateAll() {
+        syncAllSuggestTwins();
+        let total = 0;
+        document.querySelectorAll('#mainView .item-row .model-select').forEach(sel => {
+            if(sel.value) {
+                const item = globalCatalog.find(i => i['דגם'] === sel.value);
+                const qty = parseInt(sel.parentElement.querySelector('.qty').value) || 0;
+                let priceStr = item ? String(item['מחיר יחידה (₪)']).replace(/[^0-9.-]+/g,"") : "0";
+                const price = parseFloat(priceStr) || 0;
+                sel.parentElement.querySelector('.u-price').innerText = price.toLocaleString() + ' ₪';
+                const rowTotal = price * qty;
+                sel.parentElement.querySelector('.t-price').innerText = rowTotal.toLocaleString() + ' ₪';
+                total += rowTotal;
+            }
+        });
+        document.getElementById('finalPrice').innerText = total.toLocaleString();
+
+        // תג המחיר של כל הכרטיסיות (כולל הלא-פעילות) צריך להישאר עדכני תוך כדי עריכה
+        syncActiveCardFromDOM();
+        renderTabBar();
+
+        // הערכה גסה — רק אם עדיין לא נמשכו נתונים אמיתיים מהמחשבון/משמורת קודמת (ר' calculatorDataPulled)
+        if (!calculatorDataPulled) {
+            const kwp = parseFloat(document.getElementById('panelPower').value) || 0;
+            const annualSave = kwp * 1650 * 0.55;
+            const roi = total > 0 ? (annualSave / total) * 100 : 0;
+            const p25 = (annualSave * 25) - total;
+
+            document.getElementById('annualSavings').value = Math.round(annualSave).toLocaleString() + ' ₪';
+            document.getElementById('roiPercentage').value = roi.toFixed(1) + '%';
+            document.getElementById('profit25Years').value = Math.round(p25).toLocaleString() + ' ₪';
+        }
+    }
+
+    function saveDataToSheet(isNew = false) {
+        if (isNew || !document.getElementById('clientId').value) {
+            document.getElementById('clientId').value = "BS-" + Math.floor(1000 + Math.random() * 9000);
+        }
+        syncActiveCardFromDOM();
+
+        const powerSources = Array.from(document.querySelectorAll('#power-source-rows .item-row')).map(r => ({
+            type: r.querySelector('.pwr-type')?.value,
+            days: Array.from(r.querySelectorAll('.ms-days:checked')).map(c => c.value),
+            hours: Array.from(r.querySelectorAll('.ms-hours:checked')).map(c => c.value)
+        }));
+
+        const consumers = Array.from(document.querySelectorAll('#consumer-rows .item-row')).map(r => ({
+            type: r.querySelector('select')?.value,
+            source: r.querySelector('.source-link')?.value
+        }));
+
+        // הכרטיסייה הפעילה, מוכפלת גם לתוך 5 העמודות הישנות (החלטה סופית בתקציר — לשמור תאימות אחורה)
+        const activeCard = systemCards[activeCardIndex] || blankCard('רכיבי מערכת 1');
+
+        const payload = {
+            clientId: document.getElementById('clientId').value,
+            clientName: document.getElementById('clientName').value,
+            clientContact: document.getElementById('clientContact').value,
+            clientAddress: document.getElementById('clientAddress').value,
+            clientPhone: document.getElementById('clientPhone').value,
+            projectTitle: document.getElementById('projectTitle').value,
+            quoteDate: document.getElementById('quoteDate').value,
+            roofArea: document.getElementById('roofArea').value,
+            panelPower: document.getElementById('panelPower').value,
+            storageCapacity: document.getElementById('storageCapacity').value,
+            inverterPowerTarget: document.getElementById('inverterPowerTarget').value,
+            form4: document.getElementById('form4Toggle').checked ? "Yes" : "No",
+            gridQuota: document.getElementById('quotaToggle').checked ? document.getElementById('gridQuota').value : "",
+            powerSources: powerSources,
+            consumers: consumers,
+            // 5 העמודות הישנות ממשיכות להיכתב כ'כפילות' מהכרטיסייה הפעילה בלבד (החלטה סופית בתקציר)
+            batteries: activeCard.batteries,
+            inverters: activeCard.inverters,
+            panels: activeCard.panels,
+            installation: activeCard.installation,
+            extras: activeCard.addons,
+            systemCards: systemCards,
+            activeCardIndex: activeCardIndex,
+            totalPrice: document.getElementById('finalPrice').innerText.replace(/,/g,''),
+            annualSavings: document.getElementById('annualSavings').value,
+            roi: document.getElementById('roiPercentage').value,
+            profit25: document.getElementById('profit25Years').value,
+            analysisNotes: document.getElementById('analysisNotes').value,
+            clientImages: currentClientImages, // שמירת תמונות הלקוח (עמודה 25 המתוקנת)
+            rawCalculatorData: lastCalculatorRawData // עמודה 29 (חדשה): מארז IRR/NPV/הנחות-יסוד גולמי, לשימוש עמוד ההדפסה גם ללא localStorage
+        };
+
+        google.script.run.withFailureHandler(showServerError).withSuccessHandler(msg => alert(msg)).saveCustomerData(JSON.stringify(payload));
+    }
+
+    function handleSearch(val) {
+        const res = document.getElementById('results');
+        if (val.length < 2) { res.style.display = 'none'; return; }
+        const filtered = globalCustomers.filter(c => c['שם הלקוח'] && c['שם הלקוח'].includes(val));
+        res.innerHTML = filtered.map(c => `<div class="search-item" onclick="selectCustomer('${c['ID (מזהה)']}')">${c['שם הלקוח']}</div>`).join('');
+        res.style.display = 'block';
+    }
+
+    function selectCustomer(id) {
+        const c = globalCustomers.find(cust => cust['ID (מזהה)'] == id);
+        if(!c) return;
+        renderStageButtons(c);
+
+        document.getElementById('clientId').value = c['ID (מזהה)'] || "";
+        document.getElementById('clientName').value = c['שם הלקוח'] || "";
+        document.getElementById('clientAddress').value = c['כתובת'] || "";
+        document.getElementById('clientContact').value = c['איש קשר'] || "";
+        document.getElementById('clientPhone').value = c['טלפון'] || "";
+        document.getElementById('projectTitle').value = c['כותרת הפרויקט'] || "";
+        document.getElementById('quoteDate').value = c['תאריך הצעה'] || "";
+        document.getElementById('roofArea').value = c['שטח גג'] || "";
+        document.getElementById('panelPower').value = c['הספק פאנלים'] || "";
+        document.getElementById('storageCapacity').value = c['קיבולת אגירה'] || "";
+        document.getElementById('inverterPowerTarget').value = c['עוצמת ממיר נדרשת'] || "";
+        document.getElementById('gridQuota').value = c['מכסה מחח"י'] || "";
+        document.getElementById('finalPrice').innerText = c['עלות מערכת'] || "0";
+        document.getElementById('annualSavings').value = c['חיסכון שנתי'] || "";
+        document.getElementById('roiPercentage').value = c['תשואה'] || "";
+        document.getElementById('profit25Years').value = c['רווח מצטבר'] || "";
+        document.getElementById('analysisNotes').value = c['הערות ניתוח'] || "";
+        // אם ללקוח הזה כבר יש תוצאות כלכליות שמורות, אין לתת ל'הערכה הגסה' ב-calculateAll() לדרוס אותן
+        calculatorDataPulled = !!(c['חיסכון שנתי'] || c['תשואה'] || c['רווח מצטבר']);
+        lastCalculatorRawData = null; // מעבר בין לקוחות קיימים — אין להעביר נתוני מחשבון גולמיים של לקוח קודם
+
+        document.getElementById('form4Toggle').checked = c['טופס 4'] === "Yes";
+        const hasQuota = c['מכסה מחח"י'] !== "" && c['מכסה מחח"י'] !== null;
+        document.getElementById('quotaToggle').checked = hasQuota;
+        document.getElementById('gridQuota').style.display = hasQuota ? 'block' : 'none';
+
+        ['power-source-rows', 'consumer-rows'].forEach(id => document.getElementById(id).innerHTML = '');
+
+        try { JSON.parse(c['מקורות חשמל (JSON)'] || "[]").forEach(p => { addNewPowerSourceRow(); setPowerSourceRow(document.getElementById('power-source-rows').lastElementChild, p); }); } catch(e){}
+        try { JSON.parse(c['צרכנים (JSON)'] || "[]").forEach(cn => { addNewConsumerRow(); setConsumerRow(document.getElementById('consumer-rows').lastElementChild, cn); }); } catch(e){}
+
+        // כרטיסיות רכיבי המערכת: בניגוד ל-getCustomerData (שמפעיל JSON.parse בצד שרת),
+        // globalCustomers מגיע מ-getDisplayValues ולכן c['רכיבי מערכת (JSON)'] הוא כאן מחרוזת גולמית,
+        // לא מערך - יש לפרסר אותה כאן במפורש, אחרת הכרטיסיות השמורות אף פעם לא נטענות בפועל.
+        let parsedSystemCards = [];
+        try { parsedSystemCards = JSON.parse(c['רכיבי מערכת (JSON)'] || "[]"); } catch(e) { parsedSystemCards = []; }
+        systemCards = (Array.isArray(parsedSystemCards) && parsedSystemCards.length) ? parsedSystemCards : [blankCard('רכיבי מערכת 1')];
+        activeCardIndex = parseInt(c['כרטיסייה פעילה (אינדקס)']);
+        if (isNaN(activeCardIndex) || activeCardIndex < 0 || activeCardIndex >= systemCards.length) activeCardIndex = 0;
+        renderActiveCardRows();
+        renderTabBar();
+
+        // טעינת תמונות הלקוח השמורות מהשיטס
+        try {
+            currentClientImages = JSON.parse(c['תמונות לקוח (JSON)'] || "[]");
+        } catch(e) {
+            currentClientImages = [];
+        }
+
+        updateSourceDropdowns();
+        refreshImageDropdowns();
+        calculateAll();
+        document.getElementById('results').style.display = 'none';
+    }
+    
+    function setPowerSourceRow(row, data) { if(!row) return; row.querySelector('.pwr-type').value = data.type || 'חברת החשמל'; row.querySelectorAll('.ms-days').forEach(chk => chk.checked = (data.days||[]).includes(chk.value)); row.querySelectorAll('.ms-hours').forEach(chk => chk.checked = (data.hours||[]).includes(chk.value)); }
+    function setConsumerRow(row, data) { if(!row) return; row.querySelector('select').value = data.type || 'תאורה'; row.querySelector('.source-link').value = data.source || 'all'; }
+    function setDynamicRow(row, data) { if(!row) return; const sel = row.querySelector('.model-select') || row.querySelector('select'); if(sel) sel.value = data.model || ""; const qty = row.querySelector('.qty') || row.querySelector('input[type="number"]'); if(qty) qty.value = data.qty || "1"; }
+
+    // העלאת תמונה ושמירתה ב-Base64 בתוך מערך הלקוח הנוכחי
+    function uploadClientImage(input) {
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imgName = "תמונת לקוח - " + file.name;
+                currentClientImages.push({ name: imgName, data: e.target.result });
+                refreshImageDropdowns();
+                alert("✅ התמונה נשמרה בהצלחה לפרויקט זה! אל תשכח לשמור את הלקוח.");
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // אכלוס רשימות הבחירה מכל המקורות (כולל גלריית בראשית ותמונות לקוח)
+    function refreshImageDropdowns() {
+        const selectors = ['selQuoteCover', 'selQuoteProject', 'selQuoteFinSummary', 'selQuoteFinTable'];
+        
+        selectors.forEach(id => {
+            const sel = document.getElementById(id);
+            const prevValue = sel.value;
+            sel.innerHTML = '<option value="">-- בחר תמונה מהמאגר --</option>';
+
+            globalCatalog.forEach(item => {
+                if (item.image && typeof item.image === 'string' && item.image.trim() !== '') {
+                    sel.innerHTML += `<option value="${item.image}">${item['דגם']} (שיטס)</option>`;
+                }
+            });
+
+            currentClientImages.forEach(img => {
+                sel.innerHTML += `<option value="${img.data}">${img.name} (תמונות לקוח)</option>`;
+            });
+
+            sel.value = prevValue;
+        });
+    }
+
+    function openPrintWindow() {
+        const finalLogo = defaultLogoBase64;
+
+        const catalogImages = globalCatalog.filter(item => item.image && typeof item.image === 'string' && item.image.trim() !== '').map(item => ({
+            name: item['דגם'],
+            category: item['קטגוריה'],
+            image: item.image
+        }));
+
+        const payload = {
+            clientName: document.getElementById('clientName').value || "",
+            clientAddress: document.getElementById('clientAddress').value || "",
+            clientContact: document.getElementById('clientContact').value || "",
+            quoteDate: document.getElementById('quoteDate').value || "",
+            projectTitle: document.getElementById('projectTitle').value || "מערכת פוטו-וולטאית לייצור חשמל",
+            sysSize: document.getElementById('panelPower').value || "0",
+            sysCost: document.getElementById('finalPrice').innerText.replace(/[^0-9.-]+/g,"") || "0",
+            analysisNotes: document.getElementById('analysisNotes').value || "",
+
+            // שדות שהיו קיימים ומחושבים בטופס אך מעולם לא הועברו להדפסה
+            storageCapacity: document.getElementById('storageCapacity').value || "",
+            annualSavings: document.getElementById('annualSavings').value || "",
+            roiPercentage: document.getElementById('roiPercentage').value || "",
+            profit25Years: document.getElementById('profit25Years').value || "",
+            gridQuota: document.getElementById('gridQuota').value || "",
+            form4Status: document.getElementById('form4Toggle').checked ? "כן" : "לא",
+            rawCalculatorData: lastCalculatorRawData,
+
+            selectedLogo: finalLogo, 
+            selectedCover: document.getElementById('selQuoteCover').value || "",
+            selectedProject: document.getElementById('selQuoteProject').value || "",
+            selectedFinSummary: document.getElementById('selQuoteFinSummary').value || "",
+            selectedFinTable: document.getElementById('selQuoteFinTable').value || "",
+            
+            catalogImages: catalogImages,
+            clientImages: currentClientImages
+        };
+
+        localStorage.setItem('pendingQuote', JSON.stringify(payload));
+
+        // ערוץ גיבוי אמין: שולחים את הנתונים הכלכליים לשרת (לתיק הלקוח) *לפני* פתיחת חלון ההדפסה,
+        // כדי שאם ה-localStorage לא יעבור בין החלונות (Same-Origin Policy), עמוד ההדפסה עדיין יוכל
+        // לשלוף אותם בעצמו לפי clientId שמועבר ב-URL. לא ממתינים לתשובה - רק "מזריקים" את הבקשה קדימה.
+        const currentClientId = document.getElementById('clientId').value || "";
+        if (currentClientId) {
+            google.script.run.updateCalculatorResults(JSON.stringify({
+                clientId: currentClientId,
+                totalPrice: payload.sysCost,
+                annualSavings: payload.annualSavings,
+                roi: payload.roiPercentage,
+                profit25: payload.profit25Years,
+                rawCalculatorData: lastCalculatorRawData
+            }));
+        }
+
+        google.script.run.withFailureHandler(showServerError).withSuccessHandler(function(url) {
+            let target = url + "?page=print";
+            if (currentClientId) target += "&clientId=" + encodeURIComponent(currentClientId);
+            window.open(target, "_blank");
+        }).getWebAppUrl();
+    }
+
+    // פתיחת המחשבון בחלון חדש, עם קישור ל-ID הלקוח הנוכחי ולשטח הגג שלו
+    function openCalculatorWindow() {
+        const clientId = document.getElementById('clientId').value || '';
+        const roofArea = document.getElementById('roofArea').value || '';
+        google.script.run.withFailureHandler(showServerError).withSuccessHandler(function(url) {
+            let target = url + "?page=calculator";
+            if (clientId) target += "&clientId=" + encodeURIComponent(clientId);
+            if (roofArea) target += "&roofArea=" + encodeURIComponent(roofArea);
+            window.open(target, "_blank");
+        }).getWebAppUrl();
+    }
+
+    // משיכת הנתונים שהמחשבון שמר בזיכרון לאחר סגירתו - עם גיבוי לשרת אם ה-localStorage לא הועבר
+    function pullDataFromCalculator() {
+        const calcDataStr = localStorage.getItem('transferredCalcData');
+        if (calcDataStr) {
+            applyCalculatorData(JSON.parse(calcDataStr));
+            localStorage.removeItem('transferredCalcData');
+            return;
+        }
+
+        // גיבוי: ה-localStorage ריק - יתכן שהמחשבון נפתח בחלון/subdomain נפרד ב-GAS וה-Same-Origin
+        // Policy חסם את השיתוף. ננסה לשלוף את אותם נתונים ישירות מהשרת (ר' updateCalculatorResults).
+        const clientIdForFallback = document.getElementById('clientId').value;
+        if (!clientIdForFallback) {
+            alert("לא נמצאו נתונים חדשים מהמחשבון. יש להריץ סימולציה במחשבון וללחוץ שם על העברת התוצאות.");
+            return;
+        }
+        google.script.run
+            .withFailureHandler(function(err) {
+                alert("לא נמצאו נתונים חדשים מהמחשבון (גם לא בשרת). יש להריץ סימולציה במחשבון וללחוץ שם על העברת התוצאות.\n\nשגיאת שרת: " + (err && err.message ? err.message : err));
+            })
+            .withSuccessHandler(function(customer) {
+                const raw = customer && customer['נתוני חישוב גולמיים (JSON)'];
+                if (!raw || !raw.withBat) {
+                    alert("לא נמצאו נתונים חדשים מהמחשבון (גם לא בשרת). יש להריץ סימולציה במחשבון וללחוץ שם על העברת התוצאות.");
+                    return;
+                }
+                applyCalculatorData(raw);
+            })
+            .getCustomerData(clientIdForFallback);
+    }
+
+    // מיישם נתוני מחשבון על טופס הלקוח - בין אם הגיעו מ-localStorage ובין אם משליפת שרת (אותה צורה בדיוק)
+    function applyCalculatorData(data) {
+        const { withBat, inputs } = data;
+
+        // בדיקת התאמת לקוח: אם המחשבון נפתח עבור לקוח מסוים, ולקוח אחר פתוח כרגע בטופס — להתריע ולתת בחירה
+        const currentClientId = document.getElementById('clientId').value;
+        if (data.clientId && currentClientId && data.clientId !== currentClientId) {
+            const proceed = confirm(`שים לב: הנתונים מהמחשבון חושבו עבור לקוח ${data.clientId}, אך כרגע פתוח בטופס לקוח ${currentClientId}.\n\nהאם להמשיך ולמשוך את הנתונים בכל זאת?`);
+            if (!proceed) return;
+        }
+
+        let notesText = `--- מסקנות ניתוח מערכת ואגירה (2026) ---\n`;
+        notesText += `הספק מומלץ (AC): ${withBat.capacity.toFixed(2)} קו"ט\n`;
+        notesText += `נפח אגירה מומלץ: ${withBat.batKwh.toFixed(1)} קוט"ש\n`;
+        notesText += `רווח מצטבר צפוי (25 שנה): ₪${withBat.totalProfit.toLocaleString('en-US', {maximumFractionDigits:0})}\n`;
+        notesText += `תשואה שנתית משוערת (IRR): ${withBat.irr}%\n`;
+        if (inputs.useStorageShabbat || inputs.useStorageHoliday) {
+            notesText += `* המערכת כוללת תכנון לנפח גיבוי עבור שבת/חג.\n`;
+        }
+
+        // הצבת הנתונים בטופס הראשי — כל השדות המתאימים, לא רק שלושה מתוך שבעה
+        document.getElementById('analysisNotes').value = notesText;
+        document.getElementById('roofArea').value = inputs.roofArea;
+        document.getElementById('panelPower').value = withBat.capacity.toFixed(2);
+        document.getElementById('storageCapacity').value = withBat.batKwh.toFixed(1);
+        document.getElementById('profit25Years').value = Math.round(withBat.totalProfit).toLocaleString() + ' ₪';
+        document.getElementById('roiPercentage').value = withBat.irr + '%'; // IRR האמיתי, לא קירוב חיסכון/עלות
+        const avgAnnual = withBat.totalProfit / 25;
+        document.getElementById('annualSavings').value = Math.round(avgAnnual).toLocaleString() + ' ₪ (ממוצע ל-25 שנה)';
+
+        calculatorDataPulled = true; // מונע מ-calculateAll() לדרוס את הנתונים המדויקים בהערכה גסה
+        calculateAll(); // רענון סכום הציוד בלבד — הנתונים הכלכליים כבר נכונים ולא יידרסו
+
+        lastCalculatorRawData = data;
+
+        alert("הנתונים מהמחשבון נמשכו בהצלחה לטופס הצעת המחיר!");
+    }
+</script>
+</body>
+</html>

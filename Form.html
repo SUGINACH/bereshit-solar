@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>טופס איסוף נתוני צריכת חשמל — בראשית סולאר</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&family=Assistant:wght@400;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#12283F; --navy-2:#1A3A5F; --navy-3:#2454A0;
+  --orange:#F39C12; --orange-2:#D9820A;
+  --green:#1E8449; --green-bg:#E9F7EF;
+  --red:#C0392B; --red-bg:#FBEAE8;
+  --amber-bg:#FDF3DE;
+  --sky:#2C7DA0; --sky-bg:#E3F2F8;
+  --paper:#F0F3F8; --card:#FFFFFF;
+  --ink:#1B2430; --ink-soft:#5B6472; --ink-faint:#8993A3;
+  --line:#DFE4EC; --line-strong:#C7CFDB;
+  --radius:16px; --radius-sm:10px;
+  --font:'Heebo','Assistant',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --shadow-sm:0 1px 3px rgba(18,40,63,.08);
+  --shadow-md:0 10px 30px rgba(18,40,63,.16);
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--paper); color:var(--ink); direction:rtl;
+  font-family:var(--font); font-size:15.5px; line-height:1.5;
+  padding-bottom:120px;
+}
+input,select,textarea,button{font-family:inherit; font-size:inherit; color:inherit;}
+.wrap{max-width:980px; margin:0 auto; padding:0 18px;}
+h1,h2,h3{margin:0;}
+.hide{display:none !important;}
+button{cursor:pointer;}
+::selection{background:var(--orange); color:#fff;}
+
+/* ---------- HEADER ---------- */
+header.top{
+  background:
+    radial-gradient(900px 380px at 15% -20%, rgba(243,156,18,.20), transparent 60%),
+    linear-gradient(150deg, var(--navy) 0%, var(--navy-2) 55%, #0d5a8c 140%);
+  color:#fff; padding:26px 0 68px; position:relative;
+}
+header.top .row1{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+.brand{display:flex; align-items:center; gap:10px; font-weight:800; font-size:17px;}
+.brand .sun{font-size:22px;}
+.step-badge{
+  font-family:var(--font-mono); font-size:11.5px; background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.28); padding:5px 12px; border-radius:999px; color:#FCD9A0;
+}
+h1.page-title{font-size:22px; font-weight:800; margin-top:18px;}
+header.top p.sub{color:rgba(255,255,255,.78); font-size:13.5px; margin-top:6px; max-width:56ch;}
+
+/* ---------- SUMMARY BAR (sticky) ---------- */
+.summary-bar{
+  position:relative; z-index:30; margin-top:-46px;
+}
+.summary-bar .card{
+  background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow-md);
+  padding:16px 20px; display:flex; gap:14px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+}
+.summary-stats{display:flex; gap:22px; flex-wrap:wrap;}
+.stat{display:flex; flex-direction:column; gap:2px;}
+.stat b{font-size:19px; color:var(--navy); font-weight:800;}
+.stat span{font-size:11.5px; color:var(--ink-soft);}
+.stat.kwh b{color:var(--orange-2);}
+
+/* sticky mini-toolbar version once scrolled */
+.mini-toolbar{
+  position:sticky; top:0; z-index:40; background:rgba(240,243,248,.94); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line-strong); padding:9px 0; display:none;
+}
+.mini-toolbar.show{display:block;}
+.mini-toolbar .inner{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+.mini-toolbar .mt-title{font-weight:800; color:var(--navy); font-size:13.5px;}
+.mini-toolbar .mt-stats{font-family:var(--font-mono); font-size:12px; color:var(--ink-soft);}
+.mini-toolbar .mt-stats b{color:var(--orange-2);}
+
+/* ---------- SECTIONS / CARDS ---------- */
+section.block{margin-top:22px;}
+.panel{
+  background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow-sm);
+  border:1px solid var(--line); overflow:hidden;
+}
+.panel-head{
+  padding:16px 20px; display:flex; align-items:center; gap:10px; justify-content:space-between;
+}
+.panel-head h2{font-size:15.5px; font-weight:800; color:var(--navy); display:flex; align-items:center; gap:8px;}
+.panel-body{padding:4px 20px 20px;}
+
+/* form fields */
+.field-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+.field{display:flex; flex-direction:column; gap:5px;}
+.field label{font-size:12px; font-weight:700; color:var(--ink-soft);}
+.field input, .field select, .field textarea{
+  border:1.5px solid var(--line-strong); border-radius:var(--radius-sm); padding:9px 11px;
+  background:#fff; transition:.15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus{
+  outline:none; border-color:var(--navy-3); box-shadow:0 0 0 3px rgba(36,84,160,.12);
+}
+.field textarea{resize:vertical; min-height:54px;}
+.field.span2{grid-column:span 2;}
+.field.span3{grid-column:span 3;}
+@media (max-width:640px){.field-grid{grid-template-columns:1fr;} .field.span2,.field.span3{grid-column:span 1;}}
+
+/* buttons */
+.btn{
+  display:inline-flex; align-items:center; gap:7px; padding:10px 16px; border-radius:999px;
+  border:1.5px solid var(--line-strong); background:#fff; font-weight:700; font-size:13.5px;
+  color:var(--ink); transition:.15s;
+}
+.btn:hover{border-color:var(--navy-3); color:var(--navy-3);}
+.btn.primary{background:var(--navy-2); border-color:var(--navy-2); color:#fff;}
+.btn.primary:hover{background:var(--navy); color:#fff;}
+.btn.accent{background:var(--orange); border-color:var(--orange); color:#fff;}
+.btn.accent:hover{background:var(--orange-2); border-color:var(--orange-2); color:#fff;}
+.btn.ghost{background:transparent; border-color:transparent; color:var(--ink-soft); padding:7px 10px;}
+.btn.ghost:hover{color:var(--navy-3);}
+.btn.danger-ghost{background:transparent; border-color:transparent; color:var(--red); padding:6px 9px; font-size:12.5px;}
+.btn.danger-ghost:hover{background:var(--red-bg);}
+.btn.sm{padding:6px 12px; font-size:12.5px;}
+.btn.block{width:100%; justify-content:center;}
+.btn:disabled{opacity:.5; cursor:not-allowed;}
+
+/* ---------- LOCATIONS / CATEGORIES / DEVICES (accordion) ---------- */
+.location{border:1.5px solid var(--line); border-radius:var(--radius); margin-bottom:14px; overflow:hidden; background:#fff;}
+.location.open > .loc-head .chevron{transform:rotate(90deg);}
+.loc-head{
+  display:flex; align-items:center; gap:10px; padding:14px 16px; background:#F7F9FC; cursor:pointer;
+}
+.loc-head .num{
+  width:26px; height:26px; border-radius:50%; background:var(--navy-2); color:#fff; font-weight:800; font-size:12px;
+  display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+}
+.loc-head input.loc-name{
+  flex:1; border:none; background:transparent; font-weight:800; font-size:14.5px; color:var(--navy);
+  border-bottom:1.5px dashed transparent; padding:2px 2px;
+}
+.loc-head input.loc-name:focus{outline:none; border-bottom-color:var(--orange); background:#fff;}
+.loc-badge{
+  font-family:var(--font-mono); font-size:11.5px; background:var(--green-bg); color:var(--green);
+  padding:3px 10px; border-radius:999px; white-space:nowrap; font-weight:700;
+}
+.chevron{transition:.2s; color:var(--ink-faint); font-size:13px;}
+.loc-body{display:none; padding:14px 16px 16px;}
+.location.open .loc-body{display:block;}
+
+.category{border:1px solid var(--line); border-radius:12px; margin-bottom:10px; overflow:hidden;}
+.category.open > .cat-head .chevron{transform:rotate(90deg);}
+.cat-head{display:flex; align-items:center; gap:9px; padding:11px 13px; background:#FBFCFE; cursor:pointer;}
+.cat-head .icon{font-size:16px;}
+.cat-head .cname{flex:1; font-weight:700; font-size:13.5px; color:var(--ink);}
+.cat-count{font-size:11px; color:var(--ink-faint); font-family:var(--font-mono);}
+.cat-kwh{font-family:var(--font-mono); font-size:11.5px; color:var(--orange-2); font-weight:700;}
+.cat-body{display:none; padding:10px 12px 12px;}
+.category.open .cat-body{display:block;}
+
+.device-row{
+  display:grid; grid-template-columns:2.2fr 1fr .8fr 1.1fr 1.1fr 1.3fr auto; gap:8px; align-items:center;
+  padding:9px 8px; border-radius:10px; margin-bottom:6px; background:#FAFBFD; border:1px solid var(--line);
+}
+.device-row input{border:1.3px solid var(--line-strong); border-radius:8px; padding:7px 8px; font-size:13px; width:100%;}
+.device-row .dkwh{font-family:var(--font-mono); font-size:11.5px; color:var(--orange-2); font-weight:700; text-align:center;}
+.mini-btn{
+  border:1.3px solid var(--line-strong); background:#fff; border-radius:8px; padding:7px 9px; font-size:12px;
+  font-weight:700; white-space:nowrap; text-align:center; color:var(--ink-soft);
+}
+.mini-btn:hover{border-color:var(--navy-3); color:var(--navy-3);}
+.mini-btn.set{background:var(--blue-tint,#E8EEF7); border-color:#CBD9EE; color:var(--navy-3);}
+.mini-btn.shabbat-on{background:#FDF0DD; border-color:var(--orange); color:var(--orange-2);}
+@media (max-width:820px){
+  .device-row{grid-template-columns:1fr 1fr; grid-template-areas:"name name" "watt qty" "days hours" "period period" "del del";}
+  .device-row > *:nth-child(1){grid-area:name;}
+  .device-row > *:nth-child(2){grid-area:watt;}
+  .device-row > *:nth-child(3){grid-area:qty;}
+  .device-row > *:nth-child(4){grid-area:days;}
+  .device-row > *:nth-child(5){grid-area:hours;}
+  .device-row > *:nth-child(6){grid-area:period;}
+  .device-row > *:nth-child(7){grid-area:del; justify-self:end;}
+}
+
+.cat-actions{display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;}
+
+/* ---------- הגבלת זמן: רצועות מיקום/קטגוריה ופאנל גלובלי ---------- */
+.restriction-strip{
+  background:#F3F7FC; border:1px dashed #B9CBE8; border-radius:10px; padding:10px 12px; margin-bottom:12px;
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+.restriction-strip.cat-strip{background:#F7FAFD; border-color:#D3E0F2;}
+.restriction-strip .rs-label{font-size:11.3px; font-weight:700; color:var(--navy-3); flex:1 1 220px; line-height:1.5;}
+.restriction-strip .rs-label em{font-style:normal; font-weight:400; color:var(--ink-faint);}
+.rs-buttons{display:flex; gap:6px; flex-wrap:wrap;}
+.scope-flag{
+  display:inline-flex; align-items:center; font-size:10.5px; font-weight:800; color:var(--orange-2);
+  background:#FDF0DD; border:1px solid var(--orange); border-radius:999px; padding:2px 8px; margin-inline-start:2px;
+}
+.global-restriction-panel{
+  background:linear-gradient(135deg,#EEF3FB,#F8FAFD); border:1.5px solid #CBD9EE; border-radius:var(--radius);
+  padding:16px 20px;
+}
+.global-restriction-panel .grp-head{
+  display:flex; align-items:center; gap:9px; margin-bottom:5px; font-weight:800; color:var(--navy); font-size:15px;
+}
+.global-restriction-panel .grp-note{font-size:12px; color:var(--ink-soft); margin:0 0 12px; line-height:1.6; max-width:70ch;}
+
+/* ---------- נתוני צריכה בפועל (חשבון חשמל) ---------- */
+.billing-note{font-size:12px; color:var(--ink-soft); margin:0 0 14px; line-height:1.6;}
+#btnToggleMonthly .chevron{display:inline-block; transition:.2s;}
+#btnToggleMonthly.open .chevron{transform:rotate(90deg);}
+.monthly-wrap{margin-top:12px; border-top:1px solid var(--line); padding-top:12px;}
+.monthly-wrap.hide{display:none;}
+.month-grid-head{
+  display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:8px; padding:0 2px 6px;
+  font-size:11px; font-weight:700; color:var(--ink-soft);
+}
+.month-row{display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:8px; align-items:center; margin-bottom:6px;}
+.month-row .mname{font-size:12.5px; font-weight:700; color:var(--ink);}
+.month-row input{border:1.3px solid var(--line-strong); border-radius:8px; padding:7px 8px; font-size:12.8px; width:100%;}
+.monthly-sum{font-size:12px; color:var(--navy-3); font-weight:700; margin:10px 2px 0; text-align:left;}
+@media (max-width:480px){
+  .month-grid-head{grid-template-columns:1fr 1fr 1fr; font-size:10px;}
+  .month-row{grid-template-columns:1fr 1fr 1fr; gap:5px;}
+  .month-row .mname{font-size:11.5px;}
+}
+
+/* ---------- CLIENT CARD ---------- */
+.client-type-pills{display:flex; gap:7px; flex-wrap:wrap;}
+.pill-radio{
+  border:1.5px solid var(--line-strong); border-radius:999px; padding:7px 13px; font-size:12.8px; font-weight:700;
+  color:var(--ink-soft); background:#fff;
+}
+.pill-radio.active{background:var(--navy-2); border-color:var(--navy-2); color:#fff;}
+
+/* ---------- MODALS ---------- */
+.overlay{
+  position:fixed; inset:0; background:rgba(15,25,40,.55); display:none; align-items:center; justify-content:center;
+  z-index:100; padding:16px; backdrop-filter:blur(2px);
+}
+.overlay.show{display:flex;}
+.modal{
+  background:#fff; border-radius:18px; max-width:480px; width:100%; max-height:86vh; overflow:auto;
+  box-shadow:var(--shadow-md); animation:modalIn .22s ease;
+}
+@keyframes modalIn{from{opacity:0; transform:translateY(10px) scale(.98);} to{opacity:1; transform:none;}}
+.modal-head{
+  padding:16px 20px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; background:#fff;
+}
+.modal-head h3{font-size:15px; font-weight:800; color:var(--navy);}
+.modal-body{padding:16px 20px;}
+.modal-foot{padding:14px 20px; border-top:1px solid var(--line); display:flex; gap:8px; justify-content:flex-end;}
+.close-x{border:none; background:transparent; font-size:18px; color:var(--ink-faint); padding:4px;}
+
+.chip-row{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:14px;}
+.chip{
+  border:1.5px solid var(--line-strong); background:#fff; border-radius:999px; padding:7px 13px;
+  font-size:12.5px; font-weight:700; color:var(--ink-soft);
+}
+.chip:hover{border-color:var(--navy-3);}
+.day-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:7px;}
+.hour-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:6px;}
+.toggle-cell{
+  border:1.5px solid var(--line-strong); border-radius:9px; padding:8px 4px; text-align:center; font-size:12.5px;
+  font-weight:700; background:#fff; color:var(--ink-soft);
+}
+.toggle-cell.on{background:var(--navy-2); border-color:var(--navy-2); color:#fff;}
+.shabbat-toggle{
+  margin-top:14px; border:1.5px dashed var(--orange); border-radius:12px; padding:12px 14px; background:#FFF8EC;
+}
+.shabbat-toggle label{display:flex; align-items:flex-start; gap:9px; cursor:pointer; font-size:13px; font-weight:700; color:var(--orange-2);}
+.shabbat-toggle .note{font-size:11.5px; font-weight:400; color:var(--ink-soft); margin-top:4px;}
+.shabbat-toggle input{margin-top:2px;}
+
+.period-type-list{display:flex; flex-direction:column; gap:8px; margin-bottom:12px;}
+.period-opt{display:flex; align-items:center; gap:9px; border:1.5px solid var(--line-strong); border-radius:10px; padding:10px 12px; cursor:pointer;}
+.period-opt.active{border-color:var(--navy-3); background:#F3F7FC;}
+.period-opt input{margin:0;}
+.range-row{display:flex; gap:6px; align-items:center; margin-bottom:8px; flex-wrap:wrap;}
+.range-row select, .range-row input[type=number]{
+  border:1.3px solid var(--line-strong); border-radius:8px; padding:6px 8px; font-size:12.5px;
+}
+
+.catalog-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.catalog-item{
+  border:1.5px solid var(--line-strong); border-radius:10px; padding:10px 12px; text-align:right; background:#fff;
+}
+.catalog-item:hover{border-color:var(--orange); background:#FFF8EC;}
+.catalog-item .cn{font-weight:700; font-size:12.8px;}
+.catalog-item .cw{font-family:var(--font-mono); font-size:11px; color:var(--ink-soft); margin-top:2px;}
+@media (max-width:480px){.catalog-grid{grid-template-columns:1fr;}}
+
+/* ---------- TOAST ---------- */
+#toastWrap{position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:200; display:flex; flex-direction:column; gap:8px; align-items:center;}
+.toast{
+  background:var(--navy); color:#fff; padding:11px 20px; border-radius:999px; font-size:13.5px; font-weight:700;
+  box-shadow:var(--shadow-md); animation:toastIn .25s ease, toastOut .25s ease 2.4s forwards; display:flex; align-items:center; gap:8px;
+}
+.toast.warn{background:var(--orange-2);}
+.toast.err{background:var(--red);}
+@keyframes toastIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;}}
+@keyframes toastOut{to{opacity:0; transform:translateY(-6px);}}
+
+/* ---------- FOOTER ACTION BAR ---------- */
+.action-bar{
+  position:fixed; bottom:0; inset-inline:0; background:#fff; border-top:1px solid var(--line);
+  box-shadow:0 -6px 20px rgba(18,40,63,.08); padding:12px 0; z-index:50;
+}
+.action-bar .inner{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center;}
+input[type=file]{display:none;}
+
+.empty-state{text-align:center; padding:34px 14px; color:var(--ink-faint); font-size:13.5px;}
+
+footer.credit{text-align:center; padding:26px 14px 10px; color:var(--ink-faint); font-size:11.5px;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="row1">
+      <div class="brand"><span class="sun">☀️</span> בראשית סולאר</div>
+      <span class="step-badge">🔒 טופס מאובטח לאיסוף נתוני צריכה</span>
+    </div>
+    <h1 class="page-title">טופס איסוף נתוני צריכת חשמל</h1>
+    <p class="sub">מלאו את פרטי הצריכה בכל מיקום — הטופס מחשב עבורכם הערכת קוט"ש חיה תוך כדי מילוי, ובונה פרופיל צריכה שנתי לסיזינג מדויק של המערכת הסולארית. הנתונים נשארים אצלכם בדפדפן עד לרגע השליחה, ומוצפנים באופן שרק בראשית סולאר יכולה לפענח.</p>
+  </div>
+</header>
+
+<div class="wrap summary-bar">
+  <div class="card">
+    <div class="summary-stats">
+      <div class="stat"><b id="statLocations">0</b><span>מיקומים</span></div>
+      <div class="stat"><b id="statDevices">0</b><span>מכשירים</span></div>
+      <div class="stat kwh"><b id="statKwhDay">0</b><span>קוט"ש / יום (ממוצע)</span></div>
+      <div class="stat kwh"><b id="statKwhYear">0</b><span>קוט"ש / שנה</span></div>
+    </div>
+    <button class="btn ghost sm" id="btnRestoreInfo" title="מידע על שמירה אוטומטית">💾 נשמר אוטומטית בדפדפן זה</button>
+  </div>
+</div>
+
+<div class="mini-toolbar" id="miniToolbar">
+  <div class="wrap inner">
+    <span class="mt-title">☀️ בראשית סולאר · טופס נתוני צריכה</span>
+    <span class="mt-stats"><b id="miniKwhYear">0</b> קוט"ש/שנה משוער · <b id="miniDevices">0</b> מכשירים</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <section class="block">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>👤 פרטי לקוח</h2>
+      </div>
+      <div class="panel-body" id="clientDetailsCard">
+        <div class="field-grid">
+          <div class="field"><label>שם לקוח / מוסד</label><input id="cName" placeholder="לדוגמה: ישראל ישראלי"></div>
+          <div class="field"><label>טלפון</label><input id="cPhone" placeholder="050-0000000"></div>
+          <div class="field"><label>כתובת</label><input id="cAddress" placeholder="עיר, רחוב ומספר"></div>
+          <div class="field"><label>ממלא הטופס</label><input id="cFilledBy" placeholder="שם איש הקשר"></div>
+          <div class="field"><label>מס׳ חוזה / מונה</label><input id="cContract" placeholder="אם קיים"></div>
+          <div class="field span2">
+            <label>סוג צרכן</label>
+            <div class="client-type-pills" id="clientTypePills"></div>
+          </div>
+          <div class="field span2">
+            <label>סוג נכס</label>
+            <div class="client-type-pills" id="propertyTypePills"></div>
+          </div>
+          <div class="field">
+            <label>סוג מונה קיים</label>
+            <div class="client-type-pills" id="meterTypePills"></div>
+          </div>
+          <div class="field span3"><label>הערות</label><textarea id="cNotes" placeholder="הערות נוספות רלוונטיות להצעת המחיר..."></textarea></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="panel">
+      <div class="panel-head">
+        <h2>🧾 נתוני צריכה בפועל (מהחשבון החשמל)</h2>
+      </div>
+      <div class="panel-body">
+        <p class="billing-note">אופציונלי - אם יש ברשותכם חשבון חשמל, מילוי הנתונים כאן מאפשר הצלבה מדויקת יותר מול האומדן מהמכשירים למעלה.</p>
+        <div class="field-grid">
+          <div class="field"><label>סך צריכה שנתי (קוט"ש)</label><input type="number" min="0" id="billAnnualKwh" placeholder="לדוגמה: 8500"></div>
+          <div class="field"><label>סך תשלום שנתי (₪)</label><input type="number" min="0" id="billAnnualNis" placeholder="לדוגמה: 4200"></div>
+        </div>
+        <button type="button" class="btn sm" id="btnToggleMonthly" style="margin-top:14px;">📆 פירוט חודשי (אופציונלי) <span class="chevron" id="monthlyChevron">›</span></button>
+        <div id="monthlyBillingWrap" class="monthly-wrap hide">
+          <div class="month-grid-head">
+            <span></span><span>קוט"ש</span><span>₪</span>
+          </div>
+          <div id="monthlyRows"></div>
+          <p class="monthly-sum" id="monthlySumCaption"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="global-restriction-panel">
+      <div class="grp-head">⏱️ הגבלת זמן כללית לכל הטופס <span class="scope-flag" id="globalRestrictionBadge" style="display:none;">פעילה</span></div>
+      <p class="grp-note">חלה על כל המכשירים בכל המיקומים. הגבלות ברמת מיקום/קטגוריה/מכשיר תמיד מצמצמות בתוך מה שנקבע כאן (לא מרחיבות מעבר לכך).</p>
+      <div class="rs-buttons" id="globalRestrictionButtons"></div>
+    </div>
+  </section>
+
+  <section class="block" id="locationsSection">
+    <div class="panel-head" style="padding:0 2px 10px;">
+      <h2 style="font-size:16.5px;">📍 מיקומים וצריכה</h2>
+    </div>
+    <div id="locationsContainer"></div>
+    <button class="btn primary block" id="btnAddLocation">➕ הוספת מיקום</button>
+  </section>
+
+  <section class="block">
+    <div class="panel" style="border-color:#CBD9EE; background:#F8FAFD;">
+      <div class="panel-body" style="padding-top:16px; display:flex; gap:10px; align-items:flex-start;">
+        <span style="font-size:20px;">🔒</span>
+        <p style="margin:0; font-size:12.8px; color:var(--ink-soft); line-height:1.65;">
+          בלחיצה על "שליחה מוצפנת" הנתונים מוצפנים בדפדפן שלכם (הצפנת RSA+AES) לפני שנשמרים לקובץ, כך שרק בראשית סולאר יכולה לפענח ולקרוא אותם. לאחר ההורדה, אנא שלחו את הקובץ שהתקבל לנציג בראשית סולאר שלכם (במייל, וואטסאפ או כפי שהונחיתם).
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="action-bar">
+  <div class="inner">
+    <button class="btn accent" id="btnExport" style="padding:12px 26px; font-size:14.5px;">🔒 שליחה מוצפנת לבראשית סולאר</button>
+  </div>
+</div>
+
+<footer class="credit wrap">
+  בראשית סולאר · טופס איסוף נתוני צריכת חשמל · הנתונים מוצפנים מקצה-לקצה בעת השליחה
+</footer>
+
+<!-- ===== מודאל ימים ===== -->
+<div class="overlay" id="ovDays">
+  <div class="modal">
+    <div class="modal-head"><h3>בחירת ימי פעילות</h3><button class="close-x" data-close="ovDays">✕</button></div>
+    <div class="modal-body">
+      <div class="chip-row" id="dayChips"></div>
+      <div class="day-grid" id="dayGrid"></div>
+      <div class="shabbat-toggle">
+        <label>
+          <input type="checkbox" id="shabbatCheck">
+          <span>🕯️ שבת יהודי (מכניסת שבת ועד צאתה)
+            <div class="note">כאשר מסומן, המכשיר ייחשב פעיל ברציפות משקיעה ביום שישי ועד צאת הכוכבים במוצ"ש (לפי חישוב שקיעה משוער למרכז הארץ), במקום טווח השעות הרגיל בימים שישי/שבת. זוהי הערכה בלבד לצורך אמידת צריכה — אינה פסיקה הלכתית.</div>
+          </span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" data-close="ovDays">ביטול</button><button class="btn primary" id="btnSaveDays">שמירה</button></div>
+  </div>
+</div>
+
+<!-- ===== מודאל שעות ===== -->
+<div class="overlay" id="ovHours">
+  <div class="modal">
+    <div class="modal-head"><h3>בחירת שעות פעילות</h3><button class="close-x" data-close="ovHours">✕</button></div>
+    <div class="modal-body">
+      <div class="chip-row" id="hourChips"></div>
+      <div class="hour-grid" id="hourGrid"></div>
+    </div>
+    <div class="modal-foot"><button class="btn" data-close="ovHours">ביטול</button><button class="btn primary" id="btnSaveHours">שמירה</button></div>
+  </div>
+</div>
+
+<!-- ===== מודאל תקופה/עונה ===== -->
+<div class="overlay" id="ovPeriod">
+  <div class="modal">
+    <div class="modal-head"><h3>תקופת פעילות בשנה</h3><button class="close-x" data-close="ovPeriod">✕</button></div>
+    <div class="modal-body">
+      <div class="period-type-list" id="periodTypeList"></div>
+      <div id="periodExtra"></div>
+    </div>
+    <div class="modal-foot"><button class="btn" data-close="ovPeriod">ביטול</button><button class="btn primary" id="btnSavePeriod">שמירה</button></div>
+  </div>
+</div>
+
+<!-- ===== מודאל קטלוג ===== -->
+<div class="overlay" id="ovCatalog">
+  <div class="modal">
+    <div class="modal-head"><h3>בחירה מקטלוג מכשירים</h3><button class="close-x" data-close="ovCatalog">✕</button></div>
+    <div class="modal-body"><div class="catalog-grid" id="catalogGrid"></div></div>
+    <div class="modal-foot"><button class="btn" data-close="ovCatalog">סגירה</button></div>
+  </div>
+</div>
+
+<!-- ===== מודאל אישור כללי ===== -->
+<div class="overlay" id="ovConfirm">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-head"><h3 id="confirmTitle">אישור</h3><button class="close-x" data-close="ovConfirm">✕</button></div>
+    <div class="modal-body"><p id="confirmMsg" style="font-size:13.8px; line-height:1.6;"></p></div>
+    <div class="modal-foot"><button class="btn" data-close="ovConfirm">ביטול</button><button class="btn primary" id="btnConfirmOk">אישור</button></div>
+  </div>
+</div>
+
+<div id="toastWrap"></div>
+
+
+<script>
+
+const CATEGORIES = [
+  { key:'lighting', name:'תאורה', icon:'💡', presets:[
+      {name:'נורת LED 9W', watt:9},
+      {name:'נורת LED 12W', watt:12},
+      {name:'פס לד 18W', watt:18},
+      {name:'פנס פלורסנט 36W', watt:36},
+      {name:'זרקור חוץ LED 50W', watt:50},
+      {name:'עמוד תאורה חוץ 100W', watt:100},
+  ]},
+  { key:'hvac', name:'מיזוג - קירור וחימום', icon:'❄️', presets:[
+      {name:'מזגן עילי 1 כ"ס (9,000BTU)', watt:1050},
+      {name:'מזגן עילי 1.5 כ"ס (12,000BTU)', watt:1400},
+      {name:'מזגן עילי 2 כ"ס (18,000BTU)', watt:2100},
+      {name:'מזגן עילי 2.5 כ"ס (24,000BTU)', watt:2600},
+      {name:'מזגן מרכזי/מיני-מרכזי (5 כ"ס)', watt:5200},
+      {name:'תנור חימום חשמלי', watt:2000},
+      {name:'מפזר חום קרמי', watt:1500},
+  ]},
+  { key:'cooking', name:'בישול', icon:'🍳', presets:[
+      {name:'פלטת שבת', watt:500},
+      {name:'תנור אפייה חשמלי', watt:2500},
+      {name:'כיריים אינדוקציה (יחידה)', watt:2000},
+      {name:'מיקרוגל', watt:1200},
+      {name:'טוסטר אובן', watt:1500},
+  ]},
+  { key:'laundry', name:'כביסה וניקיון', icon:'🧺', presets:[
+      {name:'מכונת כביסה', watt:2000},
+      {name:'מייבש כביסה', watt:2800},
+      {name:'שואב אבק', watt:1200},
+      {name:'מכונת כביסה תעשייתית', watt:3500},
+  ]},
+  { key:'water_heating', name:'חימום מים', icon:'🚿', presets:[
+      {name:'דוד חשמל 100 ליטר', watt:2000},
+      {name:'דוד חשמל 150 ליטר', watt:2500},
+      {name:'דוד חשמל 200 ליטר', watt:3000},
+      {name:'מיחם / קומקום חשמלי', watt:2000},
+  ]},
+  { key:'office', name:'מחשבים ומשרד', icon:'💻', presets:[
+      {name:'מחשב נייח + מסך', watt:250},
+      {name:'מחשב נייד', watt:65},
+      {name:'מדפסת משרדית', watt:400},
+      {name:'נתב / מודם', watt:15},
+      {name:'שרת קטן', watt:300},
+  ]},
+  { key:'refrigeration', name:'קירור מזון', icon:'🧊', presets:[
+      {name:'מקרר ביתי', watt:150},
+      {name:'מקרר תעשייתי / מסחרי', watt:800},
+      {name:'מקפיא', watt:200},
+      {name:'ויטרינת קירור', watt:900},
+  ]},
+  { key:'motors', name:'מנועים ושאיבה', icon:'⚙️', presets:[
+      {name:'משאבת מים ביתית', watt:750},
+      {name:'משאבת בריכה', watt:1100},
+      {name:'מדחס אוויר', watt:1500},
+      {name:'מנוע השקיה חקלאי', watt:3000},
+  ]},
+  { key:'other', name:'אחר', icon:'🔌', presets:[] },
+];
+
+// מיפוי משוער בלבד (לצורכי אמידת צריכה) בין חודש עברי לחודש לועזי מרכזי - ראו הערה בממשק
+const HEBREW_MONTHS = ['תשרי','חשוון','כסלו','טבת','שבט','אדר','ניסן','אייר','סיוון','תמוז','אב','אלול'];
+const HEBREW_MONTH_TO_GREGORIAN = {
+  'תשרי':10, 'חשוון':11, 'כסלו':12, 'טבת':1, 'שבט':2, 'אדר':3,
+  'ניסן':4, 'אייר':5, 'סיוון':6, 'תמוז':7, 'אב':8, 'אלול':9,
+};
+
+// חודשים (1-12) הנחשבים בתוקף עבור תקופות קבועות מראש - ניתן לעריכה ע"פ מדיניות העסק
+const SEASON_MONTHS = {
+  all_year:    [1,2,3,4,5,6,7,8,9,10,11,12],
+  summer:      [6,7,8,9],
+  winter:      [12,1,2],
+  transition:  [3,4,5,10,11],
+  not_summer:  [1,2,3,4,5,10,11,12],
+  school_year: [9,10,11,12,1,2,3,4,5,6],
+  yeshiva_year:[8,9,10,11,12,1,2,3,4,5,6],
+};
+const PERIOD_LABELS = {
+  all_year:'כל השנה', summer:'קיץ בלבד', winter:'חורף בלבד',
+  transition:'עונות מעבר', not_summer:'כל השנה חוץ מקיץ',
+  school_year:'שנת לימודים (ספט׳-יוני)', yeshiva_year:'שנת ישיבה (אלול-תמוז, בקירוב)',
+  custom_gregorian:'טווח תאריכים מותאם', custom_hebrew:'טווח בלוח עברי (משוער)',
+};
+
+const DAY_NAMES = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+const DAY_SHORT = ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'];
+
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  client: { name:'', phone:'', address:'', filledBy:'', contract:'', clientType:'private', propertyType:'', meterType:'', notes:'' },
+  billing: null, // מוגדר בהמשך ע"י newBilling()
+  globalRestriction: null, // מוגדר בהמשך ע"י newRestriction() - הגבלה כללית לכל הטופס
+  locations: [],
+};
+let uidCounter = 1;
+function uid(prefix){ return prefix + '_' + (uidCounter++) + '_' + Math.random().toString(36).slice(2,7); }
+
+const STORAGE_KEY = 'bereshit_consumption_data_v1';
+const CLIENT_TYPES = [
+  {key:'private', label:'פרטי'}, {key:'synagogue', label:'בית כנסת'},
+  {key:'business', label:'עסק'}, {key:'school', label:'בית ספר / ישיבה'},
+  {key:'agriculture', label:'חקלאות'},
+];
+const PROPERTY_TYPES = [
+  {key:'apartment', label:'דירה'}, {key:'private_house', label:'בית פרטי / צמוד קרקע'},
+  {key:'duplex', label:'דו-משפחתי'}, {key:'penthouse', label:'פנטהאוז'},
+  {key:'commercial', label:'מבנה מסחרי'}, {key:'industrial', label:'מבנה תעשייתי'},
+  {key:'agricultural', label:'מבנה חקלאי'}, {key:'other', label:'אחר'},
+];
+const METER_TYPES = [
+  {key:'regular', label:'רגיל'}, {key:'toz', label:'תעו"ז (תעריף עונתי-זמני)'},
+];
+const MONTH_HE_NAMES = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+
+// נתוני צריכה בפועל מהחשבון (לשקלול/הצלבה מול האומדן מהמכשירים) - כל השדות אופציונליים.
+function newBilling(){
+  return {
+    annualKwh: null, annualNis: null,
+    monthly: Array.from({length:12}, (_,i)=>({month:i+1, kwh:null, nis:null})),
+  };
+}
+state.billing = newBilling();
+
+// "הגבלה" - הצורה המשותפת לארבע הרמות (כללי לטופס / מיקום / קטגוריה / מכשיר).
+// ברירת המחדל היא "ללא הגבלה" (כל הימים, כל השעות, כל השנה) כדי שהתנהגות
+// קיימת לא תשתנה עד שמישהו בפועל מצמצם רמה מסוימת.
+function newRestriction(){
+  return {
+    days: [0,1,2,3,4,5,6], jewishShabbat: false, hours: Array.from({length:24},(_,i)=>i),
+    periodType: 'all_year', seasonCode: null, customRanges: [], customHebrewRanges: [],
+  };
+}
+state.globalRestriction = newRestriction();
+
+function newDevice(name, watt){
+  const d = newRestriction();
+  d.id = uid('dev'); d.name = name||''; d.watt = watt||0; d.qty = 1;
+  return d;
+}
+function newLocation(name){
+  const cats = {};
+  CATEGORIES.forEach(c => { cats[c.key] = { open:false, devices: [], restriction: newRestriction() }; });
+  return { id: uid('loc'), name: name || ('מיקום ' + (state.locations.length+1)), open: state.locations.length===0, restriction: newRestriction(), categories: cats };
+}
+// מיגרציה מגנה: אם state ישן (משמירה אוטומטית מגרסה קודמת) חסר לו שדות restriction
+// חדשים, נשלים ברירות מחדל כדי שהחישוב לא ייכשל.
+function ensureRestrictionShape(){
+  if(!state.globalRestriction) state.globalRestriction = newRestriction();
+  if(!state.billing) state.billing = newBilling();
+  if(!Array.isArray(state.billing.monthly) || state.billing.monthly.length!==12) state.billing = newBilling();
+  if(state.client.propertyType===undefined) state.client.propertyType = '';
+  if(state.client.meterType===undefined) state.client.meterType = '';
+  (state.locations||[]).forEach(loc=>{
+    if(!loc.restriction) loc.restriction = newRestriction();
+    CATEGORIES.forEach(cd=>{
+      if(!loc.categories[cd.key]) loc.categories[cd.key] = {open:false, devices:[], restriction:newRestriction()};
+      if(!loc.categories[cd.key].restriction) loc.categories[cd.key].restriction = newRestriction();
+    });
+  });
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function toast(msg, kind){
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = 'toast' + (kind ? ' '+kind : '');
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(()=>t.remove(), 2800);
+}
+
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+document.addEventListener('click', (e)=>{
+  const closeBtn = e.target.closest('[data-close]');
+  if(closeBtn){ closeModal(closeBtn.getAttribute('data-close')); }
+  if(e.target.classList && e.target.classList.contains('overlay')){ e.target.classList.remove('show'); }
+});
+
+let _confirmCb = null;
+function confirmDialog(title, msg, onOk){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent = msg;
+  _confirmCb = onOk;
+  openModal('ovConfirm');
+}
+document.getElementById('btnConfirmOk').addEventListener('click', ()=>{
+  closeModal('ovConfirm');
+  if(_confirmCb) { const cb = _confirmCb; _confirmCb = null; cb(); }
+});
+
+// ============================================================
+// חישוב שקיעה משוער (למרכז הארץ) - עבור "שבת יהודי" בלבד.
+// נוסחה אסטרונומית מקוצרת (NOAA), נבדקה מול ערכים ידועים בתל-אביב (±10 דק').
+// לצורך אמידת צריכה בלבד — אינה פסיקה הלכתית.
+// ============================================================
+const SUNSET_LAT = 32.08, SUNSET_LNG = 34.78; // מרכז הארץ (תל אביב), ניתן לכיול לפי מיקום הלקוח
+function dayOfYearUTC(d){ return Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()) - Date.UTC(d.getFullYear(),0,1))/86400000)+1; }
+function israelDST(d){
+  const m = d.getMonth()+1, day = d.getDate();
+  if(m>3 && m<10) return true;
+  if(m===3) return day>=24;
+  if(m===10) return day<=26;
+  return false;
+}
+function sunsetHourLocal(d){
+  const rad = Math.PI/180;
+  const N = dayOfYearUTC(d);
+  const gamma = 2*Math.PI/365*(N-1);
+  const decl = 0.006918 - 0.399912*Math.cos(gamma) + 0.070257*Math.sin(gamma)
+             - 0.006758*Math.cos(2*gamma) + 0.000907*Math.sin(2*gamma)
+             - 0.002697*Math.cos(3*gamma) + 0.00148*Math.sin(3*gamma);
+  const eqtime = 229.18*(0.000075 + 0.001868*Math.cos(gamma) - 0.032077*Math.sin(gamma)
+             - 0.014615*Math.cos(2*gamma) - 0.040849*Math.sin(2*gamma));
+  const latRad = SUNSET_LAT*rad;
+  let cosH = (Math.cos(90.833*rad)/(Math.cos(latRad)*Math.cos(decl))) - Math.tan(latRad)*Math.tan(decl);
+  cosH = Math.max(-1, Math.min(1, cosH));
+  const H = Math.acos(cosH);
+  const Hhours = H*180/Math.PI/15;
+  const solarNoonUTC = 12 - SUNSET_LNG/15 - eqtime/60;
+  const sunsetUTC = solarNoonUTC + Hhours;
+  const tz = israelDST(d) ? 3 : 2;
+  let local = sunsetUTC + tz;
+  while(local<0) local += 24; while(local>=24) local -= 24;
+  return local;
+}
+// טווח "שבת יהודי" עבור שבוע נתון (Date כלשהו בשבוע): {fri:Date, friSunset, sat:Date, satNightfall}
+function shabbatWindowForWeek(anyDateInWeek){
+  const d = new Date(anyDateInWeek);
+  const dow = d.getDay();
+  const fri = new Date(d); fri.setDate(d.getDate() + (5-dow));
+  const sat = new Date(fri); sat.setDate(fri.getDate()+1);
+  const friSunset = sunsetHourLocal(fri);
+  const satSunset = sunsetHourLocal(sat);
+  const satNightfall = satSunset + (20/60); // תוספת ~20 דק' לצאת הכוכבים (משוער, ניתן לכיול)
+  return {fri, friSunset, sat, satNightfall};
+}
+
+
+// ============================================================
+// מנוע חישוב - נתיב יחיד המשמש הן לתצוגה החיה והן לייצוא.
+//
+// כל מכשיר פעיל בשעה נתונה רק אם עובר בו-זמנית את כל 4 רמות ההגבלה:
+// כללי-לטופס ∩ מיקום ∩ קטגוריה ∩ מכשיר (חיתוך אמיתי - זו בדיוק ההשלמה
+// למנגנון שהיה קיים כ"אספנו אך לא השתמשנו" בקובץ Form.html המקורי).
+// ============================================================
+function dateInMonthDayRange(date, fromMonth, fromDay, toMonth, toDay){
+  const m = date.getMonth()+1, dd = date.getDate();
+  const val = m*100+dd, from = fromMonth*100+fromDay, to = toMonth*100+toDay;
+  if(from <= to) return val>=from && val<=to;
+  return val>=from || val<=to;
+}
+function isDateInPeriod(date, restriction){
+  const pt = restriction.periodType || 'all_year';
+  const month = date.getMonth()+1;
+  if(pt === 'all_year') return true;
+  if(pt === 'season') return (SEASON_MONTHS[restriction.seasonCode||'all_year']||[]).includes(month);
+  if(pt === 'school_year') return SEASON_MONTHS.school_year.includes(month);
+  if(pt === 'yeshiva_year') return SEASON_MONTHS.yeshiva_year.includes(month);
+  if(pt === 'custom_gregorian'){
+    const ranges = restriction.customRanges||[];
+    if(!ranges.length) return true;
+    return ranges.some(r=>dateInMonthDayRange(date, r.fromMonth, r.fromDay, r.toMonth, r.toDay));
+  }
+  if(pt === 'custom_hebrew'){
+    const ranges = restriction.customHebrewRanges||[];
+    if(!ranges.length) return true;
+    return ranges.some(r=>{
+      const fm = HEBREW_MONTH_TO_GREGORIAN[r.fromMonth], tm = HEBREW_MONTH_TO_GREGORIAN[r.toMonth];
+      return dateInMonthDayRange(date, fm, r.fromDay||1, tm, r.toDay||28);
+    });
+  }
+  return true;
+}
+function isJewishShabbatHourActive(date, hour){
+  const dow = date.getDay();
+  const win = shabbatWindowForWeek(date);
+  if(dow===5) return hour >= Math.floor(win.friSunset);
+  if(dow===6) return hour <= Math.floor(win.satNightfall);
+  return false;
+}
+// שעות פעילות של רמת-הגבלה בודדת (כללי/מיקום/קטגוריה/מכשיר) ביום נתון.
+// מחזיר מערך שעות (0-23), או [] אם היום הזה כלל לא פעיל ברמה הזו.
+function levelHoursForDay(restriction, date){
+  const dow = date.getDay();
+  if(restriction.jewishShabbat && (dow===5 || dow===6)){
+    const active = [];
+    for(let h=0; h<24; h++){ if(isJewishShabbatHourActive(date,h)) active.push(h); }
+    return active;
+  }
+  if(!(restriction.days||[]).includes(dow)) return [];
+  return restriction.hours||[];
+}
+// חיתוך 4 הרמות עבור מכשיר ביום נתון -> מערך השעות הפעילות בפועל.
+function activeHoursForDeviceOnDay(device, loc, catRestriction, date){
+  if(!isDateInPeriod(date, GLOBAL_RESTRICTION())) return [];
+  if(!isDateInPeriod(date, loc.restriction)) return [];
+  if(!isDateInPeriod(date, catRestriction)) return [];
+  if(!isDateInPeriod(date, device)) return [];
+  const gH = levelHoursForDay(GLOBAL_RESTRICTION(), date); if(!gH.length) return [];
+  const lH = levelHoursForDay(loc.restriction, date); if(!lH.length) return [];
+  const cH = levelHoursForDay(catRestriction, date); if(!cH.length) return [];
+  const dH = levelHoursForDay(device, date); if(!dH.length) return [];
+  const gSet = new Set(gH), lSet = new Set(lH), cSet = new Set(cH);
+  return dH.filter(h => gSet.has(h) && lSet.has(h) && cSet.has(h));
+}
+function GLOBAL_RESTRICTION(){ return state.globalRestriction || newRestriction(); }
+
+// חישוב שנתי מהיר (רזולוציית יום, ~365 בדיקות) - למסך החי
+function calcDeviceAnnualKwh(device, loc, catRestriction, year){
+  year = year || new Date().getFullYear();
+  let hoursTotal = 0;
+  const cur = new Date(year,0,1);
+  const end = new Date(year,11,31);
+  while(cur <= end){
+    hoursTotal += activeHoursForDeviceOnDay(device, loc, catRestriction, cur).length;
+    cur.setDate(cur.getDate()+1);
+  }
+  return hoursTotal * (device.watt||0) * (device.qty||1) / 1000;
+}
+// סדרה שעתית מלאה (8,760 שעות) - לייצוא בלבד (אותו נתיב לוגי בדיוק כמו התצוגה החיה)
+function generateHourlySeries(year){
+  year = year || new Date().getFullYear();
+  const start = new Date(year,0,1);
+  const totalDays = Math.round((new Date(year,11,31)-start)/86400000)+1;
+  const totals = new Array(totalDays*24).fill(0);
+  const cur = new Date(start);
+  for(let dayIdx=0; dayIdx<totalDays; dayIdx++){
+    state.locations.forEach(loc=>{
+      CATEGORIES.forEach(catDef=>{
+        const cat = loc.categories[catDef.key];
+        (cat.devices||[]).forEach(dev=>{
+          const activeHours = activeHoursForDeviceOnDay(dev, loc, cat.restriction, cur);
+          if(!activeHours.length) return;
+          const kw = (dev.watt||0)*(dev.qty||1)/1000;
+          activeHours.forEach(h=>{ totals[dayIdx*24+h]+=kw; });
+        });
+      });
+    });
+    cur.setDate(cur.getDate()+1);
+  }
+  const out = []; const d2 = new Date(start);
+  for(let i=0;i<totalDays;i++){
+    const dateStr = d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');
+    for(let h=0;h<24;h++) out.push({date:dateStr, hour:h, kwh:+totals[i*24+h].toFixed(4)});
+    d2.setDate(d2.getDate()+1);
+  }
+  return out;
+}
+function fmtKwh(n){ return Math.round(n||0).toLocaleString('he-IL'); }
+
+let _autosaveTimer = null;
+function scheduleAutosave(){
+  clearTimeout(_autosaveTimer);
+  _autosaveTimer = setTimeout(()=>{
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ /* אחסון לא זמין - מתעלמים בשקט */ }
+  }, 400);
+}
+
+function recalcAllBadges(){
+  let totalKwhYear = 0, deviceCount = 0;
+  state.locations.forEach(loc=>{
+    let locKwh = 0;
+    CATEGORIES.forEach(catDef=>{
+      const cat = loc.categories[catDef.key];
+      const devices = cat.devices || [];
+      let catKwh = 0;
+      devices.forEach(dev=>{
+        const k = calcDeviceAnnualKwh(dev, loc, cat.restriction);
+        catKwh += k; deviceCount++;
+        const b = document.querySelector('[data-dev-kwh="'+dev.id+'"]');
+        if(b) b.textContent = fmtKwh(k)+' קוט"ש/שנה';
+      });
+      locKwh += catKwh;
+      const cb = document.querySelector('[data-cat-kwh="'+loc.id+'_'+catDef.key+'"]');
+      if(cb) cb.textContent = catKwh>0 ? (fmtKwh(catKwh)+' קוט"ש/שנה') : '';
+      const cc = document.querySelector('[data-cat-count="'+loc.id+'_'+catDef.key+'"]');
+      if(cc) cc.textContent = devices.length ? (devices.length+' מכשירים') : '';
+    });
+    totalKwhYear += locKwh;
+    const lb = document.querySelector('[data-loc-kwh="'+loc.id+'"]');
+    if(lb) lb.textContent = fmtKwh(locKwh)+' קוט"ש/שנה';
+  });
+  document.getElementById('statLocations').textContent = state.locations.length;
+  document.getElementById('statDevices').textContent = deviceCount;
+  document.getElementById('statKwhYear').textContent = fmtKwh(totalKwhYear);
+  document.getElementById('statKwhDay').textContent = fmtKwh(totalKwhYear/365);
+  document.getElementById('miniKwhYear').textContent = fmtKwh(totalKwhYear);
+  document.getElementById('miniDevices').textContent = deviceCount;
+  scheduleAutosave();
+}
+
+
+// ============================================================
+// תצוגה - בנייה מלאה מחדש של DOM המיקומים מתוך ה-state (עדכוני שדה בודדים
+// אינם גורמים לבנייה מחדש, כדי לא לאבד פוקוס/מיקום סמן בזמן הקלדה).
+// ============================================================
+function daySummary(r){
+  const d = (r.days||[]).slice().sort((a,b)=>a-b);
+  let base;
+  if(d.length===7) base='כל הימים';
+  else if(d.length===0) base='לא נבחרו ימים';
+  else if(d.length===5 && [0,1,2,3,4].every(x=>d.includes(x))) base='ימי חול';
+  else base = d.map(i=>DAY_SHORT[i]).join(',');
+  if(r.jewishShabbat) base += ' +🕯️שבת';
+  return base;
+}
+function hourSummary(r){
+  const h = (r.hours||[]).slice().sort((a,b)=>a-b);
+  if(h.length===24) return 'כל היום';
+  if(h.length===0) return 'לא נבחרו שעות';
+  let contig = true;
+  for(let i=1;i<h.length;i++){ if(h[i]!==h[i-1]+1){contig=false;break;} }
+  if(contig) return String(h[0]).padStart(2,'0')+'-'+String((h[h.length-1]+1)%24).padStart(2,'0');
+  return h.length+' שעות';
+}
+function periodSummary(r){
+  if(r.periodType==='season') return PERIOD_LABELS[r.seasonCode]||'עונה';
+  return PERIOD_LABELS[r.periodType]||'כל השנה';
+}
+function isRestrictionNarrowed(r){
+  return !!r.jewishShabbat || (r.days||[]).length<7 || (r.hours||[]).length<24 || (r.periodType && r.periodType!=='all_year');
+}
+// שלושת הכפתורים (ימים/שעות/תקופה) - משותפים לכל היקף (global/location/category/device)
+function restrictionButtonsHtml(scope, locId, catKey, restriction){
+  const attrs = `data-scope="${scope}"${locId?` data-loc="${locId}"`:''}${catKey?` data-cat="${catKey}"`:''}`;
+  const daysSet = restriction.jewishShabbat || (restriction.days||[]).length<7;
+  const hoursSet = (restriction.hours||[]).length<24;
+  const periodSet = restriction.periodType && restriction.periodType!=='all_year';
+  return `
+    <button type="button" class="mini-btn ${restriction.jewishShabbat?'shabbat-on':(daysSet?'set':'')}" data-action="openDays" ${attrs}>📅 ${daySummary(restriction)}</button>
+    <button type="button" class="mini-btn ${hoursSet?'set':''}" data-action="openHours" ${attrs}>🕐 ${hourSummary(restriction)}</button>
+    <button type="button" class="mini-btn ${periodSet?'set':''}" data-action="openPeriod" ${attrs}>📆 ${periodSummary(restriction)}</button>`;
+}
+
+function renderGlobalRestrictionBar(){
+  const el = document.getElementById('globalRestrictionButtons');
+  if(!el) return;
+  el.innerHTML = restrictionButtonsHtml('global', null, null, state.globalRestriction);
+  const badge = document.getElementById('globalRestrictionBadge');
+  if(badge) badge.style.display = isRestrictionNarrowed(state.globalRestriction) ? 'inline-flex' : 'none';
+}
+
+function renderLocations(){
+  const container = document.getElementById('locationsContainer');
+  if(state.locations.length===0){
+    container.innerHTML = '<div class="empty-state">עדיין לא נוספו מיקומים. לחצו על "➕ הוספת מיקום" כדי להתחיל.</div>';
+  } else {
+    container.innerHTML = state.locations.map((loc,idx)=>renderLocationHtml(loc,idx)).join('');
+  }
+  recalcAllBadges();
+}
+
+function renderLocationHtml(loc, idx){
+  const catsHtml = CATEGORIES.map(catDef=>renderCategoryHtml(loc, catDef)).join('');
+  const locNarrowed = isRestrictionNarrowed(loc.restriction);
+  return `
+  <div class="location ${loc.open?'open':''}" data-loc-id="${loc.id}">
+    <div class="loc-head" data-action="toggleLoc" data-loc="${loc.id}">
+      <span class="num">${idx+1}</span>
+      <input class="loc-name" value="${esc(loc.name)}" data-loc="${loc.id}" onclick="event.stopPropagation()">
+      ${locNarrowed ? '<span class="scope-flag" title="קיימת הגבלת זמן ייעודית למיקום זה">⏱️</span>' : ''}
+      <span class="loc-badge" data-loc-kwh="${loc.id}">0 קוט"ש/שנה</span>
+      <button type="button" class="btn danger-ghost" data-action="deleteLoc" data-loc="${loc.id}" title="מחיקת מיקום">🗑</button>
+      <span class="chevron">›</span>
+    </div>
+    <div class="loc-body">
+      <div class="restriction-strip">
+        <span class="rs-label">⏱️ הגבלת זמן למיקום זה <em>(חלה על כל הקטגוריות וההתקנים כאן, בנוסף להגבלה הכללית)</em></span>
+        <div class="rs-buttons">${restrictionButtonsHtml('location', loc.id, null, loc.restriction)}</div>
+      </div>
+      ${catsHtml}
+    </div>
+  </div>`;
+}
+
+function renderCategoryHtml(loc, catDef){
+  const cat = loc.categories[catDef.key];
+  const devicesHtml = cat.devices.map(dev=>renderDeviceHtml(loc.id, catDef.key, dev)).join('');
+  const catNarrowed = isRestrictionNarrowed(cat.restriction);
+  return `
+  <div class="category ${cat.open?'open':''}">
+    <div class="cat-head" data-action="toggleCat" data-loc="${loc.id}" data-cat="${catDef.key}">
+      <span class="icon">${catDef.icon}</span>
+      <span class="cname">${esc(catDef.name)}</span>
+      ${catNarrowed ? '<span class="scope-flag" title="קיימת הגבלת זמן ייעודית לקטגוריה זו">⏱️</span>' : ''}
+      <span class="cat-count" data-cat-count="${loc.id}_${catDef.key}">${cat.devices.length? cat.devices.length+' מכשירים':''}</span>
+      <span class="cat-kwh" data-cat-kwh="${loc.id}_${catDef.key}"></span>
+      <span class="chevron">›</span>
+    </div>
+    <div class="cat-body">
+      <div class="restriction-strip cat-strip">
+        <span class="rs-label">⏱️ הגבלת זמן לקטגוריה זו <em>(חלה על כל ההתקנים כאן, בנוסף להגבלות מלמעלה)</em></span>
+        <div class="rs-buttons">${restrictionButtonsHtml('category', loc.id, catDef.key, cat.restriction)}</div>
+      </div>
+      ${devicesHtml || '<div class="empty-state" style="padding:12px;">אין עדיין מכשירים בקטגוריה זו</div>'}
+      <div class="cat-actions">
+        <button type="button" class="btn sm" data-action="addDevice" data-loc="${loc.id}" data-cat="${catDef.key}">➕ הוספת מכשיר</button>
+        ${catDef.presets.length ? `<button type="button" class="btn sm accent" data-action="openCatalog" data-loc="${loc.id}" data-cat="${catDef.key}">⚡ בחירה מקטלוג</button>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderDeviceHtml(locId, catKey, dev){
+  const attrs = `data-scope="device" data-dev="${dev.id}" data-loc="${locId}" data-cat="${catKey}"`;
+  return `
+  <div class="device-row" data-dev="${dev.id}">
+    <input value="${esc(dev.name)}" placeholder="שם המכשיר" data-field="name" data-dev="${dev.id}" data-loc="${locId}" data-cat="${catKey}">
+    <input type="number" min="0" step="1" value="${dev.watt||''}" placeholder="וואט" data-field="watt" data-dev="${dev.id}" data-loc="${locId}" data-cat="${catKey}">
+    <input type="number" min="1" step="1" value="${dev.qty||1}" placeholder="כמות" data-field="qty" data-dev="${dev.id}" data-loc="${locId}" data-cat="${catKey}">
+    <button type="button" class="mini-btn ${dev.jewishShabbat?'shabbat-on':((dev.days||[]).length<7?'set':'')}" data-action="openDays" ${attrs}>📅 ${daySummary(dev)}</button>
+    <button type="button" class="mini-btn ${(dev.hours||[]).length<24?'set':''}" data-action="openHours" ${attrs}>🕐 ${hourSummary(dev)}</button>
+    <button type="button" class="mini-btn ${dev.periodType&&dev.periodType!=='all_year'?'set':''}" data-action="openPeriod" ${attrs}>📆 ${periodSummary(dev)}</button>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:3px;">
+      <span class="dkwh" data-dev-kwh="${dev.id}">0 קוט"ש/שנה</span>
+      <button type="button" class="btn danger-ghost" data-action="deleteDevice" data-dev="${dev.id}" data-loc="${locId}" data-cat="${catKey}" title="מחיקת מכשיר">🗑</button>
+    </div>
+  </div>`;
+}
+
+function getLocation(locId){ return state.locations.find(l=>l.id===locId); }
+function getDevice(locId,catKey,devId){ return getLocation(locId).categories[catKey].devices.find(d=>d.id===devId); }
+
+function toggleLoc(locId){
+  const wasOpen = getLocation(locId).open;
+  state.locations.forEach(l=>l.open=false);
+  getLocation(locId).open = !wasOpen;
+  renderLocations();
+}
+function toggleCat(locId, catKey){
+  const loc = getLocation(locId);
+  const wasOpen = loc.categories[catKey].open;
+  CATEGORIES.forEach(c=>{ loc.categories[c.key].open=false; });
+  loc.categories[catKey].open = !wasOpen;
+  renderLocations();
+}
+
+document.getElementById('btnAddLocation').addEventListener('click', ()=>{
+  state.locations.forEach(l=>l.open=false);
+  const loc = newLocation();
+  loc.open = true;
+  state.locations.push(loc);
+  renderLocations();
+  toast('מיקום חדש נוסף');
+});
+
+// מאזין אחד לכל פעולות המודאלים (ימים/שעות/תקופה) - משותף לפאנל הגלובלי
+// ולתוך מכולת המיקומים, כדי שהיקף 'global' (שנמצא מחוץ ל-locationsContainer)
+// ייתפס גם הוא.
+function handleRestrictionAction(el){
+  const action = el.getAttribute('data-action');
+  const scope = el.getAttribute('data-scope') || 'device';
+  const locId = el.getAttribute('data-loc');
+  const catKey = el.getAttribute('data-cat');
+  const devId = el.getAttribute('data-dev');
+  if(action==='openDays') openDaysModal(scope, locId, catKey, devId);
+  else if(action==='openHours') openHoursModal(scope, locId, catKey, devId);
+  else if(action==='openPeriod') openPeriodModal(scope, locId, catKey, devId);
+}
+document.getElementById('globalRestrictionButtons').addEventListener('click', e=>{
+  const el = e.target.closest('[data-action]'); if(el) handleRestrictionAction(el);
+});
+
+document.getElementById('locationsContainer').addEventListener('click', function(e){
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  const action = el.getAttribute('data-action');
+  const locId = el.getAttribute('data-loc');
+  const catKey = el.getAttribute('data-cat');
+  const devId = el.getAttribute('data-dev');
+
+  if(action==='openDays' || action==='openHours' || action==='openPeriod'){ handleRestrictionAction(el); return; }
+  if(action==='toggleLoc') toggleLoc(locId);
+  else if(action==='toggleCat') toggleCat(locId, catKey);
+  else if(action==='deleteLoc'){
+    confirmDialog('מחיקת מיקום', 'למחוק את המיקום ואת כל המכשירים שבתוכו? לא ניתן לשחזר פעולה זו.', ()=>{
+      state.locations = state.locations.filter(l=>l.id!==locId);
+      renderLocations(); toast('המיקום נמחק');
+    });
+  }
+  else if(action==='addDevice'){
+    const loc = getLocation(locId);
+    loc.categories[catKey].devices.push(newDevice('', 0));
+    loc.categories[catKey].open = true;
+    renderLocations();
+  }
+  else if(action==='deleteDevice'){
+    const loc = getLocation(locId);
+    loc.categories[catKey].devices = loc.categories[catKey].devices.filter(d=>d.id!==devId);
+    renderLocations(); toast('המכשיר הוסר');
+  }
+  else if(action==='openCatalog') openCatalogModal(locId, catKey);
+});
+
+document.getElementById('locationsContainer').addEventListener('input', function(e){
+  const t = e.target;
+  if(t.classList.contains('loc-name')){
+    getLocation(t.getAttribute('data-loc')).name = t.value;
+    scheduleAutosave();
+    return;
+  }
+  const field = t.getAttribute('data-field');
+  if(field){
+    const dev = getDevice(t.getAttribute('data-loc'), t.getAttribute('data-cat'), t.getAttribute('data-dev'));
+    if(field==='watt' || field==='qty'){ dev[field] = Math.max(0, parseFloat(t.value)||0); }
+    else { dev[field] = t.value; }
+    recalcAllBadges();
+  }
+});
+
+
+// ============================================================
+// מיפוי היקף (scope) -> אובייקט ה-restriction בפועל, ולתווית מתארת.
+// אותם 3 מודאלים (ימים/שעות/תקופה) משרתים את כל 4 ההיקפים.
+// ============================================================
+function getRestrictionTarget(ctx){
+  if(ctx.scope==='global') return state.globalRestriction;
+  if(ctx.scope==='location') return getLocation(ctx.locId).restriction;
+  if(ctx.scope==='category') return getLocation(ctx.locId).categories[ctx.catKey].restriction;
+  return getDevice(ctx.locId, ctx.catKey, ctx.devId);
+}
+function scopeTitle(ctx, base){
+  if(ctx.scope==='global') return base+' — כלל הטופס';
+  if(ctx.scope==='location'){ const l=getLocation(ctx.locId); return base+' — מיקום: '+(l?esc(l.name):''); }
+  if(ctx.scope==='category'){ const cd=CATEGORIES.find(c=>c.key===ctx.catKey); return base+' — קטגוריית '+(cd?cd.name:''); }
+  return base+' — מכשיר בודד';
+}
+function afterRestrictionSave(){
+  renderGlobalRestrictionBar();
+  renderLocations();
+}
+
+// ============================================================
+// מודאל ימים
+// ============================================================
+let _mCtx = null, _tmpDays = [], _tmpShabbat = false;
+function openDaysModal(scope, locId, catKey, devId){
+  _mCtx = {scope, locId, catKey, devId};
+  const target = getRestrictionTarget(_mCtx);
+  _tmpDays = [...(target.days||[])];
+  _tmpShabbat = !!target.jewishShabbat;
+  document.querySelector('#ovDays h3').textContent = scopeTitle(_mCtx, 'בחירת ימי פעילות');
+  renderDaysModal();
+  openModal('ovDays');
+}
+function renderDaysModal(){
+  document.getElementById('dayChips').innerHTML = [['all','כל הימים'],['week','ימי חול (א-ה)'],['weekend','סוף שבוע (ו-ש)'],['none','נקה הכל']]
+    .map(([k,l])=>`<button type="button" class="chip" data-chip="${k}">${l}</button>`).join('');
+  document.getElementById('dayGrid').innerHTML = DAY_NAMES.map((name,i)=>
+    `<button type="button" class="toggle-cell ${_tmpDays.includes(i)?'on':''}" data-day="${i}">${name}</button>`).join('');
+  document.getElementById('shabbatCheck').checked = _tmpShabbat;
+}
+document.getElementById('dayChips').addEventListener('click', e=>{
+  const b = e.target.closest('[data-chip]'); if(!b) return;
+  const k = b.getAttribute('data-chip');
+  if(k==='all') _tmpDays=[0,1,2,3,4,5,6];
+  else if(k==='week') _tmpDays=[0,1,2,3,4];
+  else if(k==='weekend') _tmpDays=[5,6];
+  else if(k==='none') _tmpDays=[];
+  renderDaysModal();
+});
+document.getElementById('dayGrid').addEventListener('click', e=>{
+  const b = e.target.closest('[data-day]'); if(!b) return;
+  const i = +b.getAttribute('data-day');
+  const idx = _tmpDays.indexOf(i);
+  if(idx>=0) _tmpDays.splice(idx,1); else _tmpDays.push(i);
+  renderDaysModal();
+});
+document.getElementById('shabbatCheck').addEventListener('change', e=>{ _tmpShabbat = e.target.checked; });
+document.getElementById('btnSaveDays').addEventListener('click', ()=>{
+  const target = getRestrictionTarget(_mCtx);
+  target.days = [..._tmpDays]; target.jewishShabbat = _tmpShabbat;
+  closeModal('ovDays'); afterRestrictionSave();
+});
+
+// ============================================================
+// מודאל שעות
+// ============================================================
+let _tmpHours = [];
+function openHoursModal(scope, locId, catKey, devId){
+  _mCtx = {scope, locId, catKey, devId};
+  const target = getRestrictionTarget(_mCtx);
+  _tmpHours = [...(target.hours||[])];
+  document.querySelector('#ovHours h3').textContent = scopeTitle(_mCtx, 'בחירת שעות פעילות');
+  renderHoursModal();
+  openModal('ovHours');
+}
+function renderHoursModal(){
+  document.getElementById('hourChips').innerHTML = [['all','כל היום'],['morning','בוקר 6-12'],['noon','צהריים 12-17'],['evening','ערב 17-22'],['night','לילה 22-06'],['none','נקה הכל']]
+    .map(([k,l])=>`<button type="button" class="chip" data-chip="${k}">${l}</button>`).join('');
+  document.getElementById('hourGrid').innerHTML = Array.from({length:24},(_,h)=>
+    `<button type="button" class="toggle-cell ${_tmpHours.includes(h)?'on':''}" data-hour="${h}">${String(h).padStart(2,'0')}</button>`).join('');
+}
+document.getElementById('hourChips').addEventListener('click', e=>{
+  const b = e.target.closest('[data-chip]'); if(!b) return;
+  const k = b.getAttribute('data-chip');
+  const range=(a,z)=>Array.from({length:z-a},(_,i)=>a+i);
+  if(k==='all') _tmpHours=range(0,24);
+  else if(k==='morning') _tmpHours=range(6,12);
+  else if(k==='noon') _tmpHours=range(12,17);
+  else if(k==='evening') _tmpHours=range(17,22);
+  else if(k==='night') _tmpHours=[22,23,0,1,2,3,4,5];
+  else if(k==='none') _tmpHours=[];
+  renderHoursModal();
+});
+document.getElementById('hourGrid').addEventListener('click', e=>{
+  const b = e.target.closest('[data-hour]'); if(!b) return;
+  const h = +b.getAttribute('data-hour');
+  const idx = _tmpHours.indexOf(h);
+  if(idx>=0) _tmpHours.splice(idx,1); else _tmpHours.push(h);
+  renderHoursModal();
+});
+document.getElementById('btnSaveHours').addEventListener('click', ()=>{
+  const target = getRestrictionTarget(_mCtx);
+  target.hours = [..._tmpHours];
+  closeModal('ovHours'); afterRestrictionSave();
+});
+
+// ============================================================
+// מודאל תקופה/עונה
+// ============================================================
+const MONTH_NAMES = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+const PERIOD_TYPE_OPTIONS = [
+  {key:'all_year', label:'כל השנה'},
+  {key:'season', label:'עונה (קיץ / חורף / מעבר)'},
+  {key:'school_year', label:'שנת לימודים (ספטמבר-יוני)'},
+  {key:'yeshiva_year', label:'שנת ישיבה (אלול-תמוז, בקירוב)'},
+  {key:'custom_gregorian', label:'טווח תאריכים מותאם'},
+  {key:'custom_hebrew', label:'טווח בלוח עברי (משוער)'},
+];
+let _tmpPeriod = {periodType:'all_year', seasonCode:null, customRanges:[], customHebrewRanges:[]};
+function openPeriodModal(scope, locId, catKey, devId){
+  _mCtx = {scope, locId, catKey, devId};
+  const target = getRestrictionTarget(_mCtx);
+  _tmpPeriod = {
+    periodType: target.periodType||'all_year', seasonCode: target.seasonCode||null,
+    customRanges: JSON.parse(JSON.stringify(target.customRanges||[])),
+    customHebrewRanges: JSON.parse(JSON.stringify(target.customHebrewRanges||[])),
+  };
+  document.querySelector('#ovPeriod h3').textContent = scopeTitle(_mCtx, 'תקופת פעילות בשנה');
+  renderPeriodModal();
+  openModal('ovPeriod');
+}
+function renderPeriodModal(){
+  document.getElementById('periodTypeList').innerHTML = PERIOD_TYPE_OPTIONS.map(o=>`
+    <label class="period-opt ${_tmpPeriod.periodType===o.key?'active':''}">
+      <input type="radio" name="ptype" value="${o.key}" ${_tmpPeriod.periodType===o.key?'checked':''}>
+      ${o.label}
+    </label>`).join('');
+  renderPeriodExtra();
+}
+function monthOptions(sel){ return MONTH_NAMES.map((m,i)=>`<option value="${i+1}" ${sel===i+1?'selected':''}>${m}</option>`).join(''); }
+function dayOptions(sel){ let s=''; for(let d=1; d<=31; d++) s+=`<option value="${d}" ${sel===d?'selected':''}>${d}</option>`; return s; }
+function monthOptionsHeb(sel){ return HEBREW_MONTHS.map(m=>`<option value="${m}" ${sel===m?'selected':''}>${m}</option>`).join(''); }
+function renderPeriodExtra(){
+  const el = document.getElementById('periodExtra');
+  if(_tmpPeriod.periodType==='season'){
+    const opts=[['summer','☀️ קיץ (יוני-ספט׳)'],['winter','❄️ חורף (דצמ׳-פבר׳)'],['transition','🍂 עונות מעבר'],['not_summer','🌤️ כל השנה חוץ מקיץ']];
+    el.innerHTML = '<div class="chip-row">'+opts.map(([k,l])=>
+      `<button type="button" class="chip" data-season="${k}" style="${_tmpPeriod.seasonCode===k?'background:var(--navy-2);color:#fff;border-color:var(--navy-2);':''}">${l}</button>`).join('')+'</div>';
+  } else if(_tmpPeriod.periodType==='custom_gregorian'){
+    let html = _tmpPeriod.customRanges.map((r,i)=>`
+      <div class="range-row" data-range-idx="${i}">
+        <span>מ-</span><select data-rf="fromMonth">${monthOptions(r.fromMonth)}</select><select data-rf="fromDay">${dayOptions(r.fromDay)}</select>
+        <span>עד</span><select data-rf="toMonth">${monthOptions(r.toMonth)}</select><select data-rf="toDay">${dayOptions(r.toDay)}</select>
+        <button type="button" class="btn danger-ghost sm" data-rm-range="${i}">✕</button>
+      </div>`).join('');
+    html += '<button type="button" class="btn sm" id="btnAddGregRange">➕ הוספת טווח נוסף</button>';
+    el.innerHTML = html;
+  } else if(_tmpPeriod.periodType==='custom_hebrew'){
+    let html = '<p style="font-size:11.5px;color:var(--ink-soft);margin:0 0 8px;">⚠️ מיפוי חודש עברי לתאריך לועזי הוא משוער בלבד, לצורך אמידת צריכה - לא לשימוש הלכתי.</p>';
+    html += _tmpPeriod.customHebrewRanges.map((r,i)=>`
+      <div class="range-row" data-range-idx="${i}">
+        <span>מ-</span><select data-rhf="fromMonth">${monthOptionsHeb(r.fromMonth)}</select><select data-rhf="fromDay">${dayOptions(r.fromDay)}</select>
+        <span>עד</span><select data-rhf="toMonth">${monthOptionsHeb(r.toMonth)}</select><select data-rhf="toDay">${dayOptions(r.toDay)}</select>
+        <button type="button" class="btn danger-ghost sm" data-rm-hrange="${i}">✕</button>
+      </div>`).join('');
+    html += '<button type="button" class="btn sm" id="btnAddHebRange">➕ הוספת טווח נוסף</button>';
+    el.innerHTML = html;
+  } else {
+    el.innerHTML = '';
+  }
+}
+const periodModalBody = document.querySelector('#ovPeriod .modal-body');
+periodModalBody.addEventListener('change', e=>{
+  if(e.target.name==='ptype'){ _tmpPeriod.periodType = e.target.value; renderPeriodModal(); return; }
+  const row = e.target.closest('[data-range-idx]');
+  if(!row) return;
+  const idx = +row.getAttribute('data-range-idx');
+  const rf = e.target.getAttribute('data-rf');
+  if(rf){ _tmpPeriod.customRanges[idx][rf] = +e.target.value; }
+  const rhf = e.target.getAttribute('data-rhf');
+  if(rhf){ _tmpPeriod.customHebrewRanges[idx][rhf] = rhf.indexOf('Day')>=0 ? +e.target.value : e.target.value; }
+});
+periodModalBody.addEventListener('click', e=>{
+  const seasonBtn = e.target.closest('[data-season]');
+  if(seasonBtn){ _tmpPeriod.seasonCode = seasonBtn.getAttribute('data-season'); renderPeriodExtra(); return; }
+  if(e.target.id==='btnAddGregRange'){ _tmpPeriod.customRanges.push({fromMonth:1,fromDay:1,toMonth:12,toDay:31}); renderPeriodExtra(); return; }
+  if(e.target.id==='btnAddHebRange'){ _tmpPeriod.customHebrewRanges.push({fromMonth:'תשרי',fromDay:1,toMonth:'אלול',toDay:29}); renderPeriodExtra(); return; }
+  const rmIdx = e.target.getAttribute('data-rm-range');
+  if(rmIdx!==null){ _tmpPeriod.customRanges.splice(+rmIdx,1); renderPeriodExtra(); return; }
+  const rmHIdx = e.target.getAttribute('data-rm-hrange');
+  if(rmHIdx!==null){ _tmpPeriod.customHebrewRanges.splice(+rmHIdx,1); renderPeriodExtra(); return; }
+});
+document.getElementById('btnSavePeriod').addEventListener('click', ()=>{
+  const target = getRestrictionTarget(_mCtx);
+  target.periodType = _tmpPeriod.periodType;
+  target.seasonCode = _tmpPeriod.seasonCode;
+  target.customRanges = JSON.parse(JSON.stringify(_tmpPeriod.customRanges));
+  target.customHebrewRanges = JSON.parse(JSON.stringify(_tmpPeriod.customHebrewRanges));
+  closeModal('ovPeriod'); afterRestrictionSave();
+});
+
+// ============================================================
+// מודאל קטלוג
+// ============================================================
+let _catalogCtx = null;
+function openCatalogModal(locId, catKey){
+  _catalogCtx = {locId, catKey};
+  const catDef = CATEGORIES.find(c=>c.key===catKey);
+  document.getElementById('catalogGrid').innerHTML = catDef.presets.map((p,i)=>`
+    <button type="button" class="catalog-item" data-preset-idx="${i}">
+      <div class="cn">${esc(p.name)}</div><div class="cw">${p.watt} וואט</div>
+    </button>`).join('') || '<p style="color:var(--ink-soft);font-size:13px;">אין פריטים מוגדרים מראש בקטגוריה זו.</p>';
+  openModal('ovCatalog');
+}
+document.getElementById('catalogGrid').addEventListener('click', e=>{
+  const b = e.target.closest('[data-preset-idx]'); if(!b) return;
+  const catDef = CATEGORIES.find(c=>c.key===_catalogCtx.catKey);
+  const preset = catDef.presets[+b.getAttribute('data-preset-idx')];
+  const loc = getLocation(_catalogCtx.locId);
+  loc.categories[_catalogCtx.catKey].devices.push(newDevice(preset.name, preset.watt));
+  loc.categories[_catalogCtx.catKey].open = true;
+  closeModal('ovCatalog');
+  renderLocations();
+  toast('נוסף מהקטלוג: '+preset.name);
+});
+
+
+// ============================================================
+// פרטי לקוח
+// ============================================================
+function renderPillGroup(containerId, options, currentValue, onPick){
+  const el = document.getElementById(containerId);
+  el.innerHTML = options.map(o=>
+    `<button type="button" class="pill-radio ${currentValue===o.key?'active':''}" data-pick="${o.key}">${o.label}</button>`).join('');
+  el.onclick = e=>{
+    const b = e.target.closest('[data-pick]'); if(!b) return;
+    onPick(b.getAttribute('data-pick'));
+  };
+}
+function renderClientTypePills(){
+  renderPillGroup('clientTypePills', CLIENT_TYPES, state.client.clientType, v=>{
+    state.client.clientType = v; renderClientTypePills(); scheduleAutosave();
+  });
+  renderPillGroup('propertyTypePills', PROPERTY_TYPES, state.client.propertyType, v=>{
+    state.client.propertyType = v; renderClientTypePills(); scheduleAutosave();
+  });
+  renderPillGroup('meterTypePills', METER_TYPES, state.client.meterType, v=>{
+    state.client.meterType = v; renderClientTypePills(); scheduleAutosave();
+  });
+}
+const CLIENT_FIELD_MAP = {cName:'name',cPhone:'phone',cAddress:'address',cFilledBy:'filledBy',cContract:'contract',cNotes:'notes'};
+Object.keys(CLIENT_FIELD_MAP).forEach(id=>{
+  document.getElementById(id).addEventListener('input', e=>{
+    state.client[CLIENT_FIELD_MAP[id]] = e.target.value;
+    scheduleAutosave();
+  });
+});
+function fillClientFieldsFromState(){
+  Object.keys(CLIENT_FIELD_MAP).forEach(id=>{ document.getElementById(id).value = state.client[CLIENT_FIELD_MAP[id]] || ''; });
+  renderClientTypePills();
+  fillBillingFieldsFromState();
+}
+
+// ============================================================
+// נתוני צריכה בפועל (מהחשבון החשמל) - שנתי + פירוט חודשי אופציונלי.
+// ============================================================
+function numOrNull(v){ const n = parseFloat(v); return (v===''||v===null||isNaN(n)) ? null : Math.max(0, n); }
+document.getElementById('billAnnualKwh').addEventListener('input', e=>{ state.billing.annualKwh = numOrNull(e.target.value); scheduleAutosave(); });
+document.getElementById('billAnnualNis').addEventListener('input', e=>{ state.billing.annualNis = numOrNull(e.target.value); scheduleAutosave(); });
+
+function renderMonthlyRows(){
+  document.getElementById('monthlyRows').innerHTML = state.billing.monthly.map((m,i)=>`
+    <div class="month-row">
+      <span class="mname">${MONTH_HE_NAMES[i]}</span>
+      <input type="number" min="0" data-month-idx="${i}" data-mfield="kwh" value="${m.kwh===null||m.kwh===undefined?'':m.kwh}" placeholder="קוט״ש">
+      <input type="number" min="0" data-month-idx="${i}" data-mfield="nis" value="${m.nis===null||m.nis===undefined?'':m.nis}" placeholder="₪">
+    </div>`).join('');
+  updateMonthlySumCaption();
+}
+function updateMonthlySumCaption(){
+  const sumKwh = state.billing.monthly.reduce((s,m)=>s+(m.kwh||0),0);
+  const sumNis = state.billing.monthly.reduce((s,m)=>s+(m.nis||0),0);
+  document.getElementById('monthlySumCaption').textContent =
+    (sumKwh||sumNis) ? `סכום 12 החודשים שמולאו: ${Math.round(sumKwh).toLocaleString('he-IL')} קוט"ש · ${Math.round(sumNis).toLocaleString('he-IL')} ₪` : '';
+}
+document.getElementById('monthlyRows').addEventListener('input', e=>{
+  const idx = e.target.getAttribute('data-month-idx');
+  if(idx===null) return;
+  const field = e.target.getAttribute('data-mfield');
+  state.billing.monthly[+idx][field] = numOrNull(e.target.value);
+  updateMonthlySumCaption();
+  scheduleAutosave();
+});
+document.getElementById('btnToggleMonthly').addEventListener('click', function(){
+  this.classList.toggle('open');
+  document.getElementById('monthlyBillingWrap').classList.toggle('hide');
+});
+function fillBillingFieldsFromState(){
+  document.getElementById('billAnnualKwh').value = state.billing.annualKwh ?? '';
+  document.getElementById('billAnnualNis').value = state.billing.annualNis ?? '';
+  renderMonthlyRows();
+}
+
+// ============================================================
+// אינטגרציית Google Apps Script - נקודת החיבור היחידה *לתוך* הטופס:
+// משיכת נתוני לקוח קיים לפי מזהה שהוזרק מהשרת (למשל מקישור אישי
+// שנשלח ללקוח). פועל רק כאשר הקובץ מוגש בפועל דרך Apps Script Web App;
+// במצב קובץ עצמאי (כפי שנפתח בדפדפן ישירות) פשוט אינו עושה דבר (no-op בטוח).
+// ============================================================
+var clientIdParam = "<?= typeof clientIdParam !== 'undefined' ? clientIdParam : '' ?>";
+function tryLoadClientFromAppsScript(){
+  try{
+    const injectedId = (clientIdParam && clientIdParam.indexOf('<?')===-1) ? clientIdParam : null;
+    const hasAppsScript = (typeof google !== 'undefined' && google.script && google.script.run);
+    if(!hasAppsScript) return;
+    if(injectedId){
+      fetchCustomerData(injectedId);
+    } else if(google.script.url && google.script.url.getLocation){
+      google.script.url.getLocation(function(loc){
+        const id = loc && loc.parameter && loc.parameter.clientId;
+        if(id) fetchCustomerData(id);
+      });
+    }
+  }catch(err){ console.warn('חיבור Google Apps Script אינו זמין:', err); }
+}
+function fetchCustomerData(id){
+  google.script.run
+    .withSuccessHandler(function(data){
+      // getCustomerData ב-code.js מחזיר אובייקט עם מפתחות בעברית (כותרות הגיליון המקוריות),
+      // לא data.name/data.phone/data.address באנגלית - התיקון הבא מתקן קריאה שהייתה שקטה
+      // תמיד נכשלת (ה-toast הופיע גם כשלא נטען בפועל שום דבר).
+      if(!data || !data['שם הלקוח']) return;
+      state.client.name = data['שם הלקוח'] || state.client.name;
+      state.client.phone = data['טלפון'] || state.client.phone;
+      state.client.address = data['כתובת'] || state.client.address;
+      // הערה: "חוזה/מס' מונה" ו"מולא ע"י" אין להם עמודה מקבילה בגיליון "לקוחות ופרוייקטים"
+      // (הם שדות ספציפיים לטופס בלבד) - נשארים למילוי ידני, לא ננסה למפות אותם ממקור שגוי.
+      fillClientFieldsFromState();
+      toast('פרטי הלקוח נטענו אוטומטית ✓');
+    })
+    .withFailureHandler(function(err){ console.warn('getCustomerData נכשל:', err); })
+    .getCustomerData(id);
+}
+
+// ============================================================
+// הצפנה - נקודת החיבור היחידה *החוצה* מהטופס: RSA-OAEP (2048/SHA-256)
+// עוטף מפתח AES-256-GCM אקראי וחד-פעמי לכל שליחה. רק בעל המפתח הפרטי
+// (בראשית סולאר, בכלי הפענוח הפנימי) יכול לפענח את הקובץ שנוצר.
+// המפתח המוטבע כאן הוא הציבורי בלבד - חשיפתו בקוד התואם לא מהווה
+// סיכון אבטחתי (זו בדיוק המטרה של הצפנה א-סימטרית).
+// ============================================================
+const RSA_PUBLIC_KEY_B64 = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArdYBQSmKpWQ0+hinwzIFnhp0uqCsTzo4Y65+PGjz/fe0CUFjJyW1Zk/P/ehndM1mvFTMdR1vZW1GU/j6JwZ8AVJkT80iZVVctbuyTWYtCF03U2ThBMJzg+Bf/G5tOJMNrE2x0BvoM8kz8SZrTx99QNJ4cHZFCL1klLqkJ4cybdBilk3AJiadF/w0gerOLzw7z6HO0i0pe5BFQw6gC2/QyucR6rvtOVo+/qoz10I9XIYkKUrEr4fC70unUP7Pm9HiW/YHiMECzBo/ZTHYEAGN33cBzB4p0IzEo5I0HM/07b49NFACiDCK/VsFyWcWwwYHJmK5QU5hqwRDQfH8eCPa+wIDAQAB";
+
+function b64ToBuf(b64){
+  const bin = atob(b64);
+  const buf = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) buf[i] = bin.charCodeAt(i);
+  return buf.buffer;
+}
+function bufToB64(buf){
+  let bin=''; const bytes = new Uint8Array(buf);
+  for(let i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+async function encryptPayloadForSystem(payloadObj){
+  const pubKey = await crypto.subtle.importKey('spki', b64ToBuf(RSA_PUBLIC_KEY_B64), {name:'RSA-OAEP', hash:'SHA-256'}, false, ['encrypt']);
+  const aesKey = await crypto.subtle.generateKey({name:'AES-GCM', length:256}, true, ['encrypt']);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const plaintext = new TextEncoder().encode(JSON.stringify(payloadObj));
+  const ciphertext = await crypto.subtle.encrypt({name:'AES-GCM', iv}, aesKey, plaintext);
+  const rawAesKey = await crypto.subtle.exportKey('raw', aesKey);
+  const wrappedKey = await crypto.subtle.encrypt({name:'RSA-OAEP'}, pubKey, rawAesKey);
+  return {
+    fileType: 'bereshit-solar-encrypted-v1',
+    version: '1.0',
+    alg: 'RSA-OAEP-2048-SHA256+AES-256-GCM',
+    exportedAt: new Date().toISOString(),
+    iv: bufToB64(iv),
+    encryptedKey: bufToB64(wrappedKey),
+    ciphertext: bufToB64(ciphertext),
+  };
+}
+
+// ============================================================
+// בניית תוכן הנתונים (לפני הצפנה)
+// ============================================================
+function buildExportPayload(){
+  const year = new Date().getFullYear();
+  const rawConsumers = [];
+  const categoriesSummary = [];
+  state.locations.forEach(loc=>{
+    CATEGORIES.forEach(catDef=>{
+      const cat = loc.categories[catDef.key];
+      let catKwh = 0;
+      (cat.devices||[]).forEach(dev=>{
+        const kwh = +calcDeviceAnnualKwh(dev, loc, cat.restriction, year).toFixed(2);
+        catKwh += kwh;
+        rawConsumers.push({
+          locationId: loc.id, locationName: loc.name, category: catDef.key, categoryName: catDef.name,
+          name: dev.name, watt: dev.watt, qty: dev.qty, days: dev.days, jewishShabbat: !!dev.jewishShabbat,
+          hours: dev.hours, periodType: dev.periodType, seasonCode: dev.seasonCode,
+          customRanges: dev.customRanges, customHebrewRanges: dev.customHebrewRanges,
+          annualKwh: kwh,
+        });
+      });
+      if(cat.devices && cat.devices.length){
+        categoriesSummary.push({
+          locationId: loc.id, locationName: loc.name, category: catDef.key, categoryName: catDef.name,
+          restriction: cat.restriction, deviceCount: cat.devices.length, annualKwh: +catKwh.toFixed(2),
+        });
+      }
+    });
+  });
+  const hourlySeries = generateHourlySeries(year);
+  const annualTotal = +hourlySeries.reduce((s,p)=>s+p.kwh,0).toFixed(2);
+  const locationsSummary = state.locations.map(loc=>{
+    let kwh=0;
+    CATEGORIES.forEach(cd=>{ const cat=loc.categories[cd.key]; (cat.devices||[]).forEach(d=>{ kwh+=calcDeviceAnnualKwh(d, loc, cat.restriction, year); }); });
+    return {id:loc.id, name:loc.name, restriction: loc.restriction, annualKwh:+kwh.toFixed(2)};
+  });
+  return {
+    fileType: 'bereshit-solar-consumption-data-v1', version: '1.1',
+    exportedAt: new Date().toISOString(), referenceYear: year,
+    client: state.client, billing: state.billing, globalRestriction: state.globalRestriction,
+    locationsSummary, categoriesSummary, rawConsumers, hourlySeries, annualTotal,
+  };
+}
+function validateBeforeExport(){
+  const warnings = [];
+  if(!state.client.name || !state.client.name.trim()) warnings.push('שם הלקוח ריק');
+  if(state.locations.length===0) warnings.push('לא נוסף אף מיקום');
+  let incomplete = 0;
+  state.locations.forEach(loc=>CATEGORIES.forEach(cd=>(loc.categories[cd.key].devices||[]).forEach(d=>{
+    if(!d.name || !d.name.trim() || !d.watt) incomplete++;
+  })));
+  if(incomplete>0) warnings.push((incomplete===1 ? 'מכשיר אחד' : incomplete+' מכשירים')+' ללא שם ו/או הספק');
+  return warnings;
+}
+async function doExport(){
+  const warnings = validateBeforeExport();
+  const btn = document.getElementById('btnExport');
+  const originalLabel = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '🔒 מצפין ומכין קובץ...';
+  try{
+    const payload = buildExportPayload();
+    const encrypted = await encryptPayloadForSystem(payload);
+    const blob = new Blob([JSON.stringify(encrypted)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const safeName = (state.client.name||'לקוח').trim().replace(/[\\/:*?"<>|]+/g,'_').replace(/\s+/g,'_') || 'לקוח';
+    const dateStr = new Date().toISOString().slice(0,10);
+    a.href = url; a.download = `נתוני_צריכה_${safeName}_${dateStr}.json.enc`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+    if(warnings.length) toast('הקובץ המוצפן נשמר, לתשומת לב: '+warnings.join(' · '), 'warn');
+    else toast('הקובץ המוצפן נשמר בהצלחה ✓ כעת שילחו אותו לבראשית סולאר');
+  }catch(err){
+    console.error(err);
+    toast('אירעה שגיאה בהכנת הקובץ המוצפן. נסו שוב או פנו לתמיכה.', 'err');
+  }finally{
+    btn.disabled = false; btn.innerHTML = originalLabel;
+  }
+}
+document.getElementById('btnExport').addEventListener('click', doExport);
+
+// ============================================================
+// שמירה אוטומטית ושחזור - נוחות מקומית בלבד בתוך הדפדפן של הלקוח.
+// אין כאן קובץ/ייבוא חיצוני: זהו הערוץ היחיד להמשך מילוי מופסק,
+// ופועל רק במכשיר ובדפדפן שבו מולא הטופס.
+// ============================================================
+function tryRestoreFromStorage(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    const saved = JSON.parse(raw);
+    if(!saved || !Array.isArray(saved.locations) || saved.locations.length===0) return false;
+    confirmDialog('שחזור טופס שמור', 'נמצא טופס שנשמר אוטומטית בדפדפן זה. לטעון אותו ולהמשיך מהיכן שהפסקתם?', ()=>{
+      state = saved;
+      ensureRestrictionShape();
+      fillClientFieldsFromState();
+      renderGlobalRestrictionBar();
+      renderLocations();
+      toast('הטופס השמור שוחזר ✓');
+    });
+    return true;
+  }catch(err){ return false; }
+}
+
+document.getElementById('btnRestoreInfo').addEventListener('click', ()=>{
+  toast('הטופס נשמר אוטומטית בדפדפן ובמכשיר הזה בלבד תוך כדי מילוי, כדי שלא תאבדו מידע בטעות. השמירה הזו מקומית בלבד - השליחה בפועל לבראשית סולאר מתבצעת רק בלחיצה על כפתור השליחה המוצפנת.');
+});
+
+// מיני-סרגל דביק כשגוללים מעבר לסרגל הסיכום העליון
+window.addEventListener('scroll', ()=>{
+  const bar = document.querySelector('.summary-bar');
+  if(!bar) return;
+  document.getElementById('miniToolbar').classList.toggle('show', bar.getBoundingClientRect().bottom < 0);
+});
+
+// ============================================================
+// אתחול
+// ============================================================
+document.addEventListener('DOMContentLoaded', ()=>{
+  renderClientTypePills();
+  renderMonthlyRows();
+  tryLoadClientFromAppsScript();
+  const hasSaved = tryRestoreFromStorage();
+  if(!hasSaved){ state.locations.push(newLocation()); }
+  renderGlobalRestrictionBar();
+  renderLocations();
+});
+
+</script>
+</body>
+</html>
