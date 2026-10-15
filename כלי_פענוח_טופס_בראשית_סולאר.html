@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>כלי פענוח פנימי — טופס איסוף נתונים — בראשית סולאר</title>
+<style>
+:root {
+  --bg: #0b0f19; --card: #131a26; --primary: #3b82f6; --accent: #f59e0b;
+  --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --info: #38bdf8;
+  --text: #f8fafc; --muted: #94a3b8; --border: #1e293b; --mono: 'Consolas','Courier New',monospace;
+}
+* { box-sizing: border-box; }
+body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); line-height:1.6; margin:0; padding:30px 16px 80px; }
+.container { max-width:820px; margin:0 auto; }
+h1 { color:#fff; font-size:1.9em; text-align:center; margin-bottom:6px; }
+h1 small { display:block; font-size:0.42em; color:var(--muted); font-weight:400; margin-top:10px; }
+h2 { color:#fff; font-size:1.25em; margin:0 0 14px; display:flex; align-items:center; gap:10px; }
+h2 .num { background:var(--primary); color:#fff; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.75em; flex:0 0 auto; }
+h3 { color:var(--accent); font-size:1em; margin:14px 0 8px; }
+h4 { color:#fff; font-size:0.95em; margin:14px 0 6px; }
+section { background:var(--card); border:1px solid var(--border); border-top:4px solid var(--primary); border-radius:10px; padding:22px 26px; margin-bottom:22px; transition:opacity .2s; }
+section.disabled { opacity:0.45; pointer-events:none; }
+p { margin:0 0 12px; }
+.callout { border-right:4px solid var(--warning); background:rgba(245,158,11,0.07); padding:12px 16px; border-radius:6px; margin:14px 0; font-size:0.92em; }
+.callout.crit { border-right-color:var(--danger); background:rgba(239,68,68,0.08); }
+.callout.info { border-right-color:var(--info); background:rgba(56,189,248,0.07); }
+.tabs { display:flex; gap:8px; margin-bottom:14px; }
+.tab-btn { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--muted); padding:8px 16px; border-radius:6px; cursor:pointer; font-size:0.9em; }
+.tab-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+textarea, input[type=text] { width:100%; background:#0d1420; border:1px solid var(--border); color:#d1d9e6; font-family:var(--mono); font-size:0.82em; border-radius:6px; padding:10px; direction:ltr; text-align:left; }
+button.action { background:var(--primary); color:#fff; border:none; padding:9px 18px; border-radius:6px; cursor:pointer; font-size:0.92em; font-weight:600; margin-top:8px; margin-left:6px; }
+button.action:hover { background:#2563eb; }
+button.secondary { background:rgba(255,255,255,0.06); color:var(--text); border:1px solid var(--border); padding:9px 18px; border-radius:6px; cursor:pointer; font-size:0.9em; margin-top:8px; margin-left:6px; }
+button.action:disabled { background:#334155; cursor:not-allowed; }
+input[type=file] { color:var(--muted); }
+.status { margin-top:10px; font-size:0.9em; }
+.ok { color:#4ade80; font-weight:600; }
+.err { color:#f87171; font-weight:600; }
+table { width:100%; border-collapse:collapse; margin:12px 0; font-size:0.87em; }
+th, td { border:1px solid var(--border); padding:7px 10px; text-align:right; }
+th { background:rgba(255,255,255,0.03); color:#fff; }
+tr:nth-child(even) { background:rgba(255,255,255,0.015); }
+footer { text-align:center; color:var(--muted); font-size:0.8em; margin-top:30px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>כלי פענוח פנימי<small>לטופס איסוף נתוני צריכת חשמל — בראשית סולאר. לשימוש פנימי בלבד, במחשב מקומי.</small></h1>
+
+<div class="callout crit">
+<b>קרא לפני שימוש:</b> קובץ זה <u>אינו</u> מכיל שום מפתח פרטי מוטבע. הוא נועד להיפתח ישירות מהמחשב שלך (לחיצה כפולה על הקובץ, לא דרך שרת) ולהישאר שם — לא להעלות אותו ל-Google Apps Script, Drive משותף, או כל מקום שאנשים אחרים יכולים לגשת אליו. המפתח הפרטי שתדביק/תיצור כאן נשאר רק בזיכרון הדפדפן ברגע השימוש ונעלם ברענון העמוד — הוא לעולם לא נשמר אוטומטית לשום מקום.
+</div>
+
+<section id="sec-key">
+<h2><span class="num">1</span> מפתח פרטי</h2>
+<div class="tabs">
+  <button class="tab-btn active" id="tabBtnExisting" onclick="showKeyTab('existing')">יש לי כבר מפתח פרטי</button>
+  <button class="tab-btn" id="tabBtnGenerate" onclick="showKeyTab('generate')">צור זוג מפתחות חדש</button>
+</div>
+
+<div id="tabExisting">
+<p>הדבק כאן את המפתח הפרטי, בפורמט PEM (מתחיל ב-<code>-----BEGIN PRIVATE KEY-----</code>):</p>
+<textarea id="privateKeyInput" rows="7" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"></textarea>
+<button class="action" onclick="loadPrivateKey()">טען מפתח</button>
+<div class="status" id="keyStatus"></div>
+</div>
+
+<div id="tabGenerate" style="display:none">
+<p>אם עדיין לא קיים זוג מפתחות (או שהמפתח הפרטי המקורי אבד), אפשר ליצור כאן זוג חדש, תואם למנגנון ההצפנה בטופס (RSA-OAEP, 2048 סיביות, SHA-256).</p>
+<div class="callout crit">
+<b>שימו לב לפני יצירה:</b> אם כבר יש שליחות טופס מוצפנות שנשלחו עם המפתח הציבורי ה<u>נוכחי</u> המוטבע ב-Form.html, יצירת זוג חדש תהפוך אותן ללא-ניתנות-לפענוח לצמיתות (אלא אם המפתח הפרטי המקורי יימצא). מומלץ לוודא שאין שליחות ממתינות לפני שמחליפים, ואז לעדכן את <code>RSA_PUBLIC_KEY_B64</code> ב-Form.html למפתח הציבורי החדש.
+</div>
+<button class="action" onclick="generateNewKeyPair()">צור זוג מפתחות חדש</button>
+<div id="generatedKeysOutput" style="display:none">
+  <h4>מפתח ציבורי חדש — להדביק ב-Form.html במקום <code>RSA_PUBLIC_KEY_B64</code>:</h4>
+  <textarea readonly id="newPublicKeyOut" rows="5"></textarea>
+  <button class="secondary" onclick="copyToClipboard('newPublicKeyOut')">העתק</button>
+
+  <h4>מפתח פרטי חדש — לשמור מיד במקום מאובטח (מנג'ר סיסמאות), לא בקובץ משותף:</h4>
+  <textarea readonly id="newPrivateKeyOut" rows="9"></textarea>
+  <button class="secondary" onclick="copyToClipboard('newPrivateKeyOut')">העתק</button>
+  <button class="secondary" onclick="downloadPrivateKey()">הורד כקובץ .pem</button>
+  <div class="status ok">✓ המפתח נטען אוטומטית ומוכן לשימוש מיידי בשלבים הבאים באותו עמוד.</div>
+</div>
+</div>
+</section>
+
+<section id="sec-file" class="disabled">
+<h2><span class="num">2</span> קובץ מוצפן שהתקבל מהלקוח</h2>
+<p>הקובץ שהלקוח שולח מסתיים ב-<code>.json.enc</code>. ניתן לבחור אותו כאן:</p>
+<input type="file" id="encFileInput" accept=".json,.enc,.txt">
+<div class="status" id="fileStatus"></div>
+</section>
+
+<section id="sec-decrypt" class="disabled">
+<h2><span class="num">3</span> פענוח</h2>
+<button class="action" id="decryptBtn" onclick="decryptFile()">פענח</button>
+<div class="status" id="decryptStatus"></div>
+<div id="resultSummary"></div>
+<button class="action" id="downloadPlainBtn" style="display:none" onclick="downloadPlainJson()">הורד JSON גלוי (להעלאה למחשבון, שלב "קובץ צריכה")</button>
+</section>
+
+<footer>כלי זה עובד לגמרי במקומי (Web Crypto API של הדפדפן) — שום נתון, כולל המפתח הפרטי, לא נשלח לשום שרת.</footer>
+</div>
+
+<script>
+let currentPrivateKey = null;   // CryptoKey - קיים רק בזיכרון, לעולם לא נשמר
+let loadedEncPayload = null;
+let decryptedPayload = null;
+
+function showKeyTab(which){
+  document.getElementById('tabExisting').style.display = (which==='existing') ? 'block' : 'none';
+  document.getElementById('tabGenerate').style.display  = (which==='generate') ? 'block' : 'none';
+  document.getElementById('tabBtnExisting').classList.toggle('active', which==='existing');
+  document.getElementById('tabBtnGenerate').classList.toggle('active', which==='generate');
+}
+
+function b64ToBuf(b64){
+  const bin = atob(b64.replace(/\s+/g,''));
+  const buf = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) buf[i] = bin.charCodeAt(i);
+  return buf.buffer;
+}
+function bufToB64(buf){
+  let bin=''; const bytes = new Uint8Array(buf);
+  for(let i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+function pemToBuf(pem){
+  const b64 = pem.replace(/-----BEGIN[^-]+-----/,'').replace(/-----END[^-]+-----/,'').replace(/\s+/g,'');
+  return b64ToBuf(b64);
+}
+function bufToPem(buf, label){
+  const b64 = bufToB64(buf);
+  const lines = b64.match(/.{1,64}/g).join('\n');
+  return `-----BEGIN ${label}-----\n${lines}\n-----END ${label}-----`;
+}
+
+function enableSection(id){ document.getElementById(id).classList.remove('disabled'); }
+
+async function loadPrivateKey(){
+  const statusEl = document.getElementById('keyStatus');
+  const pem = document.getElementById('privateKeyInput').value.trim();
+  if(!pem){ statusEl.innerHTML = '<span class="err">יש להדביק מפתח לפני הטעינה.</span>'; return; }
+  try {
+    const buf = pemToBuf(pem);
+    currentPrivateKey = await crypto.subtle.importKey('pkcs8', buf, {name:'RSA-OAEP', hash:'SHA-256'}, false, ['decrypt']);
+    statusEl.innerHTML = '<span class="ok">✓ המפתח נטען בהצלחה.</span>';
+    enableSection('sec-file');
+  } catch(e) {
+    statusEl.innerHTML = '<span class="err">שגיאה בטעינת המפתח: ' + e.message + ' — יש לוודא שזהו מפתח פרטי בפורמט PKCS8/PEM תואם ל-RSA-OAEP.</span>';
+  }
+}
+
+async function generateNewKeyPair(){
+  const kp = await crypto.subtle.generateKey(
+    {name:'RSA-OAEP', modulusLength:2048, publicExponent:new Uint8Array([1,0,1]), hash:'SHA-256'},
+    true, ['encrypt','decrypt']
+  );
+  const pubSpki  = await crypto.subtle.exportKey('spki', kp.publicKey);
+  const privPkcs8 = await crypto.subtle.exportKey('pkcs8', kp.privateKey);
+  document.getElementById('newPublicKeyOut').value  = bufToB64(pubSpki);
+  document.getElementById('newPrivateKeyOut').value = bufToPem(privPkcs8, 'PRIVATE KEY');
+  document.getElementById('generatedKeysOutput').style.display = 'block';
+  currentPrivateKey = kp.privateKey;
+  enableSection('sec-file');
+}
+
+document.getElementById('encFileInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  const statusEl = document.getElementById('fileStatus');
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    try {
+      loadedEncPayload = JSON.parse(evt.target.result);
+      if(loadedEncPayload.fileType !== 'bereshit-solar-encrypted-v1'){
+        statusEl.innerHTML = '<span class="err">הקובץ נטען אך אינו מזוהה כפורמט המוצפן של הטופס (bereshit-solar-encrypted-v1). ייתכן שזה קובץ לא-מוצפן או קובץ אחר.</span>';
+        return;
+      }
+      statusEl.innerHTML = '<span class="ok">✓ קובץ נטען: ' + file.name + ' (הוצפן ב-' + (loadedEncPayload.exportedAt||'?') + ')</span>';
+      enableSection('sec-decrypt');
+    } catch(err) {
+      statusEl.innerHTML = '<span class="err">הקובץ שנבחר אינו JSON תקין.</span>';
+    }
+  };
+  reader.readAsText(file);
+});
+
+async function decryptFile(){
+  const statusEl = document.getElementById('decryptStatus');
+  if(!currentPrivateKey){ statusEl.innerHTML = '<span class="err">יש לטעון מפתח פרטי בשלב 1 קודם.</span>'; return; }
+  if(!loadedEncPayload){ statusEl.innerHTML = '<span class="err">יש לבחור קובץ מוצפן בשלב 2 קודם.</span>'; return; }
+  try {
+    const rawAesKey = await crypto.subtle.decrypt({name:'RSA-OAEP'}, currentPrivateKey, b64ToBuf(loadedEncPayload.encryptedKey));
+    const aesKey = await crypto.subtle.importKey('raw', rawAesKey, {name:'AES-GCM'}, false, ['decrypt']);
+    const iv = new Uint8Array(b64ToBuf(loadedEncPayload.iv));
+    const plainBuf = await crypto.subtle.decrypt({name:'AES-GCM', iv}, aesKey, b64ToBuf(loadedEncPayload.ciphertext));
+    decryptedPayload = JSON.parse(new TextDecoder().decode(plainBuf));
+    statusEl.innerHTML = '<span class="ok">✓ הפענוח הצליח.</span>';
+    renderSummary(decryptedPayload);
+    document.getElementById('downloadPlainBtn').style.display = 'inline-block';
+  } catch(e) {
+    statusEl.innerHTML = '<span class="err">הפענוח נכשל: ' + e.message + '. הסיבה הנפוצה ביותר: המפתח הפרטי שנטען אינו תואם למפתח הציבורי שאיתו הוצפן קובץ זה (למשל, אם בינתיים הוחלף זוג המפתחות).</span>';
+  }
+}
+
+function renderSummary(data){
+  const el = document.getElementById('resultSummary');
+  const c = data.client || {};
+  let rowsHtml = '';
+  (data.categoriesSummary || []).forEach(cs => {
+    rowsHtml += `<tr><td>${cs.locationName||''}</td><td>${cs.categoryName||''}</td><td>${cs.deviceCount||0}</td><td>${(cs.annualKwh||0).toLocaleString()}</td></tr>`;
+  });
+  el.innerHTML = `
+    <h3>סיכום הנתונים המפוענחים</h3>
+    <table>
+      <tr><th>שם לקוח</th><td>${c.name||'-'}</td></tr>
+      <tr><th>טלפון</th><td>${c.phone||'-'}</td></tr>
+      <tr><th>כתובת</th><td>${c.address||'-'}</td></tr>
+      <tr><th>מספר חוזה/מונה</th><td>${c.contract||'-'}</td></tr>
+      <tr><th>מולא ע"י</th><td>${c.filledBy||'-'}</td></tr>
+      <tr><th>סה"כ צריכה שנתית משוערת</th><td>${data.annualTotal ? Math.round(data.annualTotal).toLocaleString()+' קוט"ש' : '-'}</td></tr>
+    </table>
+    ${rowsHtml ? `<h4>פירוט לפי מיקום וקטגוריה</h4><table><tr><th>מיקום</th><th>קטגוריה</th><th>מס' מכשירים</th><th>קוט"ש שנתי</th></tr>${rowsHtml}</table>` : ''}
+  `;
+}
+
+function downloadPlainJson(){
+  if(!decryptedPayload) return;
+  const blob = new Blob([JSON.stringify(decryptedPayload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const safeName = ((decryptedPayload.client && decryptedPayload.client.name) || 'לקוח').replace(/[\\/:*?"<>|]+/g,'_').trim();
+  a.href = url;
+  a.download = `נתוני_צריכה_${safeName}_מפוענח.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function downloadPrivateKey(){
+  const pem = document.getElementById('newPrivateKeyOut').value;
+  if(!pem) return;
+  const blob = new Blob([pem], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'bereshit-solar-private-key.pem';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function copyToClipboard(id){
+  const el = document.getElementById(id);
+  el.removeAttribute('readonly'); el.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  el.setAttribute('readonly', 'readonly');
+}
+
+if (!window.crypto || !window.crypto.subtle) {
+  document.querySelector('.container').insertAdjacentHTML('afterbegin',
+    '<div class="callout crit">הדפדפן הנוכחי לא חושף את Web Crypto API בהקשר זה. נסו לפתוח את הקובץ ישירות (לחיצה כפולה) בדפדפן עדכני (Chrome/Edge/Firefox) במקום דרך תצוגה מקוצרת.</div>');
+}
+</script>
+</body>
+</html>
